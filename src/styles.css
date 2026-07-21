@@ -1,1 +1,24 @@
-/* You can add global styles to this file, and also import other style files */
+@import "./app/shared/styles/_tables.css";
+@import "./app/shared/styles/_forms.css";
+@import "./app/shared/styles/_content-header.css";
+@import "./app/shared/styles/_dialog.css";
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, Arial, sans-serif;
+  background: #f5f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.mat-icon {
+  font-family: 'Material Symbols Outlined' !important;
+}

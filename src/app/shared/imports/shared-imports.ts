@@ -20,6 +20,8 @@ import {MatExpansionModule} from '@angular/material/expansion';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule, } from '@angular/material/dialog';
 
+import { Status } from '../components/status/status';
+
 
 
 export const SHARED_IMPORTS = [
@@ -45,4 +47,9 @@ export const SHARED_IMPORTS = [
   MatExpansionModule,
   MatCheckboxModule,
   MatDialogModule,
+
+
+
+
+  Status,
 ];

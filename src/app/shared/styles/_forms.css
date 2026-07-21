@@ -1,0 +1,43 @@
+.content-search{
+  display:flex;
+  gap:16px;
+  margin-bottom:20px;
+}
+
+.search-field{
+  flex:2;
+}
+
+.select-field{
+  flex:1;
+}
+
+
+@media (max-width:992px){
+
+  .content-search{
+    flex-wrap:wrap;
+  }
+
+  .search-field{
+    flex: 1 1 100%;
+  }
+
+  .select-field{
+    flex:1 1 calc(50% - 8px);
+  }
+
+}
+
+@media (max-width:576px){
+
+  .content-search{
+    flex-direction:column;
+  }
+
+  .search-field,
+  .select-field{
+    width:100%;
+  }
+
+}

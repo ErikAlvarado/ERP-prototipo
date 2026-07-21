@@ -1,0 +1,105 @@
+mat-dialog-title {
+    font-size: 24px;
+    font-weight: 600;
+    padding: 24px 24px 8px;
+}
+
+mat-dialog-content {
+    padding: 20px 24px;
+    overflow-x: hidden;
+}
+
+.formulario {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+mat-form-field {
+    padding: 5px;
+    width: 100%;
+}
+
+/* --- TRUCO PARA HACER LOS INPUTS MÁS DELGADOS --- */
+::v-deep .mat-mdc-form-field-infix {
+    min-height: 40px !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+}
+
+.elementos-section {
+    grid-column: 1 / -1;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 5px;
+}
+
+.elementos-section h3 {
+    font-size: 15px;
+    font-weight: 500;
+    color: #495057;
+    margin: 0 0 12px 0;
+}
+
+/* Mantenemos tu selector por atributo inline tal cual lo querías */
+.elementos-section div[style*="display: flex"] {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+}
+
+mat-chip-set {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+mat-chip {
+    background-color: #ffffff !important;
+    border: 1px solid #dee2e6 !important;
+    font-weight: 500;
+    color: #212529;
+}
+
+.checks {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    margin-top: 8px;
+    padding: 8px 5px;
+}
+
+mat-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 18px 24px;
+    border-top: 1px solid #ececec;
+}
+
+@media(max-width: 700px) {
+    .formulario {
+        grid-template-columns: 1fr;
+    }
+    
+    .checks {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .elementos-section div[style*="display: flex"] {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 8px;
+    }
+    
+    .elementos-section button {
+        width: 100%;
+        border-radius: 8px !important;
+    }
+}
