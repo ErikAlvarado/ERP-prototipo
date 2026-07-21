@@ -1,0 +1,9 @@
+:host {
+  display: block;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid #e4e7ec;
+  border-radius: 4px;
+  background: #ffffff;
+  box-shadow: none;
+}

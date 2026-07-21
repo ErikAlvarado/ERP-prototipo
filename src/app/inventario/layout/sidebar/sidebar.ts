@@ -30,47 +30,103 @@ export class Sidebar {
   }
 
   menus = signal<MenuItem[]>([
-    {
-      title: 'Dashboard',
-      icon: 'dashboard',
-      route: '/dashboard'
-    },
-    {
-      title: 'Catálogo de Productos',
-      icon: 'deployed_code',
-      expanded: false,
-      children: [
-        { title: 'Productos', icon: 'inventory', route: '/products' },
-        { title: 'Kits', icon: 'home_repair_service', route: '/kits' },
-        { title: 'Categorías', icon: 'category', route: '/categorias' },
-        { title: 'Marcas', icon: 'star', route: '/marcas' },
-        { title: 'Medidas', icon: 'straighten', route: '/medidas' },
-        { title: 'Unidades', icon: 'balance', route: '/unidades' },
-      ]
-    },
-    {
-      title: 'Inventario',
-      icon: 'assignment',
-      expanded: false,
-      children: [
-        { title: 'Existencias', icon: 'inventory_2', route: '/existencias' },
-        { title: 'Kardex', icon: 'receipt_long', route: '/kardex' },
-        { title: 'Ajustes de Inventario', icon: 'tune', route: '/ajustes' },
-        { title: 'Transferencias de Productos', icon: 'local_shipping', route: '/transferencias' },
-      ]
-    },
-    {
-      title: 'Administración',
-      icon: 'settings',
-      expanded: false,
-      children: [
-        { title: 'Almacenes', icon: 'garage_home', route: '/almacenes' },
-        { title: 'Usuarios', icon: 'people', route: '/usuarios' },
-        { title: 'Roles', icon: 'security', route: '/roles' },
-        { title: 'Empresas', icon: 'business', route: '/empresas' }
-      ]
-    }
-  ]);
+  {
+    title: 'Dashboard',
+    icon: 'dashboard',
+    route: '/dashboard'
+  },
+  {
+    title: 'Catálogo de Productos',
+    icon: 'deployed_code',
+    expanded: false,
+    children: [
+      {
+        title: 'Productos',
+        icon: 'inventory',
+        route: '/products'
+      },
+      { 
+        title: 'Kits', 
+        icon: 'home_repair_service',
+        route: '/kits'
+      },
+      {
+        title: 'Categorías',
+        icon: 'category',
+        route: '/categorias'
+      },
+      {
+        title: 'Marcas',
+        icon: 'star',
+        route: '/marcas'
+      },
+      {
+        title: 'Medidas',
+        icon: 'straighten',
+        route: '/medidas'
+      },
+      {
+        title: 'Unidades',
+        icon: 'balance',
+        route: '/unidades'
+      },
+    ]
+  },
+  {
+    title: 'Inventario',
+    icon: 'assignment',
+    expanded: false,
+    children: [
+      {
+        title: 'Existencias',
+        icon: 'inventory_2',
+        route: '/existencias'
+      },
+      {
+        title: 'Kardex',
+        icon: 'receipt_long',
+        route: '/kardex'
+      },
+      {
+        title: 'Ajustes de Inventario',
+        icon: 'tune',
+        route: '/ajustes'
+      },
+      {
+        title: 'Transferencias de Productos',
+        icon: 'local_shipping',
+        route: '/transferencias'
+      },
+    ]
+  },
+  {
+    title: 'Administracion',
+    icon: 'settings',
+    expanded: false,
+    children: [
+      {
+        title: 'Almacenes',
+        icon: 'garage_home',
+        route: '/almacenes'
+      },
+      {
+        title: 'Usuarios',
+        icon: 'people',
+        route: '/usuarios'
+      },
+      {
+        title: 'Roles',
+        icon: 'security',
+        route: '/roles'
+      },
+      {
+        title: 'Empresas',
+        icon: 'business',
+        route: '/empresas'
+      }
+    ]
+  }
+]);
 
   toggleMenuItem(index: number) {
     this.menus.update(menus =>

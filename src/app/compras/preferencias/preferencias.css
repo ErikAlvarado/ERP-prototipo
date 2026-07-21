@@ -1,0 +1,31 @@
+:host { display: block; color: #07142d; }
+.preferencias-pagina { min-height: 100%; box-sizing: border-box; background: #f5f7fb; }
+.titulo-pagina { margin-bottom: 28px; }
+.titulo-pagina h1 { margin: 0 0 6px; font-size: 32px; font-weight: 700; letter-spacing: 0; }
+.titulo-pagina p { margin: 0; color: #667085; font-size: 15px; }
+
+.seccion-favoritos { display: flex; align-items: center; gap: 8px; width: fit-content; margin-bottom: 26px; padding: 10px 18px; border-radius: 10px; background: #fff; color: #172442; box-shadow: 0 1px 3px rgb(15 23 42 / .14); font-weight: 600; }
+.seccion-favoritos mat-icon { width: 19px; height: 19px; color: #ff5364; font-size: 19px; }
+
+.preferencias-grid { display: grid; grid-template-columns: repeat(3, minmax(250px, 1fr)); gap: 18px; }
+.preferencia-card { min-width: 0; height: 106px; border-color: #e4e7ec; border-radius: 4px; background: #fff; box-shadow: none; }
+.preferencia-card mat-card-content { display: flex; align-items: center; gap: 18px; height: 100%; padding: 18px; box-sizing: border-box; }
+.tipo-icono { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 44px; border-radius: 13px; background: #fff0f2; color: #ff5364; }
+.tipo-icono mat-icon { width: 22px; height: 22px; font-size: 22px; }
+.producto-info { min-width: 0; }
+.producto-info h2 { margin: 0 0 3px; overflow: hidden; font-size: 16px; font-weight: 600; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.producto-info span { display: block; margin-bottom: 2px; color: #a0a8ba; font-size: 13px; }
+.producto-info strong { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 17px; }
+.eliminar { width: 30px; height: 30px; margin-left: auto; flex: 0 0 30px; color: #cbd1db; }
+.eliminar mat-icon { width: 17px; height: 17px; font-size: 17px; }
+.estado-vacio { display: grid; justify-items: center; padding: 80px 20px; color: #98a2b5; text-align: center; }
+.estado-vacio > mat-icon { width: 48px; height: 48px; font-size: 48px; color: #cbd1db; }
+.estado-vacio h2 { margin: 12px 0 4px; color: #172442; }.estado-vacio p { margin: 0; }
+
+@media (max-width: 1100px) { .preferencias-grid { grid-template-columns: repeat(2, minmax(250px, 1fr)); } }
+@media (max-width: 700px) {
+  .preferencias-pagina { padding: 22px 16px; }
+  .titulo-pagina h1 { font-size: 21px; }
+  .titulo-pagina p { font-size: 14px; }
+  .preferencias-grid { grid-template-columns: 1fr; }
+}

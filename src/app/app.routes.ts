@@ -5,6 +5,8 @@ import { Dashboard } from './inventario/dashboard/dashboard';
 import { inventarioRoutes } from './inventario/inventario/inventario.routes';
 import { Layout } from './inventario/layout/layout/layout';
 import { administracionRoutes } from './inventario/administracion/administracion.routes';
+import { comprasRoutes } from './compras/compras.routes';
+import { Dashboard as ComprasDashboard } from './compras/dashboard/dashboard';
 
 export const routes: Routes = [
   {
@@ -18,7 +20,22 @@ export const routes: Routes = [
 
       ...product_catalogRoutes,
       ...inventarioRoutes,
-      ...administracionRoutes
+      ...administracionRoutes,
+      {
+        path: 'compras',
+        children: [
+          {
+            path: 'dashboard',
+            component: ComprasDashboard,
+          },
+          ...comprasRoutes,
+          {
+            path: '',
+            redirectTo: 'dashboard',
+            pathMatch: 'full',
+          },
+        ],
+      },
     ]
   },
 

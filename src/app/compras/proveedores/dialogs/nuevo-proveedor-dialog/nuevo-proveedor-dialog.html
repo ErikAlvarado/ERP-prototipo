@@ -1,0 +1,72 @@
+<div class="encabezado-dialogo">
+  <h2 mat-dialog-title>Registrar Nuevo Proveedor (RF-1)</h2>
+  <button mat-icon-button type="button" aria-label="Cerrar formulario" (click)="cancelar()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <form id="formulario-proveedor" [formGroup]="formulario" (ngSubmit)="registrar()">
+    <mat-form-field appearance="outline">
+      <mat-label>Razón social</mat-label>
+      <input matInput formControlName="razonSocial" placeholder="Ej. TechnoInsumos SA de CV" />
+      @if (formulario.controls.razonSocial.hasError('required')) {
+        <mat-error>La razón social es obligatoria</mat-error>
+      } @else if (formulario.controls.razonSocial.hasError('minlength')) {
+        <mat-error>Escribe al menos 3 caracteres</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre comercial</mat-label>
+      <input matInput formControlName="nombreComercial" placeholder="Ej. TechnoInsumos" />
+      @if (formulario.controls.nombreComercial.invalid && formulario.controls.nombreComercial.touched) {
+        <mat-error>El nombre comercial es obligatorio</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Dirección fiscal</mat-label>
+      <textarea matInput rows="2" formControlName="direccionFiscal" placeholder="Calle, número, colonia, C.P., ciudad y estado"></textarea>
+      @if (formulario.controls.direccionFiscal.invalid && formulario.controls.direccionFiscal.touched) {
+        <mat-error>Ingresa la dirección fiscal completa</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Contacto principal</mat-label>
+      <input matInput formControlName="contacto" placeholder="Ej. Ing. Carlos Mendoza" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Correo electrónico</mat-label>
+      <input matInput type="email" formControlName="correo" placeholder="contacto@empresa.mx" />
+      @if (formulario.controls.correo.hasError('required')) {
+        <mat-error>El correo es obligatorio</mat-error>
+      } @else if (formulario.controls.correo.hasError('email')) {
+        <mat-error>Ingresa un correo válido</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Teléfono</mat-label>
+      <input matInput type="tel" formControlName="telefono" placeholder="55 0000-0000" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Categoría</mat-label>
+      <mat-select formControlName="categoria">
+        @for (categoria of categorias; track categoria) {
+          <mat-option [value]="categoria">{{ categoria }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button>
+  <button mat-flat-button type="submit" form="formulario-proveedor" class="boton-registrar">
+    Registrar Proveedor
+  </button>
+</mat-dialog-actions>

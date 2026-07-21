@@ -1,105 +1,236 @@
-mat-dialog-title {
-    font-size: 24px;
-    font-weight: 600;
-    padding: 24px 24px 8px;
+/* Dialog system shared by inventory, administration and purchasing flows. */
+.mat-mdc-dialog-container {
+  --mdc-dialog-container-shape: 8px;
+  --mdc-dialog-container-color: #ffffff;
+  --mdc-dialog-subhead-color: #1f2937;
+  --mdc-dialog-supporting-text-color: #475467;
 }
 
-mat-dialog-content {
-    padding: 20px 24px;
-    overflow-x: hidden;
+.mat-mdc-dialog-container .mdc-dialog__surface {
+  overflow: hidden;
+  border: 1px solid #dfe3eb;
+  box-shadow: 0 20px 48px rgb(31 41 55 / 0.18);
+}
+
+[mat-dialog-title] {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  margin: 0 !important;
+  padding: 16px 56px 16px 24px !important;
+  border-bottom: 1px solid #dfe3eb;
+  background: #f7f8fc;
+  color: #27346f;
+  font-size: 21px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+}
+
+[mat-dialog-title]::before {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 8px;
+  background: #3f51b5;
+  color: #ffffff;
+  content: 'edit_note';
+  font-family: 'Material Icons';
+  font-size: 22px;
+  font-weight: 400;
+}
+
+[mat-dialog-title]::after {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: #009688;
+  content: '';
+}
+
+mat-dialog-content.mat-mdc-dialog-content {
+  max-height: min(68vh, 720px);
+  padding: 24px !important;
+  overflow-x: hidden;
+  background: #ffffff;
 }
 
 .formulario {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
 }
 
-mat-form-field {
-    padding: 5px;
-    width: 100%;
+.formulario > mat-form-field,
+.formulario > .full-width {
+  width: 100%;
 }
 
-/* --- TRUCO PARA HACER LOS INPUTS MÁS DELGADOS --- */
-::v-deep .mat-mdc-form-field-infix {
-    min-height: 40px !important;
-    padding-top: 8px !important;
-    padding-bottom: 8px !important;
+.formulario > .full-width,
+.formulario > .elementos-section,
+.formulario > .checks {
+  grid-column: 1 / -1;
+}
+
+.mat-mdc-dialog-container .mat-mdc-form-field {
+  width: 100%;
+  --mdc-outlined-text-field-container-shape: 6px;
+  --mdc-outlined-text-field-outline-color: #cfd5e1;
+  --mdc-outlined-text-field-hover-outline-color: #7986cb;
+  --mdc-outlined-text-field-focus-outline-color: #3f51b5;
+  --mdc-outlined-text-field-focus-label-text-color: #3f51b5;
+}
+
+.mat-mdc-dialog-container .mat-mdc-form-field-infix {
+  min-height: 48px;
+  padding-top: 12px;
+  padding-bottom: 10px;
+}
+
+.mat-mdc-dialog-container textarea.mat-mdc-input-element {
+  min-height: 72px;
+  resize: vertical;
 }
 
 .elementos-section {
-    grid-column: 1 / -1;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 16px;
-    margin: 12px 5px;
+  margin: 4px 0;
+  padding: 18px;
+  border: 1px solid #dfe3eb;
+  border-left: 4px solid #009688;
+  border-radius: 6px;
+  background: #f8fafc;
 }
 
 .elementos-section h3 {
-    font-size: 15px;
-    font-weight: 500;
-    color: #495057;
-    margin: 0 0 12px 0;
+  margin: 0 0 14px !important;
+  color: #344054;
+  font-size: 14px;
+  font-weight: 700;
 }
 
-/* Mantenemos tu selector por atributo inline tal cual lo querías */
-.elementos-section div[style*="display: flex"] {
-    display: flex !important;
-    align-items: center;
-    gap: 12px;
+.elementos-section div[style*='display: flex'] {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 10px !important;
 }
 
-mat-chip-set {
-    margin-top: 8px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+.elementos-section mat-chip-set {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
 }
 
-mat-chip {
-    background-color: #ffffff !important;
-    border: 1px solid #dee2e6 !important;
-    font-weight: 500;
-    color: #212529;
+.elementos-section mat-chip {
+  border: 1px solid #c5cae9 !important;
+  background: #eef0fb !important;
+  color: #27346f !important;
+  font-weight: 600;
 }
 
 .checks {
-    grid-column: 1 / -1;
-    display: flex;
-    gap: 28px;
-    align-items: center;
-    margin-top: 8px;
-    padding: 8px 5px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  min-height: 52px;
+  padding: 10px 14px;
+  border: 1px solid #dfe3eb;
+  border-radius: 6px;
+  background: #f8fafc;
 }
 
-mat-dialog-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    padding: 18px 24px;
-    border-top: 1px solid #ececec;
+.checks .mat-mdc-checkbox {
+  --mdc-checkbox-selected-checkmark-color: #ffffff;
+  --mdc-checkbox-selected-focus-icon-color: #009688;
+  --mdc-checkbox-selected-hover-icon-color: #009688;
+  --mdc-checkbox-selected-icon-color: #009688;
+  --mdc-checkbox-selected-pressed-icon-color: #00796b;
 }
 
-@media(max-width: 700px) {
-    .formulario {
-        grid-template-columns: 1fr;
-    }
-    
-    .checks {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    
-    .elementos-section div[style*="display: flex"] {
-        flex-direction: column;
-        align-items: stretch !important;
-        gap: 8px;
-    }
-    
-    .elementos-section button {
-        width: 100%;
-        border-radius: 8px !important;
-    }
+mat-dialog-actions.mat-mdc-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  min-height: 68px;
+  padding: 12px 24px !important;
+  border-top: 1px solid #dfe3eb;
+  background: #f7f8fc;
+}
+
+mat-dialog-actions .mat-mdc-button,
+mat-dialog-actions .mat-mdc-unelevated-button {
+  min-width: 104px;
+  min-height: 40px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+mat-dialog-actions .mat-mdc-button {
+  border: 1px solid #cfd5e1;
+  background: #ffffff;
+  color: #475467;
+}
+
+mat-dialog-actions .mat-mdc-unelevated-button {
+  background: #3f51b5;
+  color: #ffffff;
+}
+
+mat-dialog-actions .mat-mdc-unelevated-button:hover {
+  background: #303f9f;
+}
+
+@media (max-width: 700px) {
+  [mat-dialog-title] {
+    min-height: 64px;
+    padding: 12px 18px !important;
+    font-size: 18px !important;
+  }
+
+  [mat-dialog-title]::before {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+    font-size: 20px;
+  }
+
+  mat-dialog-content.mat-mdc-dialog-content {
+    max-height: 70vh;
+    padding: 18px !important;
+  }
+
+  .formulario {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .checks {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .elementos-section div[style*='display: flex'] {
+    align-items: stretch !important;
+    flex-direction: column;
+  }
+
+  .elementos-section button {
+    width: 100%;
+    border-radius: 6px !important;
+  }
+
+  mat-dialog-actions.mat-mdc-dialog-actions {
+    padding: 12px 18px !important;
+  }
+
+  mat-dialog-actions .mat-mdc-button,
+  mat-dialog-actions .mat-mdc-unelevated-button {
+    flex: 1;
+    min-width: 0;
+  }
 }
