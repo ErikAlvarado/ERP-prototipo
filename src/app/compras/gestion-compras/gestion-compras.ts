@@ -72,6 +72,11 @@ export class GestionCompras {
     'En transito',
     'Completado',
   ];
+  readonly prioridadesSolicitud: ReadonlyArray<SolicitudCompra['prioridad']> = [
+    'Baja',
+    'Media',
+    'Alta',
+  ];
 
   readonly columnasSolicitudes = [
     'folio',
@@ -234,6 +239,16 @@ export class GestionCompras {
     );
     this.persistencia.guardar(this.claveSolicitudes, this.solicitudes());
     this.avisos.open(`Solicitud ${folio} cancelada`, 'Cerrar', { duration: 3500 });
+  }
+
+  actualizarPrioridadSolicitud(folio: string, prioridad: SolicitudCompra['prioridad']): void {
+    this.solicitudes.update((solicitudes) =>
+      solicitudes.map((solicitud) => solicitud.folio === folio
+        ? { ...solicitud, prioridad }
+        : solicitud),
+    );
+    this.persistencia.guardar(this.claveSolicitudes, this.solicitudes());
+    this.avisos.open(`Prioridad de ${folio} actualizada a ${prioridad}`, 'Cerrar', { duration: 3000 });
   }
 
   cancelarOrden(folio: string): void {

@@ -40,8 +40,10 @@
 
 .celda-estado { min-width: 155px; }
 .selector-estado { width: 148px; --mat-form-field-container-height: 42px; --mat-form-field-container-vertical-padding: 8px; }
-:host ::ng-deep .selector-estado .mat-mdc-select-value { overflow: visible; }
-:host ::ng-deep .selector-estado .mat-mdc-form-field-infix { width: auto; }
+.celda-prioridad { min-width: 135px; }
+.selector-prioridad { width: 128px; --mat-form-field-container-height: 42px; --mat-form-field-container-vertical-padding: 8px; }
+:host ::ng-deep :is(.selector-estado, .selector-prioridad) .mat-mdc-select-value { overflow: visible; }
+:host ::ng-deep :is(.selector-estado, .selector-prioridad) .mat-mdc-form-field-infix { width: auto; }
 
 .boton-ver,
 .boton-cancelar {
