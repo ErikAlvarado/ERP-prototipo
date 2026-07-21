@@ -99,6 +99,43 @@ export class Sidebar {
       },
     ]
   },
+    {
+    title: 'Compras',
+    icon: 'shopping_cart',
+    expanded: false,
+    children: [
+      {
+        title: 'Dashboard de Compras',
+        icon: 'dashboard',
+        route: '/compras/dashboard'
+      },
+      {
+        title: 'Proveedores',
+        icon: 'apartment',
+        route: '/compras/proveedores'
+      },
+      {
+        title: 'Gestion de Compras',
+        icon: 'shopping_cart_checkout',
+        route: '/compras/gestion-compras'
+      },
+      {
+        title: 'Consultas',
+        icon: 'description',
+        route: '/compras/consultas'
+      },
+      {
+        title: 'Catalogo',
+        icon: 'inventory_2',
+        route: '/compras/catalogo'
+      },
+      {
+        title: 'Preferencias',
+        icon: 'tune',
+        route: '/compras/preferencias'
+      }
+    ]
+  },
   {
     title: 'Administracion',
     icon: 'settings',
