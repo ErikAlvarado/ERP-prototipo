@@ -1,0 +1,70 @@
+<div class="dialogo-compra">
+  <header class="cabecera-dialogo">
+    <div>
+      <h2>Registrar compra</h2>
+      <p>{{ proveedor.nombre }}</p>
+    </div>
+    <button mat-icon-button type="button" aria-label="Cerrar" (click)="cancelar()"><mat-icon>close</mat-icon></button>
+  </header>
+
+  <mat-dialog-content>
+    <mat-card appearance="outlined" class="resumen-proveedor">
+      <div class="avatar">{{ proveedor.nombre.charAt(0) }}</div>
+      <div class="identidad"><strong>{{ proveedor.nombre }}</strong><span>{{ proveedor.categoria }}</span></div>
+      <div class="dato"><span>Tiempo de surtido</span><strong>{{ proveedor.tiempoSurtido }}</strong></div>
+      <div class="dato"><span>Unidad de compra</span><strong>{{ proveedor.unidadCompra }}</strong></div>
+      <div class="dato"><span>Cancelar hasta</span><strong>{{ fechaLimiteCancelacion() | date: 'dd/MM/yyyy' }}</strong></div>
+    </mat-card>
+
+    <mat-card appearance="outlined" class="seccion-compra">
+      <h3>Datos de la compra</h3>
+      <form [formGroup]="formulario" class="formulario-compra">
+        <mat-form-field appearance="outline"><mat-label>Fecha de compra</mat-label><input matInput [matDatepicker]="calendario" formControlName="fecha" /><mat-datepicker-toggle matIconSuffix [for]="calendario" /><mat-datepicker #calendario /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Folio (opcional)</mat-label><input matInput formControlName="folio" placeholder="Ej. OC-000123" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Almacén / Sucursal</mat-label><mat-select formControlName="almacen"><mat-option value="Almacén Central">Almacén Central</mat-option><mat-option value="Sucursal Norte">Sucursal Norte</mat-option><mat-option value="Sucursal Sur">Sucursal Sur</mat-option></mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Condiciones de pago</mat-label><mat-select formControlName="condicionesPago"><mat-option value="Contado">Contado</mat-option><mat-option value="Crédito a 15 días">Crédito a 15 días</mat-option><mat-option value="Crédito a 30 días">Crédito a 30 días</mat-option></mat-select></mat-form-field>
+        <mat-form-field appearance="outline" class="notas"><mat-label>Notas / Observaciones</mat-label><textarea matInput rows="4" formControlName="notas" placeholder="Agregar notas u observaciones..."></textarea></mat-form-field>
+      </form>
+    </mat-card>
+
+    <mat-card appearance="outlined" class="seccion-productos">
+      <div class="titulo-productos"><div><h3>Agregar productos por búsqueda</h3><p>Busca por nombre o código; cada resultado incluye la información del producto.</p></div></div>
+      <mat-form-field appearance="outline" class="busqueda-producto">
+        <mat-icon matPrefix>search</mat-icon>
+        <mat-label>Buscar producto</mat-label>
+        <input matInput [value]="busquedaProducto()" (input)="buscarProducto($any($event.target).value)" placeholder="Ej. teclado o PRO-00075" />
+      </mat-form-field>
+      @if (busquedaProducto()) {
+        <mat-list class="resultados-productos">
+          @for (producto of productosEncontrados(); track producto.id) {
+            <mat-list-item>
+              <mat-icon matListItemIcon>inventory_2</mat-icon>
+              <span matListItemTitle>{{ producto.nombre }}</span>
+              <span matListItemLine>{{ producto.codigo }} · {{ producto.precio | currency: 'MXN' }} · {{ producto.unidad }} · Máximo {{ producto.cantidadMaxima }}</span>
+              <button mat-stroked-button matListItemMeta type="button" (click)="agregarProducto(producto)"><mat-icon>add</mat-icon>Agregar</button>
+            </mat-list-item>
+          } @empty {
+            <mat-list-item><mat-icon matListItemIcon>search_off</mat-icon><span matListItemTitle>Sin resultados disponibles</span></mat-list-item>
+          }
+        </mat-list>
+      }
+      <div class="tabla-productos">
+        <div class="fila encabezados"><span>Producto</span><span>Precio unitario</span><span>Cantidad</span><span>Unidad</span><span>Impuestos</span><span>Importe</span><span></span></div>
+        @for (producto of productos(); track producto.id) {
+          <div class="fila">
+            <div class="producto"><strong>{{ producto.nombre }}</strong><small>CÓD: {{ producto.codigo }}</small></div>
+            <mat-form-field appearance="outline"><span matTextPrefix>$&nbsp;</span><input matInput type="number" min="0" [value]="producto.precio" (change)="actualizarProducto(producto.id, 'precio', +$any($event.target).value)" /></mat-form-field>
+            <div class="cantidad"><button mat-icon-button type="button" [disabled]="producto.cantidad === 1" (click)="cambiarCantidad(producto.id, -1)"><mat-icon>remove</mat-icon></button><strong title="Máximo: {{ producto.cantidadMaxima }}">{{ producto.cantidad }}/{{ producto.cantidadMaxima }}</strong><button mat-icon-button type="button" [disabled]="producto.cantidad === producto.cantidadMaxima" (click)="cambiarCantidad(producto.id, 1)"><mat-icon>add</mat-icon></button></div>
+            <mat-form-field appearance="outline"><mat-select [value]="producto.unidad" (selectionChange)="actualizarProducto(producto.id, 'unidad', $event.value)"><mat-option value="Pieza">Pieza</mat-option><mat-option value="Caja">Caja</mat-option><mat-option value="Paquete">Paquete</mat-option></mat-select></mat-form-field>
+            <mat-form-field appearance="outline"><mat-select [value]="producto.impuesto" (selectionChange)="actualizarProducto(producto.id, 'impuesto', $event.value)"><mat-option [value]="0">Sin IVA</mat-option><mat-option [value]="8">IVA 8%</mat-option><mat-option [value]="16">IVA 16%</mat-option></mat-select></mat-form-field>
+            <strong class="importe">{{ producto.precio * producto.cantidad * (1 + producto.impuesto / 100) | currency: 'MXN' : 'symbol' : '1.2-2' }}</strong>
+            <button mat-icon-button type="button" class="eliminar" aria-label="Eliminar producto" (click)="eliminarProducto(producto.id)"><mat-icon>delete_outline</mat-icon></button>
+          </div>
+        }
+      </div>
+      <div class="totales"><p><span>Subtotal</span><strong>{{ subtotal() | currency: 'MXN' }}</strong></p><p><span>Impuestos</span><strong>{{ impuestos() | currency: 'MXN' }}</strong></p><p class="total"><span>Total</span><strong>{{ total() | currency: 'MXN' }}</strong></p></div>
+    </mat-card>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end"><button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button><button mat-flat-button type="button" class="guardar" [disabled]="!productos().length" (click)="guardar()">Guardar compra</button></mat-dialog-actions>
+</div>

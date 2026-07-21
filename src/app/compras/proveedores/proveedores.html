@@ -1,0 +1,85 @@
+<section class="pagina-contenido pagina-proveedores">
+  <!-- Encabezado principal de proveedores -->
+  <div class="encabezado-proveedores">
+    <app-encabezado-pagina
+      titulo="Gestión de Proveedores"
+      [subtitulo]="'Activos y registrados: ' + proveedores().length"
+    />
+    <button mat-flat-button type="button" class="boton-nuevo" (click)="abrirNuevoProveedor()">
+      <mat-icon>add</mat-icon>
+      Nuevo Proveedor
+    </button>
+  </div>
+
+  <!-- Barra de busqueda de proveedores -->
+  <mat-form-field appearance="outline" class="barra-busqueda">
+    <mat-icon matPrefix>search</mat-icon>
+    <input matInput placeholder="Buscar por nombre, razón social, contacto o categoría..." [value]="terminoBusqueda()" (input)="buscar($any($event.target).value)" />
+    @if (terminoBusqueda()) {
+      <button matSuffix mat-icon-button type="button" aria-label="Limpiar búsqueda" (click)="buscar('')"><mat-icon>close</mat-icon></button>
+    }
+  </mat-form-field>
+
+  <!-- Cartas de proveedores generadas desde proveedores.ts -->
+  <div class="grid-proveedores">
+    @for (proveedor of proveedoresFiltrados(); track proveedor.nombre) {
+      <app-card class="tarjeta-proveedor">
+        <div class="encabezado-tarjeta">
+          <div class="avatar-proveedor">{{ proveedor.inicial }}</div>
+
+          <div class="info-proveedor">
+            <h2>{{ proveedor.nombre }}</h2>
+            <p>{{ proveedor.razonSocial }} · {{ proveedor.categoria }}</p>
+          </div>
+
+          <app-estado class="estado-proveedor" [texto]="proveedor.estado" />
+        </div>
+
+        <mat-list class="condiciones-proveedor">
+          <mat-list-item><mat-icon matListItemIcon>local_shipping</mat-icon><span matListItemTitle>Tiempo de surtido</span><span matListItemLine>{{ proveedor.tiempoSurtido }}</span></mat-list-item>
+          <mat-list-item><mat-icon matListItemIcon>inventory_2</mat-icon><span matListItemTitle>Unidad de compra</span><span matListItemLine>{{ proveedor.unidadCompra }}</span></mat-list-item>
+          <mat-list-item><mat-icon matListItemIcon>event_busy</mat-icon><span matListItemTitle>Cancelación</span><span matListItemLine>Hasta {{ proveedor.diasLimiteCancelacion }} día(s) después de comprar</span></mat-list-item>
+          <mat-list-item><mat-icon matListItemIcon>location_on</mat-icon><span matListItemTitle>Dirección fiscal</span><span matListItemLine>{{ proveedor.direccionFiscal }}</span></mat-list-item>
+        </mat-list>
+
+        <div class="datos-proveedor">
+          <p>
+            <mat-icon>person</mat-icon>
+            {{ proveedor.contacto }}
+          </p>
+          <p>
+            <mat-icon>mail</mat-icon>
+            {{ proveedor.correo }}
+          </p>
+          <p>
+            <mat-icon>call</mat-icon>
+            {{ proveedor.telefono }}
+          </p>
+        </div>
+
+        <div class="pie-tarjeta">
+          <div class="calificacion">
+            <span>*****</span>
+            <small>{{ proveedor.calificacion }}</small>
+          </div>
+
+          <div class="ultima-compra">
+            <p>
+              Ultima compra: <strong>{{ proveedor.ultimaCompra }}</strong>
+            </p>
+            <strong>{{ proveedor.totalCompra }}</strong>
+          </div>
+        </div>
+
+        @if (proveedor.estado === 'Activo') {
+          <button mat-stroked-button type="button" class="boton-comprar" (click)="realizarCompra(proveedor)">
+            <mat-icon>shopping_cart</mat-icon>
+            Realizar compra
+          </button>
+        }
+      </app-card>
+    } @empty {
+      <div class="sin-resultados"><mat-icon>search_off</mat-icon><p>No encontramos proveedores con esa búsqueda.</p></div>
+    }
+  </div>
+</section>

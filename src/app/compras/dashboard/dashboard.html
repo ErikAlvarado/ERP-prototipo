@@ -1,0 +1,168 @@
+<section class="pagina-contenido pagina-dashboard">
+  <app-encabezado-pagina titulo="Dashboard" subtitulo="Resumen ejecutivo - Junio 2026" />
+
+  <div class="grid-resumen1">
+    <!-- Card de compras del mes -->
+    <app-card class="tarjeta-resumen">
+      <div class="info-resumen">
+        <span class="etiqueta-resumen">Compras del Mes</span>
+        <strong class="valor-resumen">$374,900</strong>
+        <span class="subtitulo-resumen">Junio 2026</span>
+      </div>
+    </app-card>
+
+    <!-- Card: ordenes del mes -->
+    <app-card class="tarjeta-resumen">
+      <div class="info-resumen">
+        <span class="etiqueta-resumen">Ordenes del Mes</span>
+        <strong class="valor-resumen">4</strong>
+        <span class="subtitulo-resumen">En Proceso</span>
+      </div>
+    </app-card>
+
+    <!-- Card: proveedores activos -->
+    <app-card class="tarjeta-resumen">
+      <div class="info-resumen">
+        <span class="etiqueta-resumen">Proveedores Activos</span>
+        <strong class="valor-resumen">5</strong>
+        <span class="subtitulo-resumen">6 totales</span>
+      </div>
+    </app-card>
+
+    <!-- Card: ahorros del mes -->
+    <app-card class="tarjeta-resumen">
+      <div class="info-resumen">
+        <span class="etiqueta-resumen">Ahorros del Mes</span>
+        <strong class="valor-resumen">$28,400</strong>
+        <span class="subtitulo-resumen">Vs.Presupuesto</span>
+      </div>
+    </app-card>
+  </div>
+
+  <!--grafica y actividad reciente -->
+  <div class="grid-contenido">
+    <!-- Card: grafica de compras contra presupuesto -->
+    <app-card class="tarjeta-grafica">
+      <div class="encabezado-grafica">
+        <h2>Compras vs. Presupuesto</h2>
+        <span>ENE-JUN 2026 - MILES MXN</span>
+      </div>
+
+      <div class="contenedor-grafica">
+        <canvas baseChart [data]="comprasData" [options]="comprasOptions" [type]="'line'"> </canvas>
+      </div>
+
+      <!-- Leyenda manual de la grafica -->
+      <div class="leyenda-grafica">
+        <span class="item-leyenda">
+          <span class="cuadro-leyenda compras"></span>
+          Compras
+        </span>
+        <span class="item-leyenda">
+          <span class="cuadro-leyenda presupuesto"></span>
+          Presupuesto
+        </span>
+      </div>
+    </app-card>
+
+    <!-- Card: lista de actividad reciente -->
+    <app-card class="tarjeta-actividad">
+      <h2>Actividad Reciente</h2>
+
+      <div class="lista-actividad">
+        <div class="item-actividad">
+          <span class="punto-actividad verde"></span>
+          <div>
+            <strong>Orden aprobada</strong>
+            <p>OC-2025-0089 fue aprobada por Direccion General</p>
+            <small>Hace 5 min</small>
+          </div>
+        </div>
+
+        <div class="item-actividad">
+          <span class="punto-actividad azul"></span>
+          <div>
+            <strong>Entrega en camino</strong>
+            <p>OC-2025-0088 esta en transito, entrega estimada m...</p>
+            <small>Hace 23 min</small>
+          </div>
+        </div>
+
+        <div class="item-actividad">
+          <span class="punto-actividad azul-fuerte"></span>
+          <div>
+            <strong>Solicitud cancelada</strong>
+            <p>SC-2026-0238 cancelada. Motivo: Sin presupuesto</p>
+            <small>Hace 2 h</small>
+          </div>
+        </div>
+
+        <div class="item-actividad">
+          <span class="punto-actividad verde"></span>
+          <div>
+            <strong>Proveedor registrado</strong>
+            <p>Soluciones Logisticas Omega registrado exitosamente</p>
+            <small>Hace 3 h</small>
+          </div>
+        </div>
+
+        <div class="item-actividad">
+          <span class="punto-actividad azul"></span>
+          <div>
+            <strong>Cotizacion recibida</strong>
+            <p>TechnoInsumos respondio la cotizacion de laptops</p>
+            <small>Ayer 14:38</small>
+          </div>
+        </div>
+      </div>
+    </app-card>
+  </div>
+
+  <!-- Card: tabla de ultimas ordenes de compra -->
+  <app-card class="ultimas-ordenes">
+    <div class="encabezado-ordenes">
+      <h2>Ultimas Ordenes de Compra</h2>
+      <a href="#">Ver todas -></a>
+    </div>
+
+    <div class="contenedor-tabla">
+      <table mat-table [dataSource]="dataSource" class="tabla-compartida tabla-ordenes">
+        <!-- Columna: folio -->
+
+        <ng-container matColumnDef="folio">
+          <th mat-header-cell *matHeaderCellDef>Folio</th>
+          <td mat-cell *matCellDef="let orden" class="folio">{{ orden.folio }}</td>
+        </ng-container>
+
+        <!-- Columna: proveedor -->
+        <ng-container matColumnDef="proveedor">
+          <th mat-header-cell *matHeaderCellDef>Proveedor</th>
+          <td mat-cell *matCellDef="let orden">{{ orden.proveedor }}</td>
+        </ng-container>
+
+        <!-- Columna: solicitante -->
+        <ng-container matColumnDef="solicitante">
+          <th mat-header-cell *matHeaderCellDef>Solicitante</th>
+          <td mat-cell *matCellDef="let orden" class="texto-suave">{{ orden.solicitante }}</td>
+        </ng-container>
+
+        <!-- Columna: total -->
+        <ng-container matColumnDef="total">
+          <th mat-header-cell *matHeaderCellDef>Total</th>
+          <td mat-cell *matCellDef="let orden" class="total">{{ orden.total }}</td>
+        </ng-container>
+
+        <!-- Columna: estado -->
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let orden">
+            <app-estado [texto]="orden.estado" />
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+  </app-card>
+</section>

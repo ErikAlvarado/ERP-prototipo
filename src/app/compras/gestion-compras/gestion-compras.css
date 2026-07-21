@@ -1,0 +1,235 @@
+.acciones-solicitudes {
+  display: flex;
+  justify-content: flex-end;
+  margin: 26px 0 16px;
+}
+
+.boton-nueva-solicitud {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 160px;
+  height: 36px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 9px;
+  background: #1e3a8a !important;
+  color: #ffffff !important;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.boton-nueva-solicitud:hover {
+  background: #2563eb !important;
+}
+
+.icono-mas {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.tarjeta-ordenes {
+  margin-top: 24px;
+}
+.busqueda-compras { width: 100%; margin-top: 24px; }
+.tarjeta-ordenes { margin-top: 0; }
+.sin-resultados { display: grid; place-items: center; padding: 40px; color: #94a3b8; text-align: center; }
+.sin-resultados mat-icon { width: 36px; height: 36px; font-size: 36px; }
+
+.folio,
+.importe,
+.fecha {
+  color: #020617;
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  font-weight: 800;
+}
+
+.descripcion-solicitud {
+  display: block;
+  color: #020617;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.detalle-solicitud {
+  display: block;
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.acciones-tabla {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.boton-ver,
+.boton-cancelar {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.boton-ver {
+  color: #94a3b8;
+}
+
+.boton-cancelar {
+  color: #ef4444;
+}
+
+.lista-cotizaciones {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+  width: 100%;
+}
+
+.tarjeta-cotizacion {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 20px 22px;
+}
+
+.encabezado-cotizacion {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.meta-cotizacion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.folio-cotizacion {
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tarjeta-cotizacion h2 {
+  margin: 0 0 4px;
+  color: #020617;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.tarjeta-cotizacion p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.separador-cotizacion {
+  height: 1px;
+  margin: 18px -22px 18px;
+  background: #f1f5f9;
+}
+
+.tarjeta-cotizacion h3 {
+  margin: 0 0 14px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.grid-ofertas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.tarjeta-oferta {
+  min-height: 188px;
+  padding: 18px;
+}
+
+.tarjeta-oferta.mejor-precio {
+  border-color: #86efac;
+  background: #f6fffb;
+}
+
+.mejor-precio-texto {
+  display: block;
+  margin-bottom: 10px;
+  color: #059669;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tarjeta-oferta h4 {
+  margin: 0 0 14px;
+  color: #020617;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.datos-oferta {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.datos-oferta div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.datos-oferta span {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.datos-oferta strong {
+  color: #020617;
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.calificacion-oferta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.calificacion-oferta span {
+  color: #2563eb;
+  font-size: 13px;
+}
+
+.calificacion-oferta small {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+@media (max-width: 1050px) {
+  .grid-ofertas {
+    grid-template-columns: 1fr;
+  }
+}

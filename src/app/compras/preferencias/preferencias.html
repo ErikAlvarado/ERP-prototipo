@@ -1,0 +1,48 @@
+<section class="preferencias-pagina">
+  <div class="titulo-pagina">
+    <h1>Preferencias del Comprador</h1>
+    <p>Consulta y gestiona tus productos favoritos</p>
+  </div>
+
+  <div class="seccion-favoritos">
+    <mat-icon>favorite</mat-icon>
+    <span>Favoritos</span>
+  </div>
+
+  @if (favoritos().length) {
+    <div class="preferencias-grid">
+      @for (producto of favoritos(); track producto.id) {
+        <mat-card appearance="outlined" class="preferencia-card">
+          <mat-card-content>
+            <div class="tipo-icono">
+              <mat-icon>favorite_border</mat-icon>
+            </div>
+
+            <div class="producto-info">
+              <h2>{{ producto.nombre }}</h2>
+              <span>{{ producto.categoria }}</span>
+              <strong>{{ producto.precio | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+            </div>
+
+            <button
+              mat-icon-button
+              type="button"
+              class="eliminar"
+              matTooltip="Quitar de la lista"
+              [attr.aria-label]="'Quitar ' + producto.nombre"
+              (click)="eliminar(producto.id)"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  } @else {
+    <div class="estado-vacio">
+      <mat-icon>favorite_border</mat-icon>
+      <h2>Esta lista está vacía</h2>
+      <p>Los productos que agregues aparecerán aquí.</p>
+    </div>
+  }
+</section>

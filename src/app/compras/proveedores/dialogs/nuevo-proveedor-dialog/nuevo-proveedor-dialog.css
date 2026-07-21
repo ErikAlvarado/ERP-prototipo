@@ -1,0 +1,16 @@
+:host { display: block; width: 505px; max-width: 100%; color: #172033; }
+.encabezado-dialogo { display: flex; align-items: center; border-bottom: 1px solid #edf0f4; }
+.encabezado-dialogo h2 { flex: 1; margin: 0; padding: 20px 26px; font-size: 17px; font-weight: 700; }
+.encabezado-dialogo button { margin-right: 14px; color: #9aa4b6; }
+mat-dialog-content { max-height: 68vh; padding: 22px 26px 4px !important; }
+form { display: grid; gap: 4px; }
+mat-form-field { width: 100%; }
+:host ::ng-deep .mat-mdc-form-field-infix { min-height: 48px; padding-block: 12px; }
+mat-dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px 26px 24px; }
+mat-dialog-actions button { height: 46px; border-radius: 11px; }
+.boton-registrar { background: #1e3a8a !important; color: #fff !important; }
+@media (max-width: 560px) {
+  :host { width: 100%; }
+  mat-dialog-content { padding-inline: 18px !important; }
+  mat-dialog-actions { grid-template-columns: 1fr; padding-inline: 18px; }
+}
