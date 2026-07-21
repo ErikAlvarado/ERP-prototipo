@@ -1,14 +1,121 @@
+.app-header {
+  background-color: #005bb5; /* Azul medio de la gama de tu logo */
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
 .spacer {
   flex: 1 1 auto;
 }
-.toolbar {
-  background-color: #3f51b5;
-  color: white;
+
+
+.brand-container {
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  gap: 12px;
 }
-.usuario { display: flex; align-items: center; gap: 10px; }
-.usuario > span { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
-.usuario strong { font-size: 13px; }
-.usuario small { color: rgb(255 255 255 / 0.75); font-size: 11px; }
+
+
+.brand-logo-img {
+  width: 36px;
+  height: 36px;
+  background-color: #ffffff; 
+  border-radius: 8px;        
+  padding: 4px;              
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+}
+
+
+.brand-logo-img img {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+}
+
+.brand-name {
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.8px;
+  color: #ffffff;
+}
+
+/* Badge Temático con contraste elegante */
+.brand-badge {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* USUARIO */
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.user-profile:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #005bb5; /* Texto del avatar en el azul de tu marca */
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+@media (max-width: 600px) {
+  .user-info {
+    display: none;
+  }
+}
+
+.logout-button {
+  color: #ffffff;
+}

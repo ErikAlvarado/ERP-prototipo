@@ -1,6 +1,6 @@
 import { Component, HostBinding, signal } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
-import { routes } from '../../../app.routes';
 
 export interface MenuItem {
   title: string;
@@ -10,10 +10,9 @@ export interface MenuItem {
   expanded?: boolean;
 }
 
-
 @Component({
   selector: 'app-sidebar',
-  imports: [SHARED_IMPORTS],
+  imports: [SHARED_IMPORTS, RouterLink, RouterLinkActive],
   templateUrl: './sidebar.html',
   styleUrls: ['./sidebar.css'],
 })
@@ -100,7 +99,7 @@ export class Sidebar {
       },
     ]
   },
-  {
+    {
     title: 'Compras',
     icon: 'shopping_cart',
     expanded: false,
@@ -167,32 +166,28 @@ export class Sidebar {
 ]);
 
   toggleMenuItem(index: number) {
-  this.menus.update(menus =>
-    menus.map((menu, i) => {
-      if (i !== index || !menu.children?.length) {
-        return menu;
-      }
-
-      return { ...menu, expanded: !menu.expanded };
-    })
-  );
-}
-
-onMenuClick(index: number) {
-
-  const menu = this.menus()[index];
-
-  if (!menu.children?.length) {
-    return;
+    this.menus.update(menus =>
+      menus.map((menu, i) => {
+        if (i !== index || !menu.children?.length) {
+          return menu;
+        }
+        return { ...menu, expanded: !menu.expanded };
+      })
+    );
   }
 
-  if (!this.expanded()) {
-    this.expanded.set(true);
-    return;
+  onMenuClick(index: number) {
+    const menu = this.menus()[index];
+
+    if (!menu.children?.length) {
+      return;
+    }
+
+    if (!this.expanded()) {
+      this.expanded.set(true);
+      return;
+    }
+
+    this.toggleMenuItem(index);
   }
-
-  this.toggleMenuItem(index);
 }
-}
-
-
