@@ -1,45 +1,14 @@
-.acciones-solicitudes {
-  display: flex;
-  justify-content: flex-end;
-  margin: 26px 0 16px;
-}
-
-.boton-nueva-solicitud {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-width: 160px;
-  height: 36px;
-  padding: 0 18px;
-  border: 0;
-  border-radius: 9px;
-  background: #1e3a8a !important;
-  color: #ffffff !important;
-  box-shadow: none;
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.boton-nueva-solicitud:hover {
-  background: #2563eb !important;
-}
-
-.icono-mas {
-  color: #ffffff;
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 1;
-}
-
 .tarjeta-ordenes {
   margin-top: 24px;
 }
-.busqueda-compras { width: 100%; margin-top: 24px; }
+.filtros-ordenes { display: grid; grid-template-columns: minmax(260px, 1fr) 190px; gap: 12px; align-items: start; margin-top: 24px; }
+.busqueda-compras { width: 100%; }
+.filtro-periodo { width: 100%; }
+.filtros-ordenes mat-form-field { --mat-form-field-container-height: 46px; --mat-form-field-container-vertical-padding: 11px; }
 .tarjeta-ordenes { margin-top: 0; }
 .sin-resultados { display: grid; place-items: center; padding: 40px; color: #94a3b8; text-align: center; }
 .sin-resultados mat-icon { width: 36px; height: 36px; font-size: 36px; }
+@media (max-width: 680px) { .filtros-ordenes { grid-template-columns: 1fr; } }
 
 .folio,
 .importe,

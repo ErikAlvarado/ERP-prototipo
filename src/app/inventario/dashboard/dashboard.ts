@@ -40,9 +40,9 @@ export class Dashboard {
   ];
 
   quickActions = [
-    { label: 'Agregar producto', icon: 'add_box', route: '/dashboard/products/add' },
-    { label: 'Entrada inventario', icon: 'move_to_inbox', route: '/dashboard/inventory/add' },
-    { label: 'Reporte diario', icon: 'bar_chart', route: '/dashboard/reports/daily' },
+    { label: 'Gestionar productos', icon: 'add_box', route: '/products' },
+    { label: 'Registrar ajuste', icon: 'move_to_inbox', route: '/ajustes' },
+    { label: 'Generar reporte', icon: 'bar_chart', route: '/compras/consultas' },
   ];
 
   topProducts = [

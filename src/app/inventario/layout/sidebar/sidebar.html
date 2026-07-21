@@ -19,6 +19,7 @@ class="container"
         type="button"
         class="menu-item"
         [routerLink]="menu.children ? null : menu.route"
+        routerLinkActive="active"
         [class.expanded]="expanded()"
         (click)="onMenuClick($index)"
         >
@@ -49,7 +50,8 @@ class="container"
                 type="button"
                 class="submenu-item"
                 [class.expanded]="expanded()"
-                routerLink="{{ child.route }}">
+                routerLink="{{ child.route }}"
+                routerLinkActive="active">
 
                     <mat-icon>{{ child.icon }}</mat-icon>
 

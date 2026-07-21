@@ -67,6 +67,12 @@
     width: 100%;
 }
 
+.menu-item.active,
+.submenu-item.active {
+    background: #e8eaf6;
+    color: #303f9f;
+}
+
 .submenu-item span {
     white-space: nowrap;
     font-size: 15px;

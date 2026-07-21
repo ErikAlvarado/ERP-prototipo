@@ -8,3 +8,7 @@
   align-items: center;
   padding: 0 16px;
 }
+.usuario { display: flex; align-items: center; gap: 10px; }
+.usuario > span { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+.usuario strong { font-size: 13px; }
+.usuario small { color: rgb(255 255 255 / 0.75); font-size: 11px; }

@@ -3,15 +3,23 @@
 
   <mat-tab-group class="tabs-consultas" animationDuration="200ms">
     <mat-tab label="Seguimiento">
+      <div class="barra-periodo">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Periodo</mat-label>
+          <mat-select [value]="periodo()" (selectionChange)="periodo.set($event.value)">
+            @for (opcion of periodos; track opcion.valor) { <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+      </div>
       <div class="seguimiento-grid">
         <mat-card appearance="outlined" class="panel pedidos-panel">
           <mat-card-header><mat-card-title>PEDIDOS ACTIVOS</mat-card-title></mat-card-header>
           <mat-card-content>
-            @for (orden of pedidosActivos; track orden.folio) {
+            @for (orden of pedidosActivos(); track orden.folio) {
               <button type="button" class="pedido-item" [class.seleccionado]="detalleOrden().folio === orden.folio" [attr.aria-pressed]="detalleOrden().folio === orden.folio" (click)="seleccionarOrden(orden)">
                 <span class="pedido-linea"><strong>{{ orden.folio }}</strong><mat-chip [class]="'estado ' + orden.estadoClase">{{ orden.estado }}</mat-chip></span>
                 <span class="proveedor">{{ orden.proveedor }}</span>
-                <span class="fecha-lista">{{ orden.fecha }}</span>
+                <span class="fecha-lista">{{ orden.fecha | date:'dd MMM yyyy' }}</span>
               </button>
             }
           </mat-card-content>
@@ -37,17 +45,36 @@
 
     <mat-tab label="Historial">
       <mat-card appearance="outlined" class="panel historial-panel">
-        <mat-card-header><mat-card-title>Historial Completo de Compras</mat-card-title><button mat-button type="button" class="exportar"><mat-icon>download</mat-icon> Exportar</button></mat-card-header>
+        <mat-card-header>
+          <div class="titulo-historial">
+            <mat-card-title>Historial de compras</mat-card-title>
+            <mat-card-subtitle>{{ ordenesFiltradas().length }} órdenes en el periodo seleccionado</mat-card-subtitle>
+          </div>
+          <div class="acciones-historial">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Periodo</mat-label>
+              <mat-select [value]="periodo()" (selectionChange)="periodo.set($event.value)">
+                @for (opcion of periodos; track opcion.valor) {
+                  <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <button mat-stroked-button type="button" class="exportar" (click)="exportarHistorial()">
+              <mat-icon>download</mat-icon>
+              Exportar
+            </button>
+          </div>
+        </mat-card-header>
         <mat-card-content class="tabla-scroll">
-          <table mat-table [dataSource]="ordenes" class="tabla-compartida">
+          <table mat-table [dataSource]="ordenesFiltradas()" class="tabla-compartida">
             <ng-container matColumnDef="folio"><th mat-header-cell *matHeaderCellDef>FOLIO</th><td mat-cell *matCellDef="let o" class="mono">{{ o.folio }}</td></ng-container>
             <ng-container matColumnDef="proveedor"><th mat-header-cell *matHeaderCellDef>PROVEEDOR</th><td mat-cell *matCellDef="let o">{{ o.proveedor }}</td></ng-container>
             <ng-container matColumnDef="solicitante"><th mat-header-cell *matHeaderCellDef>SOLICITANTE</th><td mat-cell *matCellDef="let o" class="secundario">{{ o.solicitante }}</td></ng-container>
             <ng-container matColumnDef="articulos"><th mat-header-cell *matHeaderCellDef>ARTÍCULOS</th><td mat-cell *matCellDef="let o" class="secundario">{{ o.articulos }}</td></ng-container>
             <ng-container matColumnDef="total"><th mat-header-cell *matHeaderCellDef>TOTAL</th><td mat-cell *matCellDef="let o" class="mono">{{ o.total | currency:'MXN':'symbol':'1.0-0' }}</td></ng-container>
-            <ng-container matColumnDef="fecha"><th mat-header-cell *matHeaderCellDef>FECHA</th><td mat-cell *matCellDef="let o" class="fecha-tabla">{{ o.fecha }}</td></ng-container>
+            <ng-container matColumnDef="fecha"><th mat-header-cell *matHeaderCellDef>FECHA</th><td mat-cell *matCellDef="let o" class="fecha-tabla">{{ o.fecha | date:'dd MMM yyyy' }}</td></ng-container>
             <ng-container matColumnDef="estado"><th mat-header-cell *matHeaderCellDef>ESTADO</th><td mat-cell *matCellDef="let o"><app-estado [texto]="o.estado" /></td></ng-container>
-            <ng-container matColumnDef="acciones"><th mat-header-cell *matHeaderCellDef><span class="solo-lector">ACCIONES</span></th><td mat-cell *matCellDef="let o"><button mat-button type="button" class="recomprar" [attr.aria-label]="'Recomprar orden ' + o.folio"><mat-icon>refresh</mat-icon> Recomprar</button></td></ng-container>
+            <ng-container matColumnDef="acciones"><th mat-header-cell *matHeaderCellDef><span class="solo-lector">ACCIONES</span></th><td mat-cell *matCellDef="let o"><button mat-button type="button" class="recomprar" [attr.aria-label]="'Recomprar orden ' + o.folio" (click)="recomprar(o)"><mat-icon>refresh</mat-icon> Recomprar</button></td></ng-container>
             <tr mat-header-row *matHeaderRowDef="columnas"></tr><tr mat-row *matRowDef="let row; columns: columnas"></tr>
           </table>
         </mat-card-content>
@@ -59,16 +86,28 @@
         <mat-card appearance="outlined" class="panel generar-panel">
           <mat-card-header><mat-card-title>Generar Reporte</mat-card-title></mat-card-header>
           <mat-card-content>
-            <label>TIPO DE REPORTE</label><mat-form-field appearance="outline"><mat-select value="periodo"><mat-option value="periodo">Reporte de compras por período</mat-option><mat-option value="proveedor">Reporte por proveedor</mat-option><mat-option value="estado">Reporte por estado</mat-option></mat-select></mat-form-field>
-            <div class="fechas"><div><label>FECHA INICIO</label><mat-form-field appearance="outline"><input matInput [matDatepicker]="inicio" [value]="fechaInicio"><mat-datepicker-toggle matIconSuffix [for]="inicio" /><mat-datepicker #inicio /></mat-form-field></div><div><label>FECHA FIN</label><mat-form-field appearance="outline"><input matInput [matDatepicker]="fin" [value]="fechaFin"><mat-datepicker-toggle matIconSuffix [for]="fin" /><mat-datepicker #fin /></mat-form-field></div></div>
-            <label>FORMATO DE SALIDA</label><mat-form-field appearance="outline"><mat-select value="pdf"><mat-option value="pdf">PDF</mat-option><mat-option value="xlsx">Excel (.xlsx)</mat-option><mat-option value="csv">CSV</mat-option></mat-select></mat-form-field>
-            <button mat-flat-button type="button" class="generar"><mat-icon>download</mat-icon> Generar Reporte</button>
+            <label>TIPO DE REPORTE</label><mat-form-field appearance="outline"><mat-select [(ngModel)]="tipoReporte"><mat-option value="periodo">Reporte de compras por período</mat-option><mat-option value="proveedor">Reporte por proveedor</mat-option><mat-option value="estado">Reporte por estado</mat-option></mat-select></mat-form-field>
+            <label>PERIODO</label><mat-form-field appearance="outline"><mat-select [value]="periodo()" (selectionChange)="periodo.set($event.value)">@for (opcion of periodos; track opcion.valor) { <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option> }</mat-select></mat-form-field>
+            <label>FORMATO DE SALIDA</label><mat-form-field appearance="outline"><mat-select [(ngModel)]="formatoReporte"><mat-option value="pdf">Documento</mat-option><mat-option value="xlsx">Excel compatible</mat-option><mat-option value="csv">CSV</mat-option></mat-select></mat-form-field>
+            <label for="descripcion-reporte">DESCRIPCIÓN</label>
+            <mat-form-field appearance="outline" class="descripcion-reporte">
+              <textarea
+                id="descripcion-reporte"
+                matInput
+                rows="4"
+                maxlength="300"
+                placeholder="Describe el propósito o contenido del reporte"
+                [(ngModel)]="descripcionReporte"
+              ></textarea>
+              <mat-hint align="end">{{ descripcionReporte.length }}/300</mat-hint>
+            </mat-form-field>
+            <button mat-flat-button type="button" class="generar" (click)="generarReporte()"><mat-icon>download</mat-icon> Generar Reporte</button>
           </mat-card-content>
         </mat-card>
         <section class="resumen-periodo"><h2>Resumen del Período</h2>
-          <mat-card appearance="outlined" class="panel resumen-card"><span>TOTAL COMPRAS JUNIO</span><strong>$374,900</strong><small>6 órdenes emitidas</small></mat-card>
+          <mat-card appearance="outlined" class="panel resumen-card"><span>TOTAL DE COMPRAS</span><strong>{{ totalPeriodo() | currency:'MXN':'symbol':'1.0-0' }}</strong><small>{{ ordenesFiltradas().length }} órdenes en el periodo</small></mat-card>
           <mat-card appearance="outlined" class="panel resumen-card"><span>AHORRO VS. PRESUPUESTO</span><strong>$28,400</strong><small>5.7% bajo el presupuesto</small></mat-card>
-          <mat-card appearance="outlined" class="panel resumen-card"><span>ÓRDENES CANCELADAS</span><strong>1</strong><small>OC-2025-0086 · $128,900</small></mat-card>
+          <mat-card appearance="outlined" class="panel resumen-card"><span>ÓRDENES CANCELADAS</span><strong>{{ canceladasPeriodo() }}</strong><small>En el periodo seleccionado</small></mat-card>
           <mat-card appearance="outlined" class="panel resumen-card"><span>PROVEEDOR CON MAYOR VOLUMEN</span><strong>Materiales del Norte</strong><small>$890,200 acumulado</small></mat-card>
         </section>
       </div>

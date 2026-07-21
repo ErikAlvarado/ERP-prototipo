@@ -48,3 +48,4 @@ mat-card-title{
   flex: 1;
   width: 100%;
 }
+.error-sesion { margin: 0 0 12px; color: #c62828; font-size: 13px; }

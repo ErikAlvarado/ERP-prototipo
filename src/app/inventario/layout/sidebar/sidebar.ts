@@ -131,8 +131,8 @@ export class Sidebar {
         route: '/compras/catalogo'
       },
       {
-        title: 'Preferencias',
-        icon: 'tune',
+        title: 'Favoritos',
+        icon: 'favorite',
         route: '/compras/preferencias'
       }
     ]

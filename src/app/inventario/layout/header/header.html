@@ -1,10 +1,12 @@
 <mat-toolbar class="toolbar">
   <span>ZYRO IT</span>
   <span class="spacer"></span>
-  <!-- <button matIconButton class="icon favorite-icon" aria-label="Example icon-button with heart icon">
-    <mat-icon>favorite</mat-icon>
-  </button>
-  <button matIconButton class="icon" aria-label="Example icon-button with share icon">
-    <mat-icon>share</mat-icon>
-  </button> -->
+  @if (sesion(); as usuario) {
+    <div class="usuario">
+      <span><strong>{{ usuario.nombre }}</strong><small>{{ usuario.rol }}</small></span>
+      <button matIconButton type="button" matTooltip="Cerrar sesion" aria-label="Cerrar sesion" (click)="cerrarSesion()">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
+  }
 </mat-toolbar>

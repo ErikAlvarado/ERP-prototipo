@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ChartConfiguration, ChartOptions } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
-import { IMPORTACIONES_MATERIAL_TABLAS } from '../../shared/material/importaciones-material';
+import { IMPORTACIONES_MATERIAL_COMPRAS } from '../../shared/material/importaciones-material';
 import { Card } from '../../shared/components/card/card';
 import { EncabezadoPagina } from '../../shared/components/encabezado-pagina/encabezado-pagina';
 import { Estado } from '../../shared/components/estado/estado';
@@ -55,11 +56,12 @@ const ORDENES_COMPRA: OrdenCompra[] = [
 @Component({
   selector: 'app-dashboard',
   imports: [
+    RouterLink,
     Card,
     EncabezadoPagina,
     Estado,
     BaseChartDirective,
-    IMPORTACIONES_MATERIAL_TABLAS,
+    IMPORTACIONES_MATERIAL_COMPRAS,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',

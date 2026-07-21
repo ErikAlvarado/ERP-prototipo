@@ -65,7 +65,7 @@
           </mat-card-header>
           <mat-card-content class="quick-actions">
             @for (action of quickActions; track action.label) {
-              <button mat-stroked-button type="button">
+              <button mat-stroked-button type="button" [routerLink]="action.route">
                 <mat-icon>{{ action.icon }}</mat-icon>
                 {{ action.label }}
               </button>
