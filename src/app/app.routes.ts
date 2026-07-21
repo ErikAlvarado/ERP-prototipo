@@ -7,11 +7,13 @@ import { Layout } from './inventario/layout/layout/layout';
 import { administracionRoutes } from './inventario/administracion/administracion.routes';
 import { comprasRoutes } from './compras/compras.routes';
 import { Dashboard as ComprasDashboard } from './compras/dashboard/dashboard';
+import { autenticacionGuard } from './shared/guards/autenticacion.guard';
 
 export const routes: Routes = [
   {
     path: '',
     component: Layout,
+    canActivate: [autenticacionGuard],
     children: [
       {
         path: 'dashboard',

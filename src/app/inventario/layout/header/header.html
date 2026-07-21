@@ -9,12 +9,16 @@
 
   <span class="spacer"></span>
 
-  <!-- Perfil de Usuario -->
-  <div class="user-profile">
-    <div class="user-avatar">JP</div>
-    <div class="user-info">
-      <span class="user-name">Juan Pérez</span>
-      <span class="user-role">Inventarista Lead</span>
+  @if (sesion(); as usuario) {
+    <div class="user-profile">
+      <div class="user-avatar">{{ iniciales(usuario.nombre) }}</div>
+      <div class="user-info">
+        <span class="user-name">{{ usuario.nombre }}</span>
+        <span class="user-role">{{ usuario.rol }}</span>
+      </div>
+      <button matIconButton type="button" class="logout-button" matTooltip="Cerrar sesión" aria-label="Cerrar sesión" (click)="cerrarSesion()">
+        <mat-icon>logout</mat-icon>
+      </button>
     </div>
-  </div>
+  }
 </mat-toolbar>

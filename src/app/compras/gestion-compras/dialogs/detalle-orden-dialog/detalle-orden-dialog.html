@@ -1,0 +1,25 @@
+<div class="cabecera-dialogo">
+  <div class="icono"><mat-icon>receipt_long</mat-icon></div>
+  <div>
+    <span>Orden de compra</span>
+    <h2>{{ orden.folio }}</h2>
+  </div>
+  <button mat-icon-button type="button" aria-label="Cerrar detalle" matTooltip="Cerrar" (click)="cerrar()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <div class="estado"><app-estado [texto]="orden.estado" /></div>
+  <dl>
+    <div><dt>Proveedor</dt><dd>{{ orden.proveedor }}</dd></div>
+    <div><dt>Total</dt><dd class="total">{{ orden.total }}</dd></div>
+    <div><dt>Articulos</dt><dd>{{ orden.articulos }}</dd></div>
+    <div><dt>Fecha</dt><dd>{{ orden.fecha | date:'dd MMM yyyy' }}</dd></div>
+    <div class="ancho"><dt>Solicitante</dt><dd>{{ orden.solicitante }}</dd></div>
+  </dl>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-flat-button type="button" (click)="cerrar()">Cerrar</button>
+</mat-dialog-actions>

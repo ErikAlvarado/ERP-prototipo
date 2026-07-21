@@ -1,5 +1,5 @@
 .app-header {
-  background-color: #005bb5; /* Azul medio de la gama de tu logo */
+  background-color: #005bb5;
   color: #ffffff;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   height: 64px;
@@ -51,7 +51,6 @@
   color: #ffffff;
 }
 
-/* Badge Temático con contraste elegante */
 .brand-badge {
   background: rgba(255, 255, 255, 0.15);
   color: #ffffff;
@@ -64,7 +63,6 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* USUARIO */
 .user-profile {
   display: flex;
   align-items: center;
@@ -84,7 +82,7 @@
   height: 36px;
   border-radius: 50%;
   background: #ffffff;
-  color: #005bb5; /* Texto del avatar en el azul de tu marca */
+  color: #005bb5;
   font-weight: 700;
   font-size: 13px;
   display: flex;
@@ -114,4 +112,8 @@
   .user-info {
     display: none;
   }
+}
+
+.logout-button {
+  color: #ffffff;
 }

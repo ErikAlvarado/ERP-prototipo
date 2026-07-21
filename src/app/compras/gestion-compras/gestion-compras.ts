@@ -1,16 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import {
-  IMPORTACIONES_MATERIAL_COMPRAS,
-  MatDialog,
-} from '../../shared/material/importaciones-material';
+import { IMPORTACIONES_MATERIAL_COMPRAS } from '../../shared/material/importaciones-material';
 import { Card } from '../../shared/components/card/card';
 import { EncabezadoPagina } from '../../shared/components/encabezado-pagina/encabezado-pagina';
 import { Estado } from '../../shared/components/estado/estado';
-import {
-  NuevaSolicitud,
-  NuevaSolicitudDialog,
-} from './dialogs/nueva-solicitud-dialog/nueva-solicitud-dialog';
+import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-dialog';
+import { MatDialog, MatSnackBar } from '../../shared/material/importaciones-material';
+import { PersistenciaLocal } from '../../shared/services/persistencia-local';
+import { DetalleOrdenDialog } from './dialogs/detalle-orden-dialog/detalle-orden-dialog';
+import { fechaHace, perteneceAlPeriodo, PeriodoConsulta, PERIODOS_CONSULTA } from '../../shared/utils/periodos-consulta';
 
 interface SolicitudCompra {
   folio: string;
@@ -23,7 +21,7 @@ interface SolicitudCompra {
   importe: string;
 }
 
-interface OrdenCompra {
+export interface OrdenCompra {
   folio: string;
   proveedor: string;
   articulos: number;
@@ -61,7 +59,24 @@ interface Cotizacion {
 })
 export class GestionCompras {
   private readonly dialogo = inject(MatDialog);
+  private readonly avisos = inject(MatSnackBar);
+  private readonly persistencia = inject(PersistenciaLocal);
+  private readonly claveSolicitudes = 'erp.solicitudes-compras';
+  private readonly claveOrdenes = 'erp.ordenes-compras';
   readonly busquedaOrdenes = signal('');
+  readonly periodoOrdenes = signal<PeriodoConsulta>('mes');
+  readonly periodos = PERIODOS_CONSULTA;
+  readonly estadosOrden: ReadonlyArray<OrdenCompra['estado']> = [
+    'Pendiente',
+    'Activo',
+    'En transito',
+    'Completado',
+  ];
+  readonly prioridadesSolicitud: ReadonlyArray<SolicitudCompra['prioridad']> = [
+    'Baja',
+    'Media',
+    'Alta',
+  ];
 
   readonly columnasSolicitudes = [
     'folio',
@@ -98,7 +113,7 @@ export class GestionCompras {
       folio: 'SC-2025-0236',
       descripcion: 'Equipo de proteccion industrial EPP',
       solicitante: 'Diana Ruiz',
-      fecha: '15 Jun 2025',
+      fecha: fechaHace(2),
       depto: 'Operaciones',
       prioridad: 'Alta',
       estado: 'Pendiente',
@@ -108,7 +123,7 @@ export class GestionCompras {
       folio: 'SC-2025-0237',
       descripcion: 'Mobiliario para sala de juntas norte',
       solicitante: 'Carlos Vega',
-      fecha: '16 Jun 2025',
+      fecha: fechaHace(8),
       depto: 'Direccion General',
       prioridad: 'Media',
       estado: 'Aprobada',
@@ -125,54 +140,6 @@ export class GestionCompras {
       importe: '$12,400',
     },
   ]);
-
-  /**
-   * Abre el formulario Material y agrega la solicitud a la tabla solamente
-   * cuando el usuario guarda datos validos. Al cancelar no se modifica nada.
-   */
-  abrirNuevaSolicitud(): void {
-    this.dialogo
-      .open<NuevaSolicitudDialog, void, NuevaSolicitud>(NuevaSolicitudDialog, {
-        width: '650px',
-        maxWidth: 'calc(100vw - 32px)',
-        maxHeight: '95vh',
-        autoFocus: 'first-tabbable',
-        restoreFocus: true,
-      })
-      .afterClosed()
-      .subscribe((solicitud) => {
-        if (solicitud) this.agregarSolicitud(solicitud);
-      });
-  }
-
-  /** Convierte el resultado del formulario al modelo que consume la tabla. */
-  private agregarSolicitud(nueva: NuevaSolicitud): void {
-    const siguienteFolio = 2300 + this.solicitudes().length + 1;
-    const formatoFecha = new Intl.DateTimeFormat('es-MX', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-    const formatoImporte = new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-      maximumFractionDigits: 0,
-    });
-
-    this.solicitudes.update((solicitudes) => [
-      {
-        folio: `SC-${new Date().getFullYear()}-${siguienteFolio}`,
-        descripcion: nueva.descripcion.trim(),
-        solicitante: nueva.solicitante.trim(),
-        fecha: formatoFecha.format(nueva.fecha),
-        depto: nueva.departamento,
-        prioridad: nueva.prioridad,
-        estado: 'Pendiente',
-        importe: formatoImporte.format(nueva.importe),
-      },
-      ...solicitudes,
-    ]);
-  }
 
   readonly columnasOrdenes = [
     'folio',
@@ -212,7 +179,7 @@ export class GestionCompras {
       articulos: 12,
       total: '$156,800',
       solicitante: 'Diana Ruiz',
-      fecha: '17 Jun 2025',
+      fecha: fechaHace(25),
       estado: 'Activo',
       cancelable: true,
     },
@@ -222,7 +189,7 @@ export class GestionCompras {
       articulos: 8,
       total: '$23,400',
       solicitante: 'Carlos Vega',
-      fecha: '17 Jun 2025',
+      fecha: fechaHace(55),
       estado: 'Pendiente',
       cancelable: true,
     },
@@ -232,7 +199,7 @@ export class GestionCompras {
       articulos: 2,
       total: '$67,200',
       solicitante: 'Andrea Morales',
-      fecha: '18 Jun 2025',
+      fecha: fechaHace(110),
       estado: 'Activo',
       cancelable: true,
     },
@@ -242,7 +209,7 @@ export class GestionCompras {
       articulos: 7,
       total: '$128,900',
       solicitante: 'Ricardo Torres',
-      fecha: '14 Jun 2025',
+      fecha: fechaHace(300),
       estado: 'Cancelado',
       cancelable: false,
     },
@@ -250,10 +217,10 @@ export class GestionCompras {
 
   readonly ordenesFiltradas = computed(() => {
     const termino = this.normalizar(this.busquedaOrdenes());
-    if (!termino) return this.ordenes();
-    return this.ordenes().filter((orden) =>
-      this.normalizar(`${orden.folio} ${orden.proveedor} ${orden.solicitante} ${orden.estado}`).includes(termino),
-    );
+    return this.ordenes().filter((orden) => {
+      const coincideBusqueda = !termino || this.normalizar(`${orden.folio} ${orden.proveedor} ${orden.solicitante} ${orden.estado}`).includes(termino);
+      return coincideBusqueda && perteneceAlPeriodo(orden.fecha, this.periodoOrdenes());
+    });
   });
 
   buscarOrden(valor: string): void {
@@ -270,6 +237,18 @@ export class GestionCompras {
         solicitud.folio === folio ? { ...solicitud, estado: 'Cancelada' } : solicitud,
       ),
     );
+    this.persistencia.guardar(this.claveSolicitudes, this.solicitudes());
+    this.avisos.open(`Solicitud ${folio} cancelada`, 'Cerrar', { duration: 3500 });
+  }
+
+  actualizarPrioridadSolicitud(folio: string, prioridad: SolicitudCompra['prioridad']): void {
+    this.solicitudes.update((solicitudes) =>
+      solicitudes.map((solicitud) => solicitud.folio === folio
+        ? { ...solicitud, prioridad }
+        : solicitud),
+    );
+    this.persistencia.guardar(this.claveSolicitudes, this.solicitudes());
+    this.avisos.open(`Prioridad de ${folio} actualizada a ${prioridad}`, 'Cerrar', { duration: 3000 });
   }
 
   cancelarOrden(folio: string): void {
@@ -278,6 +257,18 @@ export class GestionCompras {
         orden.folio === folio ? { ...orden, estado: 'Cancelado', cancelable: false } : orden,
       ),
     );
+    this.persistencia.guardar(this.claveOrdenes, this.ordenes());
+    this.avisos.open(`Orden ${folio} cancelada`, 'Cerrar', { duration: 3500 });
+  }
+
+  actualizarEstadoOrden(folio: string, estado: OrdenCompra['estado']): void {
+    this.ordenes.update((ordenes) =>
+      ordenes.map((orden) => orden.folio === folio
+        ? { ...orden, estado, cancelable: estado !== 'Completado' && estado !== 'Cancelado' }
+        : orden),
+    );
+    this.persistencia.guardar(this.claveOrdenes, this.ordenes());
+    this.avisos.open(`Estado de ${folio} actualizado a ${estado}`, 'Cerrar', { duration: 3000 });
   }
 
   readonly cotizaciones: readonly Cotizacion[] = [
@@ -340,4 +331,42 @@ export class GestionCompras {
       ],
     },
   ];
+
+  constructor() {
+    this.solicitudes.set(this.persistencia.leer(this.claveSolicitudes, this.solicitudes()));
+    this.ordenes.set(this.persistencia.leer(this.claveOrdenes, this.ordenes()));
+    // Migra fechas de demostración antiguas para que los filtros de periodo sigan mostrando datos.
+    if (!this.ordenes().some((orden) => perteneceAlPeriodo(orden.fecha, 'anio'))) {
+      const antiguedad = [0, 8, 25, 55, 110, 300];
+      this.ordenes.update((ordenes) => ordenes.map((orden, indice) => ({
+        ...orden,
+        fecha: fechaHace(antiguedad[indice] ?? 300),
+      })));
+      this.persistencia.guardar(this.claveOrdenes, this.ordenes());
+    }
+  }
+
+  verOrden(orden: OrdenCompra): void {
+    this.dialogo.open(DetalleOrdenDialog, { data: orden, width: '560px', maxWidth: '94vw' });
+  }
+
+  confirmarCancelacionSolicitud(folio: string): void {
+    this.dialogo.open(ConfirmDialog, {
+      data: {
+        title: 'Cancelar solicitud',
+        message: `La solicitud ${folio} quedara cancelada y no continuara al proceso de compra.`,
+        confirmText: 'Cancelar solicitud',
+      },
+    }).afterClosed().subscribe((confirmado) => confirmado && this.cancelarSolicitud(folio));
+  }
+
+  confirmarCancelacionOrden(folio: string): void {
+    this.dialogo.open(ConfirmDialog, {
+      data: {
+        title: 'Cancelar orden',
+        message: `Confirma que deseas cancelar la orden ${folio}. Esta accion quedara registrada.`,
+        confirmText: 'Cancelar orden',
+      },
+    }).afterClosed().subscribe((confirmado) => confirmado && this.cancelarOrden(folio));
+  }
 }

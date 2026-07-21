@@ -2,7 +2,6 @@
   <mat-drawer #drawer opened mode="side">
     <div class="sidebar" [class.expanded]="expanded()">
 
-      <!-- Botón Hamburguesa / Toggle -->
       <button 
         matIconButton 
         type="button" 
@@ -12,7 +11,6 @@
         <mat-icon fontIcon="{{ expanded() ? 'arrow_back_ios_new' : 'menu' }}"></mat-icon>
       </button>
 
-      <!-- Menús Principales -->
       @for(menu of menus(); track menu.title){
 
         <button
@@ -33,7 +31,6 @@
             @if(menu.children){
               <span class="spacer"></span>
 
-              <!-- Flechas originales recuperadas -->
               <mat-icon>
                 {{ menu.expanded ? 'expand_less' : 'expand_more' }}
               </mat-icon>
@@ -42,7 +39,6 @@
 
         </button>
 
-        <!-- Submenús -->
         @if(menu.children?.length){
           <div class="submenu" [class.open]="expanded() && menu.expanded">
 
