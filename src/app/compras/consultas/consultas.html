@@ -89,7 +89,7 @@
           <mat-card-content>
             <label>TIPO DE REPORTE</label><mat-form-field appearance="outline"><mat-select [(ngModel)]="tipoReporte"><mat-option value="periodo">Reporte de compras por período</mat-option><mat-option value="proveedor">Reporte por proveedor</mat-option><mat-option value="estado">Reporte por estado</mat-option></mat-select></mat-form-field>
             <label>PERIODO</label><mat-form-field appearance="outline"><mat-select [value]="periodo()" (selectionChange)="periodo.set($event.value)">@for (opcion of periodos; track opcion.valor) { <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option> }</mat-select></mat-form-field>
-            <label>FORMATO DE SALIDA</label><mat-form-field appearance="outline"><mat-select [(ngModel)]="formatoReporte"><mat-option value="pdf">Documento</mat-option><mat-option value="xlsx">Excel compatible</mat-option><mat-option value="csv">CSV</mat-option></mat-select></mat-form-field>
+            <label>FORMATO DE SALIDA</label><mat-form-field appearance="outline"><mat-select [(ngModel)]="formatoReporte"><mat-option value="pdf">PDF</mat-option><mat-option value="xlsx">Excel compatible</mat-option><mat-option value="csv">CSV</mat-option></mat-select></mat-form-field>
             <label for="descripcion-reporte">DESCRIPCIÓN</label>
             <mat-form-field appearance="outline" class="descripcion-reporte">
               <textarea

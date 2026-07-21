@@ -7,6 +7,7 @@ import { Estado } from '../../shared/components/estado/estado';
 import { Archivos } from '../../shared/services/archivos';
 import { MatSnackBar } from '../../shared/material/importaciones-material';
 import { fechaHace, inicioPeriodo, perteneceAlPeriodo, PeriodoConsulta, PERIODOS_CONSULTA } from '../../shared/utils/periodos-consulta';
+import { ReportePdf } from '../../shared/services/reporte-pdf';
 
 interface OrdenCompra {
   folio: string;
@@ -43,6 +44,7 @@ export class Consultas {
   private readonly archivos = inject(Archivos);
   private readonly router = inject(Router);
   private readonly notificacion = inject(MatSnackBar);
+  private readonly reportePdf = inject(ReportePdf);
   readonly columnas = ['folio', 'proveedor', 'solicitante', 'articulos', 'total', 'fecha', 'estado', 'acciones'] as const;
   readonly periodo = signal<PeriodoConsulta>('mes');
   readonly periodos = PERIODOS_CONSULTA;
@@ -82,21 +84,18 @@ export class Consultas {
     void this.router.navigate(['/compras/proveedores'], { queryParams: { buscar: orden.proveedor } });
   }
 
-  generarReporte(): void {
-    const resumen = [
-      'REPORTE DE COMPRAS',
-      `Tipo: ${this.tipoReporte}`,
-      `Periodo: ${inicioPeriodo(this.periodo()).toLocaleDateString('es-MX')} - ${new Date().toLocaleDateString('es-MX')}`,
-      `Descripcion: ${this.descripcionReporte.trim() || 'Sin descripcion'}`,
-      `Ordenes: ${this.ordenesFiltradas().length}`,
-      `Total: ${this.totalPeriodo().toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}`,
-    ].join('\n');
+  async generarReporte(): Promise<void> {
     if (this.formatoReporte === 'csv' || this.formatoReporte === 'xlsx') {
       this.exportarHistorial();
       return;
     }
-    this.archivos.descargarTexto('reporte-compras.txt', resumen);
-    this.notificacion.open('Reporte generado', 'Cerrar', { duration: 2500 });
+    await this.reportePdf.descargarCompras({
+      periodo: `Del ${inicioPeriodo(this.periodo()).toLocaleDateString('es-MX')} al ${new Date().toLocaleDateString('es-MX')}`,
+      descripcion: this.descripcionReporte.trim(),
+      total: this.totalPeriodo(),
+      ordenes: this.ordenesFiltradas(),
+    });
+    this.notificacion.open('PDF generado', 'Cerrar', { duration: 2500 });
   }
 
   private crearOrden(
