@@ -304,6 +304,7 @@ export class GestionCompras {
   constructor() {
     this.solicitudes.set(this.persistencia.leer(this.claveSolicitudes, this.solicitudes()));
     this.ordenes.set(this.persistencia.leer(this.claveOrdenes, this.ordenes()));
+    // Migra fechas de demostración antiguas para que los filtros de periodo sigan mostrando datos.
     if (!this.ordenes().some((orden) => perteneceAlPeriodo(orden.fecha, 'anio'))) {
       const antiguedad = [0, 8, 25, 55, 110, 300];
       this.ordenes.update((ordenes) => ordenes.map((orden, indice) => ({

@@ -7,6 +7,7 @@
   <mat-tab-group class="tabs-segmentados">
     <mat-tab label="Solicitudes">
       <app-card class="tarjeta-tabla">
+        <!-- Columnas de solicitudes de compra -->
         <table mat-table [dataSource]="solicitudes()" class="tabla-compartida tabla-solicitudes">
           <ng-container matColumnDef="folio">
             <th mat-header-cell *matHeaderCellDef>Folio</th>
@@ -94,6 +95,7 @@
       </mat-form-field>
       </div>
       <app-card class="tarjeta-tabla tarjeta-ordenes">
+        <!-- Columnas de órdenes de compra -->
         <table mat-table [dataSource]="ordenesFiltradas()" class="tabla-compartida tabla-solicitudes">
           <ng-container matColumnDef="folio">
             <th mat-header-cell *matHeaderCellDef>Folio</th>

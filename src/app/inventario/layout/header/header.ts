@@ -17,6 +17,7 @@ export class Header {
   
   moduleTitle = signal<string>('Inventory');
 
+  // Relaciona la ruta principal con el contexto que se muestra en el encabezado.
   private routeTitleMap: Record<string, string> = {
     '/dashboard': 'Dashboard',
     '/products': 'Catálogo / Productos',

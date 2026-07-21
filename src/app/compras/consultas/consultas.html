@@ -66,6 +66,7 @@
           </div>
         </mat-card-header>
         <mat-card-content class="tabla-scroll">
+          <!-- Columnas del historial de compras -->
           <table mat-table [dataSource]="ordenesFiltradas()" class="tabla-compartida">
             <ng-container matColumnDef="folio"><th mat-header-cell *matHeaderCellDef>FOLIO</th><td mat-cell *matCellDef="let o" class="mono">{{ o.folio }}</td></ng-container>
             <ng-container matColumnDef="proveedor"><th mat-header-cell *matHeaderCellDef>PROVEEDOR</th><td mat-cell *matCellDef="let o">{{ o.proveedor }}</td></ng-container>
