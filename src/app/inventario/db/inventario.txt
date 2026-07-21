@@ -1,0 +1,3 @@
+id_inventario|id_producto|id_almacen|lote|fecha_caducidad|stock|stock_reorden|stock_critico|stock_maximo|anaquel|fecha_actualizacion
+1|1|1|||50.00|10.00|5.00|100.00|A1-01|2024-07-21
+2|2|1|LOTE-992|2026-12-31|200.00|50.00|20.00|500.00|B2-04|2024-07-21

@@ -1,0 +1,72 @@
+<div class="dialog-container">
+  
+  <div class="dialog-header">
+    <h2>Filtros</h2>
+    <button mat-icon-button (click)="cerrar()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="dialog-content">
+    
+    <div class="selects-section">
+      <div class="select-wrapper">
+        <div class="select-label"><mat-icon>folder</mat-icon> Categorías</div>
+        <select class="custom-select" [(ngModel)]="filtros.categoria">
+          <option value="">Todas las Categorías</option>
+          <option value="Herramientas">Herramientas</option>
+          <option value="Iluminación">Iluminación</option>
+        </select>
+      </div>
+      
+      <div class="select-wrapper">
+        <div class="select-label"><mat-icon>sell</mat-icon> Marcas</div>
+        <select class="custom-select" [(ngModel)]="filtros.marca">
+          <option value="">Todas las Marcas</option>
+          <option value="Truper">Truper</option>
+          <option value="WD-40">WD-40</option>
+          <option value="Generica">Genérica</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tipo -->
+    <div class="filter-box">
+      <div class="box-header"><mat-icon>grid_view</mat-icon> Tipo</div>
+      <div class="chips-group">
+        <button class="chip" [class.active]="filtros.tipo === 'Producto'" (click)="setTipo('Producto')">Producto</button>
+        <button class="chip" [class.active]="filtros.tipo === 'Servicio'" (click)="setTipo('Servicio')">Servicio</button>
+        <button class="chip" [class.active]="filtros.tipo === 'Kit'" (click)="setTipo('Kit')">Kit</button>
+      </div>
+    </div>
+
+    <!-- Código de Barras -->
+    <div class="filter-box">
+      <div class="box-header"><mat-icon>qr_code_scanner</mat-icon> Código de Barras</div>
+      <div class="chips-group">
+        <button class="chip" [class.active]="filtros.conCodigo === true" (click)="setCodigo(true)">Con código</button>
+        <button class="chip" [class.active]="filtros.conCodigo === false" (click)="setCodigo(false)">Sin código</button>
+      </div>
+    </div>
+
+    <!-- Catálogo en Línea -->
+    <div class="filter-box">
+      <div class="box-header"><mat-icon>desktop_windows</mat-icon> Catálogo en Línea</div>
+      <div class="chips-group">
+        <button class="chip" [class.active]="filtros.visible === true" (click)="setVisible(true)">Visible</button>
+        <button class="chip" [class.active]="filtros.visible === false" (click)="setVisible(false)">No visible</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dialog-footer">
+    <button mat-stroked-button class="btn-limpiar" (click)="limpiar()">
+      <mat-icon>delete_outline</mat-icon> Limpiar Filtros ({{ conteoFiltros }})
+    </button>
+    <button mat-flat-button class="btn-resultados" (click)="aplicar()">
+      Ver Resultados
+    </button>
+  </div>
+
+</div>

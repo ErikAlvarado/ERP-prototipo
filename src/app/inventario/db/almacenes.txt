@@ -1,0 +1,2 @@
+id_almacen|id_empresa|nombre_almacen|direccion|es_principal|activo|fecha_creacion|fecha_actualizacion|creado_por_usuario|actualizado_por_usuario
+1|1|Almacén Central|Bodega 5, Zona Industrial|1|1|2024-01-01|2024-01-01|1|1

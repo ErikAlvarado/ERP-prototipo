@@ -1,0 +1,3 @@
+id_rol|id_empresa|nombre|descripcion|activo|fecha_creacion|fecha_actualizacion|creado_por_usuario|actualizado_por_usuario
+1|1|Administrador|Acceso total al sistema|1|2024-01-01|2024-01-01|1|1
+2|1|Cajero|Acceso solo a punto de venta|1|2024-01-01|2024-01-01|1|1

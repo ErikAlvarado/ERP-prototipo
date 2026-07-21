@@ -2,7 +2,6 @@
   <mat-drawer #drawer opened mode="side">
     <div class="sidebar" [class.expanded]="expanded()">
 
-      <!-- Botón Hamburguesa / Toggle -->
       <button 
         matIconButton 
         type="button" 
@@ -12,7 +11,6 @@
         <mat-icon fontIcon="{{ expanded() ? 'arrow_back_ios_new' : 'menu' }}"></mat-icon>
       </button>
 
-      <!-- Menús Principales -->
       @for(menu of menus(); track menu.title){
 
         <button

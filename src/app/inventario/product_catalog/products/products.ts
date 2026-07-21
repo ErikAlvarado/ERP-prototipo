@@ -1,10 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatDialog } from '@angular/material/dialog';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatMenuModule } from '@angular/material/menu'; // <-- Importante para el menú
+import { Observable } from 'rxjs';
+import { AsyncPipe } from '@angular/common'; 
 import { ProductD } from './dialogs/product-d/product-d';
+import { Filtro } from './dialogs/filtro/filtro';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
-
 
 export interface PeriodicElement {
   sku: string;
@@ -17,143 +21,169 @@ export interface PeriodicElement {
   pos: boolean;
   linea: boolean;
   estado: boolean;
+  tipo: string;
+  almacen: string;
   acciones?: string;
 }
 
 const ELEMENT_DATA: PeriodicElement[] = [
-  {sku: '001', codigo: 1234567890123, producto: 'Producto A', marca: 'Marca A', categoria: 'Categoría 1', medida: 'Unidad', precio: 10.99, pos: true, linea: true, estado: true},
-  {sku: '002', codigo: 2345678901234, producto: 'Producto B', marca: 'Marca B', categoria: 'Categoría 2', medida: 'Caja', precio: 25.50, pos: false, linea: true, estado: false},
-  {sku: '003', codigo: 3456789012345, producto: 'Producto C', marca: 'Marca C', categoria: 'Categoría 1', medida: 'Paquete', precio: 15.75, pos: true, linea: false, estado: true},
-  {sku: '004', codigo: 4567890123456, producto: 'Producto D', marca: 'Marca D', categoria: 'Categoría 3', medida: 'Unidad', precio: 8.99, pos: false, linea: true, estado: true},
-  {sku: '005', codigo: 5678901234567, producto: 'Producto E', marca: 'Marca E', categoria: 'Categoría 2', medida: 'Caja', precio: 30.00, pos: true, linea: false, estado: false},
-  {sku: '006', codigo: 6789012345678, producto: 'Producto F', marca: 'Marca F', categoria: 'Categoría 1', medida: 'Paquete', precio: 12.50, pos: false, linea: true, estado: true},
-  {sku: '007', codigo: 7890123456789, producto: 'Producto G', marca: 'Marca G', categoria: 'Categoría 3', medida: 'Unidad', precio: 9.99, pos: true, linea: true, estado: true},
-  {sku: '008', codigo: 8901234567890, producto: 'Producto H', marca: 'Marca H', categoria: 'Categoría 2', medida: 'Caja', precio: 28.75, pos: false, linea: false, estado: false},
-  {sku: '009', codigo: 9012345678901, producto: 'Producto I', marca: 'Marca I', categoria: 'Categoría 1', medida: 'Paquete', precio: 14.25, pos: true, linea: true, estado: true},
-  {sku: '010', codigo: 1234567890123, producto: 'Producto J', marca: 'Marca J', categoria: 'Categoría 3', medida: 'Unidad', precio: 11.50, pos: false, linea: false, estado: true},
+  {sku: '001', codigo: 1234567890123, producto: 'Aerosol WD-40', marca: 'WD-40', categoria: 'Herramientas', medida: 'Unidad', precio: 155.00, pos: true, linea: true, estado: true, tipo: 'Producto', almacen: 'Norte'},
+  {sku: '002', codigo: 2345678901234, producto: 'Cinta métrica Truper', marca: 'Truper', categoria: 'Herramientas', medida: 'Pieza', precio: 28.50, pos: false, linea: true, estado: false, tipo: 'Producto', almacen: 'Sur'},
+  {sku: '003', codigo: 3456789012345, producto: 'Destornillador', marca: 'Truper', categoria: 'Herramientas', medida: 'Pieza', precio: 54.00, pos: true, linea: false, estado: true, tipo: 'Producto', almacen: 'Norte'},
+  {sku: '004', codigo: 0, producto: 'Kit ferre', marca: 'Generica', categoria: 'Herramientas', medida: 'Kit', precio: 123.00, pos: false, linea: true, estado: true, tipo: 'Kit', almacen: 'Norte'},
+  {sku: '005', codigo: 5678901234567, producto: 'Martillo Truper', marca: 'Truper', categoria: 'Herramientas', medida: 'Pieza', precio: 19.95, pos: true, linea: false, estado: false, tipo: 'Producto', almacen: 'Sur'},
+  {sku: '006', codigo: 678901234678, producto: 'Plafón Redondo', marca: 'Generica', categoria: 'Iluminación', medida: 'Pieza', precio: 8.75, pos: false, linea: true, estado: true, tipo: 'Producto', almacen: 'Norte'},
 ];
-
-
 
 @Component({
   selector: 'app-products',
-  imports: [SHARED_IMPORTS],
+  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule, MatMenuModule], // <-- Añadido MatMenuModule aquí
   templateUrl: './products.html',
-  styleUrl: './products.css',
+  styleUrl: './products.css', 
 })
-export class Products {
+export class Products implements OnInit, AfterViewInit {
+  
   constructor(private dialog: MatDialog) {}
+  
   displayedColumns: string[] = ['sku', 'codigo', 'producto', 'marca', 'categoria', 'medida', 'precio', 'pos', 'linea', 'estado', 'acciones'];
+  dataSource = new MatTableDataSource(ELEMENT_DATA);
 
-  dataSource =  new MatTableDataSource(ELEMENT_DATA);
+  currentSearch: string = '';
+  currentAlmacen: string = '';
+  currentSort: string = ''; 
 
-currentSearch: string = '';
-  currentCategory: string = '';
+  filtrosAvanzados = { categoria: '', marca: '', tipo: '', conCodigo: null as boolean | null, visible: null as boolean | null };
 
-  applyFilter() {
-    this.dataSource.filter = JSON.stringify({
-      search: this.currentSearch.trim().toLowerCase(),
-      category: this.currentCategory
-    });
-  }
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  obs!: Observable<any>; 
 
   ngOnInit() {
     this.dataSource.filterPredicate = (data: PeriodicElement, filter: string) => {
-      const search = JSON.parse(filter);
-      const matchSearch = data.producto.toLowerCase().includes(search.search) ||
-                          data.sku.toLowerCase().includes(search.search);
-      const matchCategory = search.category === '' || data.categoria === search.category;
-      return matchSearch && matchCategory;
-    };
-  }
-  
-  abrirAgregar() {
-
-    this.dialog.open(ProductD, {
-
-      width: '700px',
-
-      data: {
-        mode: 'add'
+      if (!filter) return true;
+      
+      let search;
+      try {
+        search = JSON.parse(filter);
+      } catch (e) {
+        return true;
       }
+      
+      const textMatch = !search.text || data.producto.toLowerCase().includes(search.text) || data.sku.toLowerCase().includes(search.text) || data.codigo.toString().includes(search.text);
+      const almacenMatch = !search.almacen || data.almacen === search.almacen;
+      
+      const catMatch = !search.adv?.categoria || data.categoria === search.adv.categoria;
+      const marcaMatch = !search.adv?.marca || data.marca === search.adv.marca;
+      const tipoMatch = !search.adv?.tipo || data.tipo === search.adv.tipo;
+      
+      const codigoMatch = search.adv?.conCodigo === null || search.adv?.conCodigo === undefined || (search.adv.conCodigo ? data.codigo > 0 : data.codigo === 0);
+      const visibleMatch = search.adv?.visible === null || search.adv?.visible === undefined || data.linea === search.adv.visible;
 
-    }).afterClosed().subscribe(result => {
-
-      if (!result) return;
-
-      this.dataSource.data = [
-        ...this.dataSource.data,
-        result
-      ];
-
+      return textMatch && almacenMatch && catMatch && marcaMatch && tipoMatch && codigoMatch && visibleMatch;
+    };
+    
+    this.dataSource.filter = JSON.stringify({ 
+      text: '', 
+      almacen: '', 
+      adv: { categoria: '', marca: '', tipo: '', conCodigo: null, visible: null } 
     });
 
+    this.obs = this.dataSource.connect();
+  }
+
+  ngAfterViewInit() {
+    this.dataSource.paginator = this.paginator;
+  }
+
+  applyFilter() {
+    this.dataSource.filter = JSON.stringify({
+      text: this.currentSearch.trim().toLowerCase(),
+      almacen: this.currentAlmacen,
+      adv: this.filtrosAvanzados
+    });
+  }
+
+  setAlmacen(almacen: string) {
+    this.currentAlmacen = almacen;
+    this.applyFilter();
+  }
+
+  setSort(sortType: string) {
+    this.currentSort = sortType;
+    const dataCopy = [...this.dataSource.data];
+
+    if (sortType === 'A - Z') {
+      dataCopy.sort((a, b) => a.producto.localeCompare(b.producto));
+    } else if (sortType === 'Z - A') {
+      dataCopy.sort((a, b) => b.producto.localeCompare(a.producto));
+    } else if (sortType === 'Más recientes') {
+      dataCopy.sort((a, b) => b.sku.localeCompare(a.sku)); 
+    }
+
+    this.dataSource.data = dataCopy;
+  }
+  
+  abrirFiltros() {
+    const dialogRef = this.dialog.open(Filtro, {
+      width: '550px',
+      panelClass: 'custom-dialog',
+      data: { filtros: this.filtrosAvanzados } 
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.filtrosAvanzados = result; 
+        this.applyFilter(); 
+      }
+    });
+  }
+
+  abrirAgregar() {
+    const dialogRef = this.dialog.open(ProductD, {
+      width: '700px',
+      panelClass: 'custom-dialog',
+      data: { mode: 'add' }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (!result) return;
+      this.dataSource.data = [
+        result,
+        ...this.dataSource.data
+      ];
+    });
   }
 
   editar(producto: PeriodicElement) {
-
-    this.dialog.open(ProductD, {
-
+    const dialogRef = this.dialog.open(ProductD, {
       width: '700px',
-
-      data: {
-        mode: 'edit',
-        product: producto
-      }
-
-    }).afterClosed().subscribe(result => {
-
-      if (!result) return;
-
-      const index = this.dataSource.data.findIndex(
-        p => p.sku === producto.sku
-      );
-
-      if (index !== -1) {
-
-        this.dataSource.data[index] = result;
-
-        this.dataSource.data = [
-          ...this.dataSource.data
-        ];
-
-      }
-
+      panelClass: 'custom-dialog',
+      data: { mode: 'edit', product: producto }
     });
 
+    dialogRef.afterClosed().subscribe(result => {
+      if (!result) return;
+      const index = this.dataSource.data.findIndex(p => p.sku === producto.sku);
+      if (index !== -1) {
+        this.dataSource.data[index] = result;
+        this.dataSource.data = [...this.dataSource.data];
+      }
+    });
   }
 
   eliminar(producto: PeriodicElement) {
+    const dialogRef = this.dialog.open(ConfirmDialog, {
+      width: '400px',
+      data: {
+        title: 'Eliminar producto',
+        message: `¿Deseas eliminar "${producto.producto}"?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar'
+      }
+    });
 
-  this.dialog.open(ConfirmDialog, {
-
-    width: '400px',
-
-    data: {
-
-      title: 'Eliminar producto',
-
-      message: `¿Deseas eliminar "${producto.producto}"?`,
-
-      confirmText: 'Eliminar',
-
-      cancelText: 'Cancelar'
-
-    }
-
-  }).afterClosed().subscribe(confirmado => {
-
-    if (!confirmado) return;
-
-    this.dataSource.data = this.dataSource.data.filter(
-
-      p => p.sku !== producto.sku
-
-    );
-
-  });
-
+    dialogRef.afterClosed().subscribe(confirmado => {
+      if (!confirmado) return;
+      this.dataSource.data = this.dataSource.data.filter(p => p.sku !== producto.sku);
+    });
+  }
 }
- 
-}
-

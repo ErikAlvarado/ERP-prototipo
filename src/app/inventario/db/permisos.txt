@@ -1,0 +1,3 @@
+id_permiso|nombre|modulo|descripcion|accion
+1|crear_producto|Productos|Permite crear nuevos productos en el catálogo|Crear
+2|vender_pos|Ventas|Permite cobrar en el punto de venta|Crear

@@ -1,0 +1,275 @@
+/* =========================================
+   ESTRUCTURA GENERAL
+========================================= */
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* =========================================
+   NUEVO BUSCADOR Y FILTROS (Estilo Imagen)
+========================================= */
+.content-search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+.custom-search {
+  flex: 1; 
+  min-width: 280px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  padding: 0 14px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.custom-search:focus-within {
+  border-color: #3f51b5;
+  box-shadow: 0 0 0 4px rgba(63, 81, 181, 0.1);
+}
+
+.custom-search mat-icon {
+  color: #667085;
+  margin-right: 10px;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.custom-search input {
+  border: none;
+  outline: none;
+  width: 100%;
+  height: 100%;
+  font-size: 14px;
+  color: #101828;
+  background: transparent;
+}
+
+.custom-search input::placeholder {
+  color: #667085;
+}
+
+.custom-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  height: 44px !important;
+  border-radius: 8px !important;
+  border-color: #d0d5dd !important;
+  color: #344054 !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05) !important;
+}
+
+.filter-btn mat-icon {
+  color: #667085;
+  margin-right: 4px;
+}
+
+.filter-btn .arrow-icon {
+  margin-right: -4px;
+  margin-left: 4px;
+}
+
+/* =========================================
+   CONTROL DE VISTAS (HÍBRIDO)
+========================================= */
+.desktop-view { display: block; }
+
+/* =========================================
+   ESTILOS DE LA TABLA (ESCRITORIO)
+========================================= */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+table {
+  width: 100%;
+  min-width: 1000px; /* Evita que se aplasten las 11 columnas */
+  border-collapse: collapse;
+}
+
+.mat-mdc-header-cell {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mat-mdc-row:hover {
+  background-color: #f2f3f5;
+  transition: background-color 0.2s;
+}
+
+.mat-column-precio {
+  font-family: monospace;
+  font-weight: bold;
+}
+
+/* =========================================
+   ESTILOS DE TARJETAS (MÓVIL)
+========================================= */
+.cards-container {
+  display: none; /* Oculto por defecto en monitor */
+  flex-direction: column;
+  gap: 16px;
+}
+
+.product-card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e4e7ec;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #eaecf0;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+.card-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: #1f2937;
+}
+
+.brand-badge {
+  font-size: 12px;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 12px;
+  color: #4b5563;
+}
+
+.price {
+  font-weight: bold;
+  font-size: 18px;
+  color: #1e8e3e;
+}
+
+.card-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 13px;
+  color: #475467;
+  margin-bottom: 16px;
+}
+
+.card-status {
+  display: flex;
+  gap: 16px;
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-item small {
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* =========================================
+   PAGINADOR
+========================================= */
+.paginator-container {
+  background: white;
+  border-radius: 8px;
+  margin-top: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* =========================================
+   TUS OTROS ESTILOS GLOBALES
+========================================= */
+mat-expansion-panel {
+  margin-bottom: 24px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+}
+
+mat-accordion { width: 100%; }
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  background-color: #eee;
+}
+
+.badge.active {
+  background-color: #e6f4ea;
+  color: #1e8e3e;
+}
+
+/* =========================================
+   MEDIA QUERIES (El Switch Móvil/Escritorio)
+========================================= */
+@media (max-width: 992px) {
+  .desktop-view {
+    display: none;
+  }
+  
+  .cards-container {
+    display: flex;
+  }
+}
+
+@media (max-width: 600px) {
+  .content-header {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  .content-header button {
+    width: 100%;
+  }
+  .custom-search {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+  .filter-btn {
+    flex: 1;
+  }
+}

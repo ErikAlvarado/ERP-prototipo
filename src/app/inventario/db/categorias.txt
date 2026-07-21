@@ -1,0 +1,4 @@
+id_categoria|id_empresa|id_categoria_padre|nombre_categoria|activo
+1|1||Electrónica|1
+2|1|1|Smartphones|1
+3|1||Farmacia|1

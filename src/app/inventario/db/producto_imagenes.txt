@@ -1,0 +1,3 @@
+id_imagen|id_producto|url_imagen|es_principal|orden
+1|1|https://cdn.supermart.com/img/sku001_front.jpg|1|1
+2|2|https://cdn.supermart.com/img/sku002_box.jpg|1|1

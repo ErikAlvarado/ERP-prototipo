@@ -1,0 +1,6 @@
+id_estado_transferencia|nombre
+1|Borrador
+2|Pendiente
+3|En tránsito
+4|Recibida
+5|Cancelada

@@ -1,0 +1,2 @@
+id_usuario_rol|id_usuario|id_rol|fecha_asignacion|fecha_fin|activo|asignado_por_usuario
+1|1|1|2024-01-01||1|1

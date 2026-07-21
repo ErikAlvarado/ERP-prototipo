@@ -1,103 +1,127 @@
-<h2 mat-dialog-title>
-  {{ data.mode === 'add' ? 'Agregar producto' : 'Actualizar producto' }}
-</h2>
+<div class="dialog-container">
+  
 
-<mat-dialog-content>
+  <div class="dialog-header">
+    <h2>{{ data.mode === 'add' ? 'Crear Producto' : 'Actualizar Producto' }}</h2>
+    <button mat-icon-button (click)="cerrar()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
 
-  <div class="formulario">
 
-    <mat-form-field appearance="outline">
-      <mat-label>SKU</mat-label>
-      <input matInput [(ngModel)]="producto.sku">
-    </mat-form-field>
+  <div class="dialog-content">
+    
 
-    <mat-form-field appearance="outline">
-      <mat-label>Código de barras</mat-label>
-      <input matInput [(ngModel)]="producto.codigo">
-    </mat-form-field>
+    <div class="card-section">
+      <label class="section-label">Tipo</label>
+      <div class="chips-group">
+        <button class="chip" [class.active]="producto.tipo === 'Producto'" (click)="producto.tipo = 'Producto'">Producto</button>
+        <button class="chip" [class.active]="producto.tipo === 'Servicio'" (click)="producto.tipo = 'Servicio'">Servicio</button>
+      </div>
+    </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Producto</mat-label>
-      <input matInput [(ngModel)]="producto.producto">
-    </mat-form-field>
 
-    <mat-form-field appearance="outline">
-    <mat-label>Marca</mat-label>
+    <div class="card-section grid-layout">
+      
+      <div class="input-group full-width">
+        <label>Nombre*</label>
+        <input class="custom-input" [(ngModel)]="producto.producto" placeholder="Ej: Jabón de mano">
+      </div>
 
-        <mat-select [(ngModel)]="producto.marca">
+      <div class="input-group">
+        <label>SKU</label>
+        <input class="custom-input" [(ngModel)]="producto.sku" placeholder="Ej: PROD-001">
+      </div>
 
-            <mat-option value="Marca A">Marca A</mat-option>
-            <mat-option value="Marca B">Marca B</mat-option>
-            <mat-option value="Marca C">Marca C</mat-option>
+      <div class="input-group">
+        <label>Código de barras</label>
+        <input class="custom-input" [(ngModel)]="producto.codigo" placeholder="Opcional">
+      </div>
 
-        </mat-select>
+      <div class="input-group">
+        <label>Marca</label>
+        <select class="custom-select" [(ngModel)]="producto.marca">
+          <option value="" disabled selected>Selecciona una marca</option>
+          <option value="Marca A">Marca A</option>
+          <option value="Marca B">Marca B</option>
+          <option value="Marca C">Marca C</option>
+          <option value="Truper">Truper</option>
+          <option value="WD-40">WD-40</option>
+        </select>
+      </div>
 
-    </mat-form-field>
+      <div class="input-group">
+        <label>Categoría</label>
+        <select class="custom-select" [(ngModel)]="producto.categoria">
+          <option value="" disabled selected>Buscar o crear categoría</option>
+          <option value="Cableado">Cableado</option>
+          <option value="Hardware">Hardware</option>
+          <option value="Herramientas">Herramientas</option>
+          <option value="Iluminación">Iluminación</option>
+        </select>
+      </div>
 
-    <mat-form-field appearance="outline">
-    <mat-label>Categoría</mat-label>
+    </div>
 
-        <mat-select [(ngModel)]="producto.categoria">
+    <div class="card-section grid-layout">
+      
+      <div class="input-group">
+        <label>Precio de venta</label>
+        <div class="input-with-prefix">
+          <span class="prefix">$</span>
+          <input class="custom-input pl-prefix" type="number" [(ngModel)]="producto.precio" placeholder="0.00">
+          <span class="suffix">por {{ producto.medida || 'Unidad' }}</span>
+        </div>
+        <span class="hint">Incluyendo impuestos</span>
+      </div>
 
-            <mat-option value="Cableado">Cableado</mat-option>
-            <mat-option value="Hardware">Hardware</mat-option>
-            <mat-option value="Herramientas">Herramientas</mat-option>
+      <div class="input-group">
+        <label>Unidad de medida</label>
+        <select class="custom-select" [(ngModel)]="producto.medida">
+          <option value="Pieza">Pieza</option>
+          <option value="Caja">Caja</option>
+          <option value="Paquete">Paquete</option>
+          <option value="Kit">Kit</option>
+        </select>
+      </div>
 
-        </mat-select>
+    </div>
 
-    </mat-form-field>
+    <div class="card-section">
+      <label class="section-label" style="margin-bottom: 12px;">Configuraciones de visibilidad</label>
+      <div class="checkbox-group">
+        
+        <label class="custom-checkbox">
+          <input type="checkbox" [(ngModel)]="producto.pos">
+          <span class="checkmark"></span> Punto de venta
+        </label>
 
-    <mat-form-field appearance="outline">
-        <mat-label>Unidad de medida</mat-label>
+        <label class="custom-checkbox">
+          <input type="checkbox" [(ngModel)]="producto.linea">
+          <span class="checkmark"></span> Tienda en línea
+        </label>
 
-        <mat-select [(ngModel)]="producto.medida">
+        <label class="custom-checkbox">
+          <input type="checkbox" [(ngModel)]="producto.estado">
+          <span class="checkmark"></span> Activo
+        </label>
 
-            <mat-option value="Pieza">Pieza</mat-option>
-            <mat-option value="Caja">Caja</mat-option>
-            <mat-option value="Paquete">Paquete</mat-option>
-
-        </mat-select>
-
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Precio</mat-label>
-      <input matInput type="number" [(ngModel)]="producto.precio">
-    </mat-form-field>
-
-    <div class="checks">
-
-      <mat-checkbox [(ngModel)]="producto.pos">
-        Punto de venta
-      </mat-checkbox>
-
-      <mat-checkbox [(ngModel)]="producto.linea">
-        Tienda en línea
-      </mat-checkbox>
-
-      <mat-checkbox [(ngModel)]="producto.estado">
-        Activo
-      </mat-checkbox>
-
+      </div>
     </div>
 
   </div>
 
-</mat-dialog-content>
+  <div class="dialog-footer">
 
-<mat-dialog-actions>
+    <div class="footer-actions">
+      <button mat-stroked-button class="btn-cancelar" (click)="cerrar()">
+        Cancelar
+      </button>
+      <button mat-flat-button class="btn-guardar" (click)="guardar()">
+        {{ data.mode === 'add' ? 'Crear Producto' : 'Actualizar' }}
+      </button>
+    </div>
 
-  <button mat-button mat-dialog-close>
-    Cancelar
-  </button>
+  </div>
 
-  <button
-    mat-flat-button
-    color="primary"
-    (click)="guardar()">
-
-    {{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}
-
-  </button>
-
-</mat-dialog-actions>
+</div>

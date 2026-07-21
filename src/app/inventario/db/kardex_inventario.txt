@@ -1,0 +1,3 @@
+id_movimiento|id_producto|id_almacen|id_tipo_movimiento|lote|fecha_caducidad|existencia_anterior|cantidad|existencia_nueva|costo_unitario|observaciones|referencia|fecha|id_usuario
+1|1|1|1|||0.00|50.00|50.00|5000.00|Inventario inicial|INV-001|2024-01-02|1
+2|2|1|1|LOTE-992|2026-12-31|0.00|200.00|200.00|15.00|Inventario inicial|INV-001|2024-01-02|1

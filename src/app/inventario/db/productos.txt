@@ -1,0 +1,3 @@
+id_producto|id_empresa|sku|codigo_barras|nombre_producto|tipo|descripcion|id_marca|id_categoria|id_unidad|estatus|ubicacion_default|en_punto_venta|en_catalogo_linea|requiere_receta|usar_existencias|usar_lotes_caducidades|clave_sat|fecha_creacion|fecha_actualizacion
+1|1|SKU001|750123456789|Smartphone X|Físico|Teléfono inteligente 128GB|1|2|1|Vigente|Pasillo 3|1|1|0|1|0|43191501|2024-01-02|2024-01-02
+2|1|SKU002|750987654321|Paracetamol 500mg|Físico|Caja con 20 tabletas|2|3|3|Vigente|Pasillo 1|1|0|0|1|1|51142000|2024-01-02|2024-01-02

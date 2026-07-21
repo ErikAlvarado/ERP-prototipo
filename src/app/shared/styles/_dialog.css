@@ -1,236 +1,284 @@
-/* Dialog system shared by inventory, administration and purchasing flows. */
-.mat-mdc-dialog-container {
-  --mdc-dialog-container-shape: 8px;
-  --mdc-dialog-container-color: #ffffff;
-  --mdc-dialog-subhead-color: #1f2937;
-  --mdc-dialog-supporting-text-color: #475467;
-}
-
-.mat-mdc-dialog-container .mdc-dialog__surface {
-  overflow: hidden;
-  border: 1px solid #dfe3eb;
-  box-shadow: 0 20px 48px rgb(31 41 55 / 0.18);
-}
-
-[mat-dialog-title] {
-  position: relative;
+/* =========================================
+   CONTENEDOR PRINCIPAL DEL DIÁLOGO
+========================================= */
+.dialog-container {
   display: flex;
+  flex-direction: column;
+  background-color: #fcfcfc; /* Fondo ligeramente grisáceo para que resalten las tarjetas */
+  border-radius: 12px;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* =========================================
+   HEADER
+========================================= */
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  min-height: 72px;
-  margin: 0 !important;
-  padding: 16px 56px 16px 24px !important;
-  border-bottom: 1px solid #dfe3eb;
-  background: #f7f8fc;
-  color: #27346f;
-  font-size: 21px !important;
-  font-weight: 700 !important;
-  line-height: 1.25 !important;
+  padding: 16px 24px;
+  background-color: white;
+  border-bottom: 1px solid #eaecf0;
 }
 
-[mat-dialog-title]::before {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  flex: 0 0 38px;
+.dialog-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #101828;
+}
+
+.dialog-header button {
+  color: #667085;
+}
+
+/* =========================================
+   BODY / CONTENT
+========================================= */
+.dialog-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+/* Las "Tarjetas" Blancas de cada sección */
+.card-section {
+  background-color: white;
+  border: 1px solid #eaecf0;
   border-radius: 8px;
-  background: #3f51b5;
-  color: #ffffff;
-  content: 'edit_note';
-  font-family: 'Material Icons';
-  font-size: 22px;
-  font-weight: 400;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
 }
 
-[mat-dialog-title]::after {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: #009688;
-  content: '';
+.section-label {
+  display: block;
+  font-size: 14px;
+  color: #344054;
+  margin-bottom: 16px;
 }
 
-mat-dialog-content.mat-mdc-dialog-content {
-  max-height: min(68vh, 720px);
-  padding: 24px !important;
-  overflow-x: hidden;
-  background: #ffffff;
-}
-
-.formulario {
+/* =========================================
+   FORMULARIOS Y GRUPOS DE INPUTS
+========================================= */
+.grid-layout {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px 16px;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
-.formulario > mat-form-field,
-.formulario > .full-width {
-  width: 100%;
-}
-
-.formulario > .full-width,
-.formulario > .elementos-section,
-.formulario > .checks {
+.full-width {
   grid-column: 1 / -1;
 }
 
-.mat-mdc-dialog-container .mat-mdc-form-field {
-  width: 100%;
-  --mdc-outlined-text-field-container-shape: 6px;
-  --mdc-outlined-text-field-outline-color: #cfd5e1;
-  --mdc-outlined-text-field-hover-outline-color: #7986cb;
-  --mdc-outlined-text-field-focus-outline-color: #3f51b5;
-  --mdc-outlined-text-field-focus-label-text-color: #3f51b5;
-}
-
-.mat-mdc-dialog-container .mat-mdc-form-field-infix {
-  min-height: 48px;
-  padding-top: 12px;
-  padding-bottom: 10px;
-}
-
-.mat-mdc-dialog-container textarea.mat-mdc-input-element {
-  min-height: 72px;
-  resize: vertical;
-}
-
-.elementos-section {
-  margin: 4px 0;
-  padding: 18px;
-  border: 1px solid #dfe3eb;
-  border-left: 4px solid #009688;
-  border-radius: 6px;
-  background: #f8fafc;
-}
-
-.elementos-section h3 {
-  margin: 0 0 14px !important;
-  color: #344054;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.elementos-section div[style*='display: flex'] {
-  display: flex !important;
-  align-items: flex-start;
-  gap: 10px !important;
-}
-
-.elementos-section mat-chip-set {
+.input-group {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.elementos-section mat-chip {
-  border: 1px solid #c5cae9 !important;
-  background: #eef0fb !important;
-  color: #27346f !important;
-  font-weight: 600;
+.input-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #344054;
 }
 
-.checks {
+.custom-input,
+.custom-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #101828;
+  background-color: white;
+  outline: none;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  transition: all 0.2s ease;
+}
+
+.custom-input:focus,
+.custom-select:focus {
+  border-color: #0ea5e9; /* Azul claro estilo la imagen */
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+}
+
+.custom-input::placeholder {
+  color: #98a2b3;
+}
+
+.hint {
+  font-size: 12px;
+  color: #98a2b3;
+  margin-top: 2px;
+}
+
+/* =========================================
+   INPUT CON PREFIJO (PRECIO)
+========================================= */
+.input-with-prefix {
+  position: relative;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 24px;
-  min-height: 52px;
-  padding: 10px 14px;
-  border: 1px solid #dfe3eb;
+}
+
+.prefix {
+  position: absolute;
+  left: 12px;
+  color: #667085;
+  font-size: 14px;
+}
+
+.suffix {
+  position: absolute;
+  right: 12px;
+  color: #98a2b3;
+  font-size: 13px;
+}
+
+.pl-prefix {
+  padding-left: 28px !important;
+  padding-right: 80px !important; /* Espacio para el suffix */
+}
+
+/* =========================================
+   CHIPS DE TIPO (Producto / Servicio)
+========================================= */
+.chips-group {
+  display: flex;
+  gap: 12px;
+}
+
+.chip {
+  padding: 8px 16px;
   border-radius: 6px;
-  background: #f8fafc;
+  border: 1px solid #d0d5dd;
+  background-color: white;
+  color: #344054;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.checks .mat-mdc-checkbox {
-  --mdc-checkbox-selected-checkmark-color: #ffffff;
-  --mdc-checkbox-selected-focus-icon-color: #009688;
-  --mdc-checkbox-selected-hover-icon-color: #009688;
-  --mdc-checkbox-selected-icon-color: #009688;
-  --mdc-checkbox-selected-pressed-icon-color: #00796b;
+.chip.active {
+  border-color: #0ea5e9;
+  color: #0ea5e9;
+  background-color: #f0f9ff;
 }
 
-mat-dialog-actions.mat-mdc-dialog-actions {
+/* =========================================
+   CHECKBOXES PERSONALIZADOS
+========================================= */
+.checkbox-group {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.custom-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #344054;
+  cursor: pointer;
+}
+
+.custom-checkbox input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #0ea5e9; /* Color del check activo */
+}
+
+/* =========================================
+   FOOTER Y BOTONES
+========================================= */
+.dialog-footer {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+  background-color: white;
+  border-top: 1px solid #eaecf0;
+  gap: 16px;
+}
+
+/* Botón "Ir al editor completo" */
+.btn-editor-completo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 40px;
+  background-color: #f0f9ff;
+  color: #0ea5e9;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-editor-completo mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  margin-left: 4px;
+}
+
+.btn-editor-completo:hover {
+  background-color: #e0f2fe;
+}
+
+/* Contenedor de Cancelar / Guardar */
+.footer-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  min-height: 68px;
-  padding: 12px 24px !important;
-  border-top: 1px solid #dfe3eb;
-  background: #f7f8fc;
+  gap: 12px;
 }
 
-mat-dialog-actions .mat-mdc-button,
-mat-dialog-actions .mat-mdc-unelevated-button {
-  min-width: 104px;
-  min-height: 40px;
-  border-radius: 6px;
-  font-weight: 700;
+.btn-cancelar {
+  border-color: #d0d5dd !important;
+  color: #344054 !important;
+  font-weight: 500 !important;
+  height: 40px !important;
+  border-radius: 6px !important;
 }
 
-mat-dialog-actions .mat-mdc-button {
-  border: 1px solid #cfd5e1;
-  background: #ffffff;
-  color: #475467;
+.btn-guardar {
+  background-color: #f3f4f6 !important; /* Color inactivo simulado de la imagen */
+  color: #98a2b3 !important;
+  font-weight: 500 !important;
+  height: 40px !important;
+  border-radius: 6px !important;
 }
 
-mat-dialog-actions .mat-mdc-unelevated-button {
-  background: #3f51b5;
-  color: #ffffff;
+/* Cambiaremos el botón de guardar a activo si el producto tiene nombre */
+.btn-guardar:not([disabled]):hover {
+  background-color: #0d4794 !important; /* Tu color verde azulado original */
+  color: white !important;
 }
 
-mat-dialog-actions .mat-mdc-unelevated-button:hover {
-  background: #303f9f;
-}
-
-@media (max-width: 700px) {
-  [mat-dialog-title] {
-    min-height: 64px;
-    padding: 12px 18px !important;
-    font-size: 18px !important;
-  }
-
-  [mat-dialog-title]::before {
-    width: 34px;
-    height: 34px;
-    flex-basis: 34px;
-    font-size: 20px;
-  }
-
-  mat-dialog-content.mat-mdc-dialog-content {
-    max-height: 70vh;
-    padding: 18px !important;
-  }
-
-  .formulario {
+/* =========================================
+   MEDIA QUERIES (Móviles)
+========================================= */
+@media (max-width: 600px) {
+  .grid-layout {
     grid-template-columns: 1fr;
-    gap: 10px;
+  }
+  
+  .dialog-content {
+    padding: 16px;
   }
 
-  .checks {
-    align-items: flex-start;
+  .checkbox-group {
     flex-direction: column;
-    gap: 4px;
-  }
-
-  .elementos-section div[style*='display: flex'] {
-    align-items: stretch !important;
-    flex-direction: column;
-  }
-
-  .elementos-section button {
-    width: 100%;
-    border-radius: 6px !important;
-  }
-
-  mat-dialog-actions.mat-mdc-dialog-actions {
-    padding: 12px 18px !important;
-  }
-
-  mat-dialog-actions .mat-mdc-button,
-  mat-dialog-actions .mat-mdc-unelevated-button {
-    flex: 1;
-    min-width: 0;
+    gap: 12px;
   }
 }
