@@ -13,34 +13,104 @@
 .container {
     height: 100%;
     width: 100%;
+    background: transparent;
 }
 
+/* Sidebar Contenedor Base */
+.sidebar {
+    box-sizing: border-box;
+    height: 100%;
+    width: 64px;
+    transition: width .3s ease;
+    border-right: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    padding: 12px 8px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sidebar.expanded {
+    width: 300px;
+    padding: 12px;
+}
+
+/* Botón Toggle de Menú */
+.toggle-btn {
+    align-self: flex-start;
+    margin-bottom: 12px;
+    color: #64748b !important;
+    border-radius: 8px !important;
+}
+
+.toggle-btn:hover {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+}
+
+/* Items del Menú Principal */
 .menu-item {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    /* gap: 16px; */
-    /* padding: 12px 16px; */
-}
-.menu-item.expanded {
     width: 100%;
+    height: 44px;
+    border-radius: 8px !important;
+    color: #475569 !important;
+    padding: 0 10px !important;
+    transition: all 0.2s ease;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.menu-item:hover {
+    background-color: #f0f9ff !important;
+    color: #0284c7 !important;
+}
+
+.menu-item:hover mat-icon {
+    color: #0284c7 !important;
+}
+
+/* Estado Activo Menú Principal */
+.menu-item.active {
+    background-color: #0284c7 !important; 
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.menu-item mat-icon {
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    margin-right: 16px;
+    color: #64748b;
+    transition: color 0.2s ease;
+}
+
+.menu-item.active mat-icon {
+    color: #ffffff !important;
 }
 
 .menu-item span {
     white-space: nowrap;
     font-size: 15px;
     font-weight: 500;
-}
-.menu-item mat-icon {
-    width: 24px;
-    min-width: 24px;
-    margin-right: 16px;
+    color: inherit;
 }
 
+.spacer {
+    flex: 1 1 auto;
+}
+
+/* Submenús */
 .submenu {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     max-height: 0;
     opacity: 0;
     overflow: hidden;
@@ -49,43 +119,60 @@
 }
 
 .submenu.open {
-    max-height: 100%;
+    max-height: 500px;
     opacity: 1;
     padding-top: 4px;
     padding-bottom: 4px;
 }
 
+/* Items del Submenú */
 .submenu-item {
     display: flex;
     align-items: center;
-    width: 100%;
     justify-content: flex-start;
-    transition: transform .2s ease, opacity .2s ease;
+    width: 100%;
+    height: 40px;
+    border-radius: 6px !important;
+    color: #64748b !important;
+    padding: 0 10px !important;
+    transition: all 0.2s ease;
+    background: transparent;
+    border: none;
+    cursor: pointer;
 }
 
-.submenu-item.expanded {
-    width: 100%;
+.submenu-item:hover {
+    background-color: #f0f9ff !important;
+    color: #0284c7 !important;
+}
+
+.submenu-item:hover mat-icon {
+    color: #0284c7 !important;
+}
+
+/* Submenú Activo (ej. Productos) */
+.submenu-item.active {
+    background-color: #e0f2fe !important; 
+    color: #0284c7 !important; 
+    font-weight: 600;
+}
+
+.submenu-item mat-icon {
+    width: 20px;
+    min-width: 20px;
+    height: 20px;
+    font-size: 20px;
+    margin-right: 12px;
+    color: #94a3b8;
+    transition: color 0.2s ease;
+}
+
+.submenu-item.active mat-icon {
+    color: #0284c7 !important;
 }
 
 .submenu-item span {
     white-space: nowrap;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
 }
-
-.sidebar {
-    box-sizing: border-box;
-    overflow: hidden;
-    height: 100%;
-    width: 64px;
-    transition: width .3s ease;
-    border: 1px solid rgba(85, 85, 85, 0.2);
-    border-radius: 0px;
-    padding: 10px;
-    overflow-y: auto;
-}
-
-.sidebar.expanded {
-    width: 300px;
-}
-

@@ -3,60 +3,47 @@ import { SHARED_IMPORTS } from '../../shared/imports/shared-imports';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [...SHARED_IMPORTS,],
+  imports: [...SHARED_IMPORTS],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
 export class Dashboard {
-  summaryCards = [
-    {
-      title: 'Productos en catalogo',
-      value: '6',
-      detail: '95 unidades totales',
-      icon: 'inventory',
-      tone: 'primary',
-    },
-    {
-      title: 'Stock crítico',
-      value: '2',
-      detail: 'Requieren atención inmediata',
-      icon: 'warning',
-      tone: 'warn',
-    },
-    {
-      title: 'Valor de inventario',
-      value: '$23,540',
-      detail: 'Precio costo',
-      icon: 'attach_money',
-      tone: 'accent',
-    },
-    {
-      title: 'Kits activos',
-      value: '9',
-      detail: '7 referencias',
-      icon: 'sell',
-      tone: 'primary',
-    },
+  // Tarjeta 1: Stock de Productos
+  stockProducts = [
+    { name: 'Cinta métrica Truper', stock: 50, img: 'assets/cinta.png' },
+    { name: 'Aerosol WD-40', stock: 594, img: 'assets/wd40.png' },
+    { name: 'Plafón Redondo', stock: 199, img: 'assets/plafon.png' },
+    { name: 'Martillo Truper', stock: 7, img: 'assets/martillo.png' },
   ];
 
-  quickActions = [
-    { label: 'Agregar producto', icon: 'add_box', route: '/dashboard/products/add' },
-    { label: 'Entrada inventario', icon: 'move_to_inbox', route: '/dashboard/inventory/add' },
-    { label: 'Reporte diario', icon: 'bar_chart', route: '/dashboard/reports/daily' },
+  // Tarjeta 2: Entradas y Salidas del Día
+  recentMovements = [
+    { name: 'Cinta métrica Truper', type: 'Entrada', qty: '+20' },
+    { name: 'Martillo Truper', type: 'Salida', qty: '-5' },
   ];
 
-  topProducts = [
-    { name: 'Cable HDMI 2m', stock: 42, sales: 128, status: 'Disponible' },
-    { name: 'Mouse inalambrico', stock: 18, sales: 94, status: 'Medio' },
-    { name: 'Teclado mecanico', stock: 7, sales: 76, status: 'Bajo' },
-    { name: 'Adaptador USB-C', stock: 5, sales: 61, status: 'Bajo' },
+  // Tarjeta 3: Resumen / Salud del Inventario (en vez de solo finanzas)
+  inventoryValue = {
+    totalValue: '$98,076',
+    totalCost: '$44,933',
+    margin: '$53,143',
+  };
+
+  // Tarjeta 4: Productos por Reponer (Con días reales y alertas por color)
+  reorderProducts = [
+    { name: 'Martillo Truper', duration: '3 días', tone: 'danger', img: 'assets/martillo.png' },
+    { name: 'Cinta métrica Truper', duration: '12 días', tone: 'warning', img: 'assets/cinta.png' },
+    { name: 'Plafón Redondo', duration: '28 días', tone: 'normal', img: 'assets/plafon.png' },
+    { name: 'Aerosol WD-40', duration: '+1 mes', tone: 'normal', img: 'assets/wd40.png' },
   ];
 
-  activities = [
-    { title: 'Venta cerrada', detail: 'Ticket #1028 - $1,240', icon: 'check_circle' },
-    { title: 'Stock actualizado', detail: 'Cable HDMI 2m +20 piezas', icon: 'sync' },
-    { title: 'Producto por agotarse', detail: 'Adaptador USB-C queda en 5', icon: 'warning' },
+  // Tarjeta 5: Productos Pronto a Expirar
+  expiringProducts: Array<{ name: string; expiration: string; img: string }> = [
+    // Déjalo vacío [] para probar el estado "Sin alertas"
+  ];
+
+  // Tarjeta 6: Productos Apartados
+  reservedProducts: Array<{ name: string; reservedQty: number; img: string }> = [
+    // Déjalo vacío [] para probar el estado "Sin apartados"
   ];
 }
-
-
