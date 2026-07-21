@@ -16,7 +16,6 @@
     background: transparent;
 }
 
-/* Sidebar Contenedor Base */
 .sidebar {
     box-sizing: border-box;
     height: 100%;
@@ -37,7 +36,6 @@
     padding: 12px;
 }
 
-/* Botón Toggle de Menú */
 .toggle-btn {
     align-self: flex-start;
     margin-bottom: 12px;
@@ -50,7 +48,6 @@
     color: #0f172a !important;
 }
 
-/* Items del Menú Principal */
 .menu-item {
     display: flex;
     align-items: center;
@@ -75,7 +72,6 @@
     color: #0284c7 !important;
 }
 
-/* Estado Activo Menú Principal */
 .menu-item.active {
     background-color: #0284c7 !important; 
     color: #ffffff !important;
@@ -106,7 +102,6 @@
     flex: 1 1 auto;
 }
 
-/* Submenús */
 .submenu {
     display: flex;
     flex-direction: column;
@@ -125,7 +120,6 @@
     padding-bottom: 4px;
 }
 
-/* Items del Submenú */
 .submenu-item {
     display: flex;
     align-items: center;
@@ -150,7 +144,6 @@
     color: #0284c7 !important;
 }
 
-/* Submenú Activo (ej. Productos) */
 .submenu-item.active {
     background-color: #e0f2fe !important; 
     color: #0284c7 !important; 

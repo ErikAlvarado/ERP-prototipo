@@ -12,14 +12,12 @@
   color: #111827;
 }
 
-/* Grilla principal 3 x 2 */
 .grid-container {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
 }
 
-/* Tarjeta base */
 .dashboard-card {
   background: #ffffff;
   border-radius: 10px;
@@ -63,7 +61,6 @@
   flex-direction: column;
 }
 
-/* Encabezados de mini-tabla */
 .table-header {
   display: flex;
   justify-content: space-between;
@@ -79,7 +76,6 @@
   text-align: right;
 }
 
-/* Filas de elementos */
 .list-container {
   display: flex;
   flex-direction: column;
@@ -118,7 +114,6 @@
   height: 18px;
 }
 
-/* Chips de duración y estados */
 .chip-duration {
   padding: 4px 10px;
   border-radius: 12px;
@@ -138,7 +133,6 @@
   color: #d97706;
 }
 
-/* Empty States */
 .empty-state {
   display: flex;
   align-items: center;
@@ -150,7 +144,6 @@
   padding: 40px 0;
 }
 
-/* Tarjeta de Métricas (Valor de Inventario) */
 .center-metrics {
   display: flex;
   flex-direction: column;
@@ -185,7 +178,6 @@
   color: #10b981;
 }
 
-/* Adaptabilidad a Pantallas Menores */
 @media (max-width: 1200px) {
   .grid-container {
     grid-template-columns: repeat(2, 1fr);

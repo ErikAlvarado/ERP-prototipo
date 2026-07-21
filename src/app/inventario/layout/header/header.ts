@@ -15,10 +15,8 @@ export class Header {
   private readonly autenticacion = inject(Autenticacion);
   readonly sesion = this.autenticacion.sesion;
   
-  // Signal para el título dinámico
   moduleTitle = signal<string>('Inventory');
 
-  // Diccionario de equivalencias de rutas a títulos
   private routeTitleMap: Record<string, string> = {
     '/dashboard': 'Dashboard',
     '/products': 'Catálogo / Productos',
@@ -38,7 +36,6 @@ export class Header {
   };
 
   constructor() {
-    // Escuchar cambios de navegación
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
@@ -47,7 +44,6 @@ export class Header {
   }
 
   private updateTitle(url: string) {
-    // Extraer la ruta base ignorando query params o IDs (ej. /products/123 -> /products)
     const baseUrl = '/' + url.split('/')[1]; 
     const title = this.routeTitleMap[baseUrl] || 'Inventory';
     this.moduleTitle.set(title);
