@@ -1,0 +1,85 @@
+<h2 mat-dialog-title>
+  {{ data.mode === 'add' ? 'Agregar Kit' : 'Actualizar Kit' }}
+</h2>
+
+<mat-dialog-content>
+  <div class="formulario">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre del Kit</mat-label>
+      <input matInput [(ngModel)]="kit.nombre">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Descripción</mat-label>
+      <textarea matInput [(ngModel)]="kit.descripcion" rows="2"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Costo ($)</mat-label>
+      <input matInput type="number" [(ngModel)]="kit.costo" (input)="calcularMargen()">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Precio de Venta ($)</mat-label>
+      <input matInput type="number" [(ngModel)]="kit.precio" (input)="calcularMargen()">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Margen (%)</mat-label>
+      <input matInput type="number" [(ngModel)]="kit.margen" readonly>
+      <mat-hint>Calculado automáticamente</mat-hint>
+    </mat-form-field>
+    <div class="elementos-section" style="margin-top: 15px; margin-bottom: 15px;">
+      <h3 style="margin-bottom: 8px;">Productos incluidos en el Kit</h3>
+      
+      <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <mat-form-field appearance="outline" style="flex: 1; margin-bottom: 0;">
+          <mat-label>Seleccionar producto</mat-label>
+          <mat-select [(ngModel)]="nuevoProductoSeleccionado">
+            @for (prod of misProductos; track prod.id_producto) {
+              <mat-option [value]="prod">{{ prod.nombre_producto }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        
+        <button mat-mini-fab color="primary" type="button" (click)="agregarElemento()" style="margin-top: 4px;">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+
+      <mat-chip-set>
+        @for (item of kit.elementos; track item.id_producto; let i = $index) {
+          <mat-chip>
+            {{ item.nombre_producto }}
+            <button matChipRemove (click)="removerElemento(i)">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip>
+        } @empty {
+          <p style="color: gray; font-size: 13px;">No hay productos agregados a este kit aún.</p>
+        }
+      </mat-chip-set>
+    </div>
+
+    <div class="checks">
+      <mat-checkbox [(ngModel)]="kit.estado">
+        Activo
+      </mat-checkbox>
+    </div>
+
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  <button mat-button mat-dialog-close>
+    Cancelar
+  </button>
+
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="guardar()">
+    {{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}
+  </button>
+</mat-dialog-actions>

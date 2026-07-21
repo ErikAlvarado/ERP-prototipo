@@ -1,0 +1,84 @@
+<h2 mat-dialog-title>
+  {{ data.mode === 'add' ? 'Agregar ajuste' : 'Actualizar ajuste' }}
+</h2>
+
+<mat-dialog-content>
+
+  <div class="formulario">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha</mat-label>
+      <input matInput type="date" [(ngModel)]="ajuste.fecha">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Producto</mat-label>
+
+      <mat-select [(ngModel)]="ajuste.producto">
+
+        <mat-option value="Taladro Bosch">Taladro Bosch</mat-option>
+        <mat-option value="Cable eléctrico">Cable eléctrico</mat-option>
+        <mat-option value="Martillo">Martillo</mat-option>
+
+      </mat-select>
+
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Almacén</mat-label>
+
+      <mat-select [(ngModel)]="ajuste.almacen">
+
+        <mat-option value="Principal">Principal</mat-option>
+        <mat-option value="Norte">Norte</mat-option>
+        <mat-option value="Sur">Sur</mat-option>
+
+      </mat-select>
+
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Existencia anterior</mat-label>
+      <input matInput type="number" [(ngModel)]="ajuste.anterior">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Ajuste</mat-label>
+      <input matInput type="number" [(ngModel)]="ajuste.ajuste">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nueva existencia</mat-label>
+      <input matInput type="number" [(ngModel)]="ajuste.nueva">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Motivo</mat-label>
+      <textarea matInput [(ngModel)]="ajuste.motivo"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Usuario</mat-label>
+      <input matInput [(ngModel)]="ajuste.usuario">
+    </mat-form-field>
+
+  </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions>
+
+  <button mat-button mat-dialog-close>
+    Cancelar
+  </button>
+
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="guardar()">
+
+    {{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}
+
+  </button>
+
+</mat-dialog-actions>

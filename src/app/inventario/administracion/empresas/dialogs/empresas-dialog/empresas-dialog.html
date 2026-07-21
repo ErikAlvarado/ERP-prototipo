@@ -1,0 +1,58 @@
+<h2 mat-dialog-title>
+  {{ data.mode === 'add' ? 'Agregar empresa' : 'Actualizar empresa' }}
+</h2>
+
+<mat-dialog-content>
+  <div class="formulario">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre Comercial</mat-label>
+      <input matInput [(ngModel)]="empresa.empresa">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Razón Social</mat-label>
+      <input matInput [(ngModel)]="empresa.razonSocial">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>RFC</mat-label>
+      <input matInput [(ngModel)]="empresa.rfc">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Dirección</mat-label>
+      <input matInput [(ngModel)]="empresa.direccion">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Teléfono</mat-label>
+      <input matInput [(ngModel)]="empresa.telefono">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Email de Contacto</mat-label>
+      <input matInput type="email" [(ngModel)]="empresa.email">
+    </mat-form-field>
+
+    <div class="checks">
+      <mat-checkbox [(ngModel)]="empresa.estado">
+        Activo
+      </mat-checkbox>
+    </div>
+
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  <button mat-button mat-dialog-close>
+    Cancelar
+  </button>
+
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="guardar()">
+    {{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}
+  </button>
+</mat-dialog-actions>

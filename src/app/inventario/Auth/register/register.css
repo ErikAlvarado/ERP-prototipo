@@ -1,0 +1,50 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 90vh;
+  padding: 28px;
+}
+
+.card {
+  width: 100%;
+  max-width: 550px;
+  padding: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+mat-card-header {
+  padding-bottom: 25px;
+  margin-top: -8px;
+}
+mat-card-title{
+  font: var(--mat-sys-headline-small);
+  letter-spacing: var(--mat-sys-headline-small-tracking);
+  color: var(--mat-sys-primary);
+  font-weight: 700;
+}
+
+.cont-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.apellidos-cont {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.apellidos-cont mat-form-field {
+  flex: 1;
+  width: 100%;
+}

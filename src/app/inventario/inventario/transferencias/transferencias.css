@@ -1,0 +1,22 @@
+
+.content-header {
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+/* Contenedor de filtros */
+.content-search {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.search-field {
+  flex: 2; 
+}
+
+.select-field {
+  flex: 1;
+}

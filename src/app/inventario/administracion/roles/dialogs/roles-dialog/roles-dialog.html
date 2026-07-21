@@ -1,0 +1,53 @@
+<h2 mat-dialog-title>
+  {{ data.mode === 'add' ? 'Agregar rol' : 'Actualizar rol' }}
+</h2>
+
+<mat-dialog-content>
+
+  <div class="formulario">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre del rol</mat-label>
+      <input
+        matInput
+        [(ngModel)]="rol.nombre">
+    </mat-form-field>
+
+
+    <mat-form-field appearance="outline">
+      <mat-label>Descripción</mat-label>
+
+      <textarea
+        matInput
+        rows="4"
+        [(ngModel)]="rol.descripcion">
+      </textarea>
+
+    </mat-form-field>
+
+
+  </div>
+
+</mat-dialog-content>
+
+
+<mat-dialog-actions>
+
+  <button
+    mat-button
+    mat-dialog-close>
+    Cancelar
+  </button>
+
+
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="guardar()">
+
+    {{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}
+
+  </button>
+
+
+</mat-dialog-actions>

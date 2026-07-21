@@ -1,0 +1,126 @@
+<section class="dashboard-shell">
+  <div class="dashboard-body">
+
+    <main class="dashboard-main">
+      <div class="page-heading">
+        <div>
+          <h1>Dashboard</h1>
+        </div>
+
+        <div class="heading-actions">
+        </div>
+      </div>
+
+      <section class="summary-grid" aria-label="Resumen del negocio">
+        @for (card of summaryCards; track card.title) {
+          <mat-card class="summary-card" [class]="card.tone" appearance="outlined">
+            <mat-card-content>
+              <div class="summary-icon">
+                <mat-icon>{{ card.icon }}</mat-icon>
+              </div>
+              <div>
+                <p>{{ card.title }}</p>
+                <strong>{{ card.value }}</strong>
+                <span>{{ card.detail }}</span>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+      </section>
+
+      <section class="content-grid">
+        <mat-card class="panel sales-panel" appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Rendimiento de ventas</mat-card-title>
+            <mat-card-subtitle>Meta diaria: $30,000</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="goal-row">
+              <span>Avance</span>
+              <strong>82%</strong>
+            </div>
+            <mat-progress-bar mode="determinate" value="82"></mat-progress-bar>
+
+            <div class="metric-strip">
+              <div>
+                <span>Ticket promedio</span>
+                <strong>$647</strong>
+              </div>
+              <div>
+                <span>Ventas canceladas</span>
+                <strong>2</strong>
+              </div>
+              <div>
+                <span>Pagos mixtos</span>
+                <strong>11</strong>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="panel actions-panel" appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Acciones rapidas</mat-card-title>
+            <mat-card-subtitle>Operaciones frecuentes</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content class="quick-actions">
+            @for (action of quickActions; track action.label) {
+              <button mat-stroked-button type="button">
+                <mat-icon>{{ action.icon }}</mat-icon>
+                {{ action.label }}
+              </button>
+            }
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="panel products-panel" appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Productos destacados</mat-card-title>
+            <mat-card-subtitle>Mayor movimiento del dia</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="products-table">
+              <div class="table-row table-head">
+                <span>Producto</span>
+                <span>Stock</span>
+                <span>Ventas</span>
+                <span>Estado</span>
+              </div>
+
+              @for (product of topProducts; track product.name) {
+                <div class="table-row">
+                  <span>{{ product.name }}</span>
+                  <span>{{ product.stock }}</span>
+                  <span>{{ product.sales }}</span>
+                  <span>
+                    <mat-chip [class.low-stock]="product.status === 'Bajo'">
+                      {{ product.status }}
+                    </mat-chip>
+                  </span>
+                </div>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="panel activity-panel" appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Actividad reciente</mat-card-title>
+            <mat-card-subtitle>Ultimos movimientos</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            @for (activity of activities; track activity.title) {
+              <div class="activity-item">
+                <mat-icon>{{ activity.icon }}</mat-icon>
+                <div>
+                  <strong>{{ activity.title }}</strong>
+                  <span>{{ activity.detail }}</span>
+                </div>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+      </section>
+    </main>
+  </div>
+</section>

@@ -1,0 +1,46 @@
+<h2 mat-dialog-title>
+  {{ data.mode === 'add' ? 'Agregar unidad' : 'Actualizar unidad' }}
+</h2>
+
+<mat-dialog-content>
+
+  <div class="formulario">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre</mat-label>
+      <input matInput [(ngModel)]="unidad.nombre">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Abreviatura</mat-label>
+      <input matInput [(ngModel)]="unidad.abreviatura">
+    </mat-form-field>
+
+    <div class="checks">
+
+      <mat-checkbox [(ngModel)]="unidad.estado">
+        Activa
+      </mat-checkbox>
+
+    </div>
+
+  </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions>
+
+  <button mat-button mat-dialog-close>
+    Cancelar
+  </button>
+
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="guardar()">
+
+    {{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}
+
+  </button>
+
+</mat-dialog-actions>

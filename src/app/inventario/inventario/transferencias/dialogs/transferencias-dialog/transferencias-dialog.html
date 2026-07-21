@@ -1,0 +1,106 @@
+<h2 mat-dialog-title>
+  Nueva transferencia
+</h2>
+
+<mat-dialog-content>
+
+  <div class="formulario">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Folio</mat-label>
+      <input matInput [(ngModel)]="transferencia.folio">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Sucursal origen</mat-label>
+
+      <mat-select [(ngModel)]="transferencia.origen">
+
+        <mat-option value="Principal">Principal</mat-option>
+        <mat-option value="Norte">Norte</mat-option>
+        <mat-option value="Sur">Sur</mat-option>
+
+      </mat-select>
+
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Sucursal destino</mat-label>
+
+      <mat-select [(ngModel)]="transferencia.destino">
+
+        <mat-option value="Principal">Principal</mat-option>
+        <mat-option value="Norte">Norte</mat-option>
+        <mat-option value="Sur">Sur</mat-option>
+
+      </mat-select>
+
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Producto</mat-label>
+
+      <mat-select [(ngModel)]="transferencia.producto">
+
+        <mat-option value="Taladro Bosch">Taladro Bosch</mat-option>
+        <mat-option value="Cable eléctrico">Cable eléctrico</mat-option>
+        <mat-option value="Martillo">Martillo</mat-option>
+
+      </mat-select>
+
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Cantidad</mat-label>
+      <input
+        matInput
+        type="number"
+        [(ngModel)]="transferencia.cantidad">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha</mat-label>
+      <input
+        matInput
+        type="date"
+        [(ngModel)]="transferencia.fecha">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Usuario</mat-label>
+      <input matInput [(ngModel)]="transferencia.usuario">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Observaciones</mat-label>
+      <textarea
+        matInput
+        rows="3"
+        [(ngModel)]="transferencia.observaciones">
+      </textarea>
+    </mat-form-field>
+
+  </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions>
+
+  <button
+    mat-button
+    mat-dialog-close>
+
+    Cancelar
+
+  </button>
+
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="guardar()">
+
+    Guardar
+
+  </button>
+
+</mat-dialog-actions>

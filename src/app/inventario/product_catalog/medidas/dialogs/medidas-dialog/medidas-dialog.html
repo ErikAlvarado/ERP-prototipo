@@ -1,0 +1,47 @@
+<h2 mat-dialog-title>
+  {{ data.mode === 'add' ? 'Agregar medida' : 'Actualizar medida' }}
+</h2>
+
+<mat-dialog-content>
+
+  <div class="formulario">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Valor</mat-label>
+      <input matInput type="number" [(ngModel)]="medida.valor">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Unidad</mat-label>
+
+      <mat-select [(ngModel)]="medida.unidad">
+
+        <mat-option value="Pz">Pz</mat-option>
+        <mat-option value="M">M</mat-option>
+        <mat-option value="Kg">Kg</mat-option>
+        <mat-option value="L">L</mat-option>
+
+      </mat-select>
+
+    </mat-form-field>
+
+  </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions>
+
+  <button mat-button mat-dialog-close>
+    Cancelar
+  </button>
+
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="guardar()">
+
+    {{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}
+
+  </button>
+
+</mat-dialog-actions>

@@ -1,0 +1,37 @@
+
+    <div class="content-header">
+          <h1>Kits</h1>
+          <button mat-raised-button color="primary" (click)="abrirDialogo()">Agregar kit</button>
+    </div>
+
+    @for (kit of kits; track kit.nombre) {
+      <mat-card class="kit-card" appearance="outlined">
+        <mat-card-header class="card-header"> <div mat-card-avatar class="kit-icon"><mat-icon>local_offer</mat-icon></div>
+          <div class="title-section">
+            <mat-card-title>{{ kit.nombre }}</mat-card-title>
+            <mat-card-subtitle>{{ kit.descripcion }}</mat-card-subtitle>
+          </div>
+          <div class="price-section">
+            <div class="price">${{ kit.precio }}</div>
+            <div class="cost">Costo: ${{ kit.costo }}</div>
+            <div class="margin">Margen: {{ kit.margen }}%</div>
+          </div>
+        </mat-card-header>
+
+        <mat-card-content>
+          <mat-chip-set class="chip-container">
+            @for(item of kit.elementos; track item){
+              <mat-chip>{{ item }}</mat-chip>
+            }
+          </mat-chip-set>
+        </mat-card-content>
+
+        <mat-card-footer class="footer">
+          <span>Creado: {{ kit.fecha }}</span>
+          <app-status [active]="kit.estado"></app-status>
+          <span class="spacer"></span>
+            <button mat-icon-button (click)="editar(kit)"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button color="warn" (click)="eliminar(kit)"><mat-icon>delete</mat-icon></button>
+        </mat-card-footer>
+      </mat-card>
+    }

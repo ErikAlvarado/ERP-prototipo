@@ -1,0 +1,71 @@
+<mat-drawer-container 
+class="container"  
+[class.expanded]="expanded()">
+
+  <mat-drawer 
+  #drawer 
+  opened mode="side">
+
+  <div class="sidebar" [class.expanded]="expanded()">
+
+    <button matIconButton type="button" (click)="toggleMenu()" [attr.aria-expanded]="expanded()">
+        <mat-icon fontIcon="{{ expanded() ? 'arrow_back_ios_new' : 'menu' }}"></mat-icon>
+    </button>
+
+    @for(menu of menus(); track menu.title){
+
+    <button
+        matIconButton
+        type="button"
+        class="menu-item"
+        [routerLink]="menu.children ? null : menu.route"
+        [class.expanded]="expanded()"
+        (click)="onMenuClick($index)"
+        >
+
+        <mat-icon>{{ menu.icon }}</mat-icon>
+
+        @if(expanded()){
+            <span>{{ menu.title }}</span>
+
+            @if(menu.children){
+                <span class="spacer"></span>
+
+                <mat-icon>
+                    {{ menu.expanded ? 'expand_less' : 'expand_more' }}
+                </mat-icon>
+            }
+        }
+
+    </button>
+    @if(menu.children?.length){
+
+        <div class="submenu" [class.open]="expanded() && menu.expanded">
+
+            @for(child of menu.children ?? []; track child.title){
+
+                <button
+                matIconButton
+                type="button"
+                class="submenu-item"
+                [class.expanded]="expanded()"
+                routerLink="{{ child.route }}">
+
+                    <mat-icon>{{ child.icon }}</mat-icon>
+
+                    <span>{{ child.title }}</span>
+
+                </button>
+
+            }
+
+        </div>
+
+    }
+
+}
+    
+
+    </div>
+  </mat-drawer>
+</mat-drawer-container>

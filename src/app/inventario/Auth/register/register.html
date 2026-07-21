@@ -1,0 +1,85 @@
+<div class="container">
+    <mat-card class="card">
+        <mat-card-header>
+            <mat-card-title>Registro de sesion</mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+            <form class="cont-form">
+            <mat-form-field class="full-width">
+                <mat-label>Email</mat-label>
+                <input type="email" matInput [formControl]="emailFormControl" [errorStateMatcher]="matcher"
+                    placeholder="Ex. pat@example.com">
+                <mat-hint>Errors appear instantly!</mat-hint>
+                @if (emailFormControl.hasError('email') && !emailFormControl.hasError('required')) {
+                <mat-error>Please enter a valid email address</mat-error>
+                }
+                @if (emailFormControl.hasError('required')) {
+                <mat-error>Email is <strong>required</strong></mat-error>
+                }
+
+            </mat-form-field>
+
+            <mat-form-field class="full-width">
+                <mat-label>Nombres</mat-label>
+                <input matInput>
+            </mat-form-field>
+
+        <div class="apellidos-cont">
+            <mat-form-field>
+                <mat-label>Primer Apellido</mat-label>
+                <input matInput>
+            </mat-form-field>
+        
+
+            <mat-form-field >
+                <mat-label>Segundo Apellido</mat-label>
+                <input matInput class="right-align">
+            </mat-form-field>
+        </div>
+
+            <!-- ! AQUI EMPIEZA PASSWORD -->
+            <div class="container" class="full-width">
+            <mat-form-field class="full-width">
+                <mat-label>Contraseña</mat-label>
+                <input matInput [type]="hidePassword() ? 'password' : 'text'"/>
+                <button
+                matIconButton
+                matSuffix
+                type="button"
+                (click)="togglePasswordVisibility($event)"
+                [attr.aria-label]="hidePassword() ? 'Mostrar contraseña' : 'Ocultar contraseña'"
+                [attr.aria-pressed]="!hidePassword()"
+                >
+                <mat-icon>{{hidePassword() ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+            </mat-form-field>
+            </div>
+
+            <div class="container" class="full-width">
+            <mat-form-field class="full-width">
+                <mat-label>Confirmar contraseña</mat-label>
+                <input matInput [type]="hideConfirmPassword() ? 'password' : 'text'"/>
+                <button
+                matIconButton
+                matSuffix
+                type="button"
+                (click)="toggleConfirmPasswordVisibility($event)"
+                [attr.aria-label]="hideConfirmPassword() ? 'Mostrar contraseña' : 'Ocultar contraseña'"
+                [attr.aria-pressed]="!hideConfirmPassword()"
+                >
+                <mat-icon>{{hideConfirmPassword() ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+            </mat-form-field>
+            </div>
+            <!-- ! Aqui termina password -->
+
+            <button mat-raised-button color="primary" class="full-width">Registrarse</button>
+
+            <p>
+                ¿Ya tienes una cuenta? <a matButton="elevated" routerLink="/login" href="javascript():void(0)">Inicia sesión</a>
+            </p>
+            </form>
+        </mat-card-content>
+    </mat-card>
+</div>

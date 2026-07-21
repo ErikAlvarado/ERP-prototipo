@@ -1,0 +1,91 @@
+:host {
+    display: block;
+    flex: 0 0 64px;
+    width: 64px;
+    transition: flex-basis .3s ease, width .3s ease;
+}
+
+:host.expanded {
+    flex-basis: 300px;
+    width: 300px;
+}
+
+.container {
+    height: 100%;
+    width: 100%;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    /* gap: 16px; */
+    /* padding: 12px 16px; */
+}
+.menu-item.expanded {
+    width: 100%;
+}
+
+.menu-item span {
+    white-space: nowrap;
+    font-size: 15px;
+    font-weight: 500;
+}
+.menu-item mat-icon {
+    width: 24px;
+    min-width: 24px;
+    margin-right: 16px;
+}
+
+.submenu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding-left: 24px;
+    transition: max-height .3s ease, opacity .3s ease, padding .3s ease;
+}
+
+.submenu.open {
+    max-height: 100%;
+    opacity: 1;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.submenu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: flex-start;
+    transition: transform .2s ease, opacity .2s ease;
+}
+
+.submenu-item.expanded {
+    width: 100%;
+}
+
+.submenu-item span {
+    white-space: nowrap;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.sidebar {
+    box-sizing: border-box;
+    overflow: hidden;
+    height: 100%;
+    width: 64px;
+    transition: width .3s ease;
+    border: 1px solid rgba(85, 85, 85, 0.2);
+    border-radius: 0px;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.sidebar.expanded {
+    width: 300px;
+}
+
