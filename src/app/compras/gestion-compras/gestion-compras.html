@@ -141,8 +141,23 @@
 
           <ng-container matColumnDef="estado">
             <th mat-header-cell *matHeaderCellDef>Estado</th>
-            <td mat-cell *matCellDef="let orden">
-              <app-estado [texto]="orden.estado" />
+            <td mat-cell *matCellDef="let orden" class="celda-estado">
+              @if (orden.estado === 'Cancelado') {
+                <app-estado [texto]="orden.estado" />
+              } @else {
+                <mat-form-field appearance="outline" class="selector-estado" subscriptSizing="dynamic">
+                  <mat-select
+                    [value]="orden.estado"
+                    [attr.aria-label]="'Cambiar estado de ' + orden.folio"
+                    (selectionChange)="actualizarEstadoOrden(orden.folio, $event.value)"
+                  >
+                    <mat-select-trigger><app-estado [texto]="orden.estado" /></mat-select-trigger>
+                    @for (estado of estadosOrden; track estado) {
+                      <mat-option [value]="estado"><app-estado [texto]="estado" /></mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
             </td>
           </ng-container>
 

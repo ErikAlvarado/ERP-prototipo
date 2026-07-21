@@ -66,6 +66,12 @@ export class GestionCompras {
   readonly busquedaOrdenes = signal('');
   readonly periodoOrdenes = signal<PeriodoConsulta>('mes');
   readonly periodos = PERIODOS_CONSULTA;
+  readonly estadosOrden: ReadonlyArray<OrdenCompra['estado']> = [
+    'Pendiente',
+    'Activo',
+    'En transito',
+    'Completado',
+  ];
 
   readonly columnasSolicitudes = [
     'folio',
@@ -238,6 +244,16 @@ export class GestionCompras {
     );
     this.persistencia.guardar(this.claveOrdenes, this.ordenes());
     this.avisos.open(`Orden ${folio} cancelada`, 'Cerrar', { duration: 3500 });
+  }
+
+  actualizarEstadoOrden(folio: string, estado: OrdenCompra['estado']): void {
+    this.ordenes.update((ordenes) =>
+      ordenes.map((orden) => orden.folio === folio
+        ? { ...orden, estado, cancelable: estado !== 'Completado' && estado !== 'Cancelado' }
+        : orden),
+    );
+    this.persistencia.guardar(this.claveOrdenes, this.ordenes());
+    this.avisos.open(`Estado de ${folio} actualizado a ${estado}`, 'Cerrar', { duration: 3000 });
   }
 
   readonly cotizaciones: readonly Cotizacion[] = [
