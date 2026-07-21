@@ -1,0 +1,73 @@
+:host { display: block; color: #0f172a; }
+.solo-lector { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.tabs-consultas { margin-top: 26px; }
+.tabs-consultas ::ng-deep .mat-mdc-tab-header { width: fit-content; padding: 5px; border: 0; border-radius: 12px; background: #f1f3f6; }
+.tabs-consultas ::ng-deep .mat-mdc-tab { min-width: 110px; height: 36px; padding: 0 18px; border-radius: 9px; }
+.tabs-consultas ::ng-deep .mdc-tab--active { background: #fff; box-shadow: 0 1px 3px #0f172a24; }
+.tabs-consultas ::ng-deep .mdc-tab-indicator { display: none; }
+.tabs-consultas ::ng-deep .mat-mdc-tab-body-content { overflow: visible; }
+.panel { border-color: #e4e7ec; border-radius: 4px; background: #fff; box-shadow: none; }
+.seguimiento-grid { display: grid; grid-template-columns: 350px minmax(0, 1fr); gap: 20px; margin-top: 30px; }
+.pedidos-panel mat-card-header { padding: 17px 20px 13px; border-bottom: 1px solid #f1f5f9; }
+.pedidos-panel mat-card-title { color: #64748b; font-size: 14px; font-weight: 800; letter-spacing: .06em; }
+.pedidos-panel mat-card-content { padding: 0; }
+.pedido-item { display: block; width: 100%; padding: 17px 20px; border: 0; border-bottom: 1px solid #f1f5f9; color: inherit; background: #fff; text-align: left; cursor: pointer; }
+.pedido-item.seleccionado { background: #f8fafc; }
+.pedido-item:hover { background: #f8fafc; }
+.pedido-item:focus-visible { position: relative; z-index: 1; outline: 2px solid #2563eb; outline-offset: -2px; }
+.pedido-linea { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pedido-linea strong, .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-weight: 800; }
+.proveedor, .fecha-lista { display: block; margin-top: 5px; color: #526078; font-size: 14px; }
+.fecha-lista { color: #c0c8d5; font-family: monospace; font-size: 12px; }
+.estado { min-height: 26px; border-radius: 5px !important; font-family: monospace; font-size: 12px; }
+.estado.completado { --mdc-chip-label-text-color:#0369a1; --mdc-chip-elevated-container-color:#eff8ff; --mdc-chip-outline-color:#a5d8ff; }
+.estado.en-tránsito { --mdc-chip-label-text-color:#5b21ff; --mdc-chip-elevated-container-color:#f5f1ff; --mdc-chip-outline-color:#d8ccff; }
+.estado.activo { --mdc-chip-label-text-color:#047857; --mdc-chip-elevated-container-color:#ecfdf5; --mdc-chip-outline-color:#86efc0; }
+.estado.pendiente { --mdc-chip-label-text-color:#1d4ed8; --mdc-chip-elevated-container-color:#eff6ff; --mdc-chip-outline-color:#93c5fd; }
+.estado.cancelado { --mdc-chip-label-text-color:#dc2626; --mdc-chip-elevated-container-color:#fff1f2; --mdc-chip-outline-color:#fecaca; }
+.detalle-panel { padding: 28px 30px 24px; }
+.detalle-panel mat-card-header { justify-content: space-between; padding: 0 0 22px; }
+.detalle-panel mat-card-title { font-size: 21px; }
+.detalle-panel mat-card-subtitle { margin-top: 5px; color: #98a2b6; font-size: 16px; }
+.orden-resumen { display: flex; flex-direction: column; align-items: end; gap: 8px; }
+.orden-resumen strong { font-family: monospace; font-size: 23px; }
+.linea-tiempo { padding: 0 !important; }
+.etapa { display: grid; grid-template-columns: 44px 1fr auto; align-items: start; min-height: 85px; column-gap: 16px; }
+.marcador { position: relative; height: 100%; }
+.circulo { position: relative; z-index: 1; display: grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; color: white; background: #172442; }
+.circulo mat-icon { width: 19px; height: 19px; font-size: 19px; }
+.marcador i { position: absolute; top: 40px; bottom: 0; left: 19px; width: 2px; background: #cbd5e1; }
+.etapa-nombre { padding-top: 10px; font-size: 16px; }
+.etapa-fecha { padding-top: 10px; color: #c6ceda; font-family: monospace; }
+.etapa.pendiente .circulo { border: 2px solid #e2e8f0; background: white; }
+.etapa.pendiente .circulo span { width: 9px; height: 9px; border-radius: 50%; background: #e2e8f0; }
+.etapa.pendiente .etapa-nombre, .etapa.pendiente .etapa-fecha { color: #d3d9e3; }
+.historial-panel { margin-top: 28px; overflow: hidden; }
+.historial-panel mat-card-header { align-items: center; justify-content: space-between; min-height: 58px; padding: 0 22px; border-bottom: 1px solid #f1f5f9; }
+.historial-panel mat-card-title { font-size: 15px; font-weight: 700; }
+.exportar { color: #94a3b8 !important; }
+.exportar mat-icon, .recomprar mat-icon { width: 15px; height: 15px; font-size: 15px; }
+.tabla-scroll { overflow-x: auto; padding: 0 !important; }
+table { min-width: 980px; width: 100%; }
+th.mat-mdc-header-cell { color: #475467; font-size: 12px; font-weight: 600; letter-spacing: 0; }
+td.mat-mdc-cell { height: 64px; color: #1f2937; border-color: #eaecf0; font-size: 14px; }
+.secundario, .fecha-tabla { color: #9aa4b8 !important; }
+.fecha-tabla { width: 90px; }
+.recomprar { color: #2563eb !important; font-size: 12px; }
+.reportes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 28px; }
+.generar-panel { min-height: 520px; padding: 20px 24px; }
+.generar-panel mat-card-header { padding: 0 0 18px; }
+.generar-panel mat-card-title, .resumen-periodo h2 { font-size: 15px; font-weight: 700; }
+.generar-panel mat-card-content { padding: 0; }
+.generar-panel label { display: block; margin: 0 0 6px; color: #334155; font-size: 12px; font-weight: 700; }
+.generar-panel mat-form-field { width: 100%; margin-bottom: 6px; --mat-form-field-container-height: 46px; --mat-form-field-container-vertical-padding: 11px; }
+.fechas { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.generar { width: 100%; height: 45px; border-radius: 10px; background: #172442 !important; color: white !important; font-weight: 700; }
+.resumen-periodo h2 { margin: 2px 0 14px; }
+.resumen-periodo { display: flex; flex-direction: column; }
+.resumen-card { display: flex; min-height: 105px; justify-content: center; padding: 18px; margin-bottom: 12px; }
+.resumen-card span { color: #98a2b6; font-size: 11px; font-weight: 800; letter-spacing: .07em; }
+.resumen-card strong { margin: 5px 0 3px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 23px; line-height: 1.1; }
+.resumen-card small { color: #a4adbe; font-size: 12px; }
+@media (max-width: 900px) { .seguimiento-grid, .reportes-grid { grid-template-columns: 1fr; } .pedidos-panel { max-height: 400px; overflow-y: auto; } }
+@media (max-width: 600px) { .pagina-consultas { padding-inline: 14px; } .tabs-consultas ::ng-deep .mat-mdc-tab { min-width: 92px; padding: 0 10px; } .detalle-panel { padding: 20px 16px; } .etapa { grid-template-columns: 40px 1fr; gap: 10px; } .etapa-fecha { grid-column: 2; padding-top: 0; font-size: 11px; } .fechas { grid-template-columns: 1fr; } }
