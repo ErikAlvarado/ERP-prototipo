@@ -1,15 +1,8 @@
-import { Component, signal } from '@angular/core';
-import { FormControl, FormGroupDirective, NgForm, Validators } from '@angular/forms';
-import { ErrorStateMatcher } from '@angular/material/core';
+import { Component, inject, signal } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
-
-/** Error when invalid control is dirty, touched, or submitted. */
-export class MyErrorStateMatcher implements ErrorStateMatcher {
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const isSubmitted = form && form.submitted;
-    return !!(control && control.invalid && (control.dirty || control.touched || isSubmitted));
-  }
-}
+import { Autenticacion } from '../../../shared/services/autenticacion';
 
 @Component({
   selector: 'app-login',
@@ -18,12 +11,31 @@ export class MyErrorStateMatcher implements ErrorStateMatcher {
   styleUrl: './login.css',
 })
 export class Login {
-  emailFormControl = new FormControl('', [Validators.required, Validators.email]);
-  matcher = new MyErrorStateMatcher();
+  private readonly formularios = inject(FormBuilder);
+  private readonly autenticacion = inject(Autenticacion);
+  private readonly router = inject(Router);
+  readonly hide = signal(true);
+  readonly error = signal('');
+  readonly formulario = this.formularios.nonNullable.group({
+    correo: ['admin@zyro.mx', [Validators.required, Validators.email]],
+    password: ['admin123', Validators.required],
+  });
 
-  hide = signal(true);
-  clickEvent(event: MouseEvent) {
-    this.hide.set(!this.hide());
+  iniciarSesion(): void {
+    if (this.formulario.invalid) {
+      this.formulario.markAllAsTouched();
+      return;
+    }
+    const { correo, password } = this.formulario.getRawValue();
+    if (!this.autenticacion.iniciarSesion(correo, password)) {
+      this.error.set('El correo o la contrasena no son correctos.');
+      return;
+    }
+    void this.router.navigate(['/dashboard']);
+  }
+
+  clickEvent(event: MouseEvent): void {
+    this.hide.update((valor) => !valor);
     event.stopPropagation();
   }
 }

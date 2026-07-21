@@ -11,7 +11,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTreeModule } from '@angular/material/tree';
 import { MatCardModule } from '@angular/material/card';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatGridListModule } from '@angular/material/grid-list';
 import {MatSelectModule} from '@angular/material/select';
@@ -40,6 +40,7 @@ export const SHARED_IMPORTS = [
   MatProgressBarModule,
   ReactiveFormsModule,
   RouterLink,
+  RouterLinkActive,
   MatTooltipModule,
   MatTreeModule,
   MatSelectModule,

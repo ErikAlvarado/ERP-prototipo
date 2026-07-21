@@ -1,14 +1,8 @@
-import { Component, signal} from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
-import {FormControl,FormGroupDirective,NgForm,Validators,FormsModule,ReactiveFormsModule,} from '@angular/forms';
-import { ErrorStateMatcher } from '@angular/material/core';
-
-export class MyErrorStateMatcher implements ErrorStateMatcher {
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const isSubmitted = form && form.submitted;
-    return !!(control && control.invalid && (control.dirty || control.touched || isSubmitted));
-  }
-}
+import { Autenticacion } from '../../../shared/services/autenticacion';
 
 @Component({
   selector: 'app-register',
@@ -17,19 +11,43 @@ export class MyErrorStateMatcher implements ErrorStateMatcher {
   styleUrl: './register.css',
 })
 export class Register {
-  emailFormControl = new FormControl('', [Validators.required, Validators.email]);
-  matcher = new MyErrorStateMatcher();
+  private readonly formularios = inject(FormBuilder);
+  private readonly autenticacion = inject(Autenticacion);
+  private readonly router = inject(Router);
+  readonly hidePassword = signal(true);
+  readonly hideConfirmPassword = signal(true);
+  readonly error = signal('');
+  readonly formulario = this.formularios.nonNullable.group({
+    nombre: ['', [Validators.required, Validators.minLength(3)]],
+    correo: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
+    confirmacion: ['', Validators.required],
+  });
 
-  hidePassword = signal(true);
-  hideConfirmPassword = signal(true);
+  registrar(): void {
+    if (this.formulario.invalid) {
+      this.formulario.markAllAsTouched();
+      return;
+    }
+    const datos = this.formulario.getRawValue();
+    if (datos.password !== datos.confirmacion) {
+      this.error.set('Las contrasenas no coinciden.');
+      return;
+    }
+    if (!this.autenticacion.registrar(datos.nombre.trim(), datos.correo.trim(), datos.password)) {
+      this.error.set('Ya existe una cuenta con ese correo.');
+      return;
+    }
+    void this.router.navigate(['/login']);
+  }
 
-  togglePasswordVisibility(event: MouseEvent) {
-    this.hidePassword.set(!this.hidePassword());
+  togglePasswordVisibility(event: MouseEvent): void {
+    this.hidePassword.update((valor) => !valor);
     event.stopPropagation();
   }
 
-  toggleConfirmPasswordVisibility(event: MouseEvent) {
-    this.hideConfirmPassword.set(!this.hideConfirmPassword());
+  toggleConfirmPasswordVisibility(event: MouseEvent): void {
+    this.hideConfirmPassword.update((valor) => !valor);
     event.stopPropagation();
   }
 }

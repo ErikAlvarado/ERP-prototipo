@@ -33,6 +33,7 @@
 .proveedor { margin: 0; overflow: hidden; color: #9aa3bb; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .separador { height: 1px; margin: 13px 0; background: #eef0f3; }
 .datos-producto { display: flex; align-items: flex-end; justify-content: space-between; margin-top: auto; }
+.comprar { width: 100%; margin-top: 14px; border-color: #c7d7fe; color: #1d4ed8; }
 .precio, .stock { display: flex; flex-direction: column; }
 .precio strong { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 19px; line-height: 1.2; }
 .precio span, .stock span { color: #a5adbf; font-size: 11px; }

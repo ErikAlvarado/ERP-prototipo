@@ -1,3 +1,4 @@
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -83,6 +84,7 @@ export const IMPORTACIONES_MATERIAL_COMPRAS = [
 ];
 
 export const IMPORTACIONES_MATERIAL_CONSULTAS = [
+  FormsModule,
   MatButtonModule,
   MatCardModule,
   MatChipsModule,

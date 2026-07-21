@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import {
   IMPORTACIONES_MATERIAL_PROVEEDORES,
   MatDialog,
@@ -15,6 +16,7 @@ import {
   CompraProveedorDialog,
   CompraRegistrada,
 } from './dialogs/compra-proveedor-dialog/compra-proveedor-dialog';
+import { PersistenciaLocal } from '../../shared/services/persistencia-local';
 
 interface Proveedor {
   inicial: string;
@@ -49,6 +51,9 @@ interface Proveedor {
 export class Proveedores {
   private readonly dialogo = inject(MatDialog);
   private readonly notificacion = inject(MatSnackBar);
+  private readonly persistencia = inject(PersistenciaLocal);
+  private readonly route = inject(ActivatedRoute);
+  private readonly clavePersistencia = 'erp.proveedores';
   readonly terminoBusqueda = signal('');
 
   readonly proveedores = signal<Proveedor[]>([
@@ -152,6 +157,12 @@ export class Proveedores {
     );
   });
 
+  constructor() {
+    this.proveedores.set(this.persistencia.leer(this.clavePersistencia, this.proveedores()));
+    const busqueda = this.route.snapshot.queryParamMap.get('buscar');
+    if (busqueda) this.terminoBusqueda.set(busqueda);
+  }
+
   buscar(valor: string): void {
     this.terminoBusqueda.set(valor);
   }
@@ -196,6 +207,8 @@ export class Proveedores {
       },
       ...proveedores,
     ]);
+    this.persistencia.guardar(this.clavePersistencia, this.proveedores());
+    this.notificacion.open('Proveedor registrado', 'Cerrar', { duration: 2500 });
   }
 
   realizarCompra(proveedor: Proveedor): void {
@@ -228,5 +241,6 @@ export class Proveedores {
           : proveedor,
       ),
     );
+    this.persistencia.guardar(this.clavePersistencia, this.proveedores());
   }
 }

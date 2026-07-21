@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
+import { Autenticacion } from '../../../shared/services/autenticacion';
 
 @Component({
   selector: 'app-header',
@@ -10,12 +11,17 @@ import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
   styleUrl: './header.css',
 })
 export class Header {
-  private router = inject(Router);
+  private readonly router = inject(Router);
+  private readonly autenticacion = inject(Autenticacion);
+  readonly sesion = this.autenticacion.sesion;
   
-  // Signal para el título dinámico
   moduleTitle = signal<string>('Inventory');
 
+<<<<<<< HEAD
   // Diccionario completo de equivalencias de rutas a títulos
+=======
+  // Relaciona la ruta principal con el contexto que se muestra en el encabezado.
+>>>>>>> a499e175a86113468533dadfcdf49397412ddca8
   private routeTitleMap: Record<string, string> = {
     // Dashboard principal
     '/dashboard': 'Dashboard',
@@ -50,7 +56,6 @@ export class Header {
   };
 
   constructor() {
-    // Escuchar cambios de navegación
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
@@ -59,6 +64,7 @@ export class Header {
   }
 
   private updateTitle(url: string) {
+<<<<<<< HEAD
     // Limpia la URL removiendo query params (?) y fragmentos (#)
     const cleanUrl = url.split('?')[0].split('#')[0];
 
@@ -89,5 +95,19 @@ export class Header {
 
     // Título por defecto si no encuentra coincidencia
     this.moduleTitle.set('Inventory');
+=======
+    const baseUrl = '/' + url.split('/')[1]; 
+    const title = this.routeTitleMap[baseUrl] || 'Inventory';
+    this.moduleTitle.set(title);
+>>>>>>> a499e175a86113468533dadfcdf49397412ddca8
+  }
+
+  iniciales(nombre: string): string {
+    return nombre.split(/\s+/).slice(0, 2).map((parte) => parte[0]).join('').toUpperCase();
+  }
+
+  cerrarSesion(): void {
+    this.autenticacion.cerrarSesion();
+    void this.router.navigate(['/login']);
   }
 }
