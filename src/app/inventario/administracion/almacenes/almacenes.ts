@@ -42,7 +42,7 @@ export class Almacenes implements OnInit, AfterViewInit {
     this.obs = this.dataSource.connect();
     this.datos.cargar().subscribe(estado => {
       this.empresas = estado.empresas;
-      this.dataSource.data = estado.almacenes;
+      this.dataSource.data = [...estado.almacenes].sort((a, b) => Number(a.id) - Number(b.id));
       this.applyFilter();
     });
   }

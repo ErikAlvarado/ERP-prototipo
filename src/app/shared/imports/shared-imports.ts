@@ -19,6 +19,7 @@ import {MatTableModule} from '@angular/material/table';
 import {MatExpansionModule} from '@angular/material/expansion';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule, } from '@angular/material/dialog';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 import { Status } from '../components/status/status';
 
@@ -48,6 +49,7 @@ export const SHARED_IMPORTS = [
   MatExpansionModule,
   MatCheckboxModule,
   MatDialogModule,
+  MatAutocompleteModule,
 
 
 

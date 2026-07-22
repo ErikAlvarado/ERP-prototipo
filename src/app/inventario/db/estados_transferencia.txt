@@ -4,3 +4,13 @@ id_estado_transferencia|nombre
 3|En tránsito
 4|Recibida
 5|Cancelada
+6|Programada
+7|Preparando
+8|Empacada
+9|Lista para envío
+10|En ruta
+11|Demorada
+12|Recepción parcial
+13|En revisión
+14|Devuelta
+15|Cerrada

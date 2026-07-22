@@ -45,7 +45,7 @@ export class AjustesDialog {
       motivo: actual?.motivo || '',
       usuarioId: actual?.usuarioId ?? data.usuarios[0]?.id ?? null,
     };
-    if (actual) this.existenciaAnterior = actual.anterior;
+    if (actual) this.existenciaAnterior = actual.existencia;
     else this.actualizarExistencia();
   }
 

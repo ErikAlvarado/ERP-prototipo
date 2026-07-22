@@ -10,6 +10,7 @@ export interface ProductoKitOption {
   nombre: string;
   costo: number;
   precio: number;
+  stock: number;
 }
 
 export interface KitDialogData {
@@ -36,9 +37,24 @@ export class KitsDialog {
     @Inject(MAT_DIALOG_DATA) public data: KitDialogData,
   ) {
     this.kit = data.kit
-      ? { nombre: data.kit.nombre, descripcion: data.kit.descripcion, precio: data.kit.precio, costo: data.kit.costo, margen: data.kit.margen, elementos: data.kit.elementos.map(elemento => ({ ...elemento })), estado: data.kit.estado }
+      ? {
+          nombre: data.kit.nombre,
+          descripcion: data.kit.descripcion,
+          precio: data.kit.precio,
+          costo: data.kit.costo,
+          margen: data.kit.margen,
+          elementos: data.kit.elementos.map(elemento => ({
+            ...elemento,
+            stock: data.productos.find(producto => producto.idProducto === elemento.idProducto)?.stock || 0,
+          })),
+          estado: data.kit.estado,
+        }
       : { nombre: '', descripcion: '', precio: 0, costo: 0, margen: 0, elementos: [], estado: true };
     this.calcularTotales();
+  }
+
+  get stockSeleccionado(): number {
+    return this.data.productos.find(producto => producto.idProducto === this.nuevoProductoId)?.stock || 0;
   }
 
   agregarElemento(): void {
@@ -46,6 +62,12 @@ export class KitsDialog {
     const cantidad = Math.max(1, Math.floor(Number(this.cantidadNueva) || 1));
     if (!producto) { this.error = 'Selecciona un producto para agregar.'; return; }
     const existente = this.kit.elementos.find(elemento => elemento.idProducto === producto.idProducto);
+    const cantidadTotal = (existente?.cantidad || 0) + cantidad;
+    if (producto.stock <= 0) { this.error = `${producto.nombre} no tiene existencias disponibles.`; return; }
+    if (cantidadTotal > producto.stock) {
+      this.error = `Solo hay ${producto.stock} unidades disponibles de ${producto.nombre}.`;
+      return;
+    }
     if (existente) existente.cantidad += cantidad;
     else this.kit.elementos.push({ ...producto, cantidad });
     this.nuevoProductoId = '';
@@ -56,6 +78,16 @@ export class KitsDialog {
 
   actualizarCantidad(elemento: KitElemento): void {
     elemento.cantidad = Math.max(1, Math.floor(Number(elemento.cantidad) || 1));
+    const producto = this.data.productos.find(actual => actual.idProducto === elemento.idProducto);
+    if (!producto || elemento.cantidad > producto.stock) {
+      const disponibles = producto?.stock || 0;
+      elemento.cantidad = Math.max(1, disponibles);
+      this.error = disponibles
+        ? `Solo hay ${disponibles} unidades disponibles de ${elemento.nombre}.`
+        : `${elemento.nombre} no tiene existencias disponibles.`;
+    } else {
+      this.error = '';
+    }
     this.calcularTotales();
   }
 
@@ -77,6 +109,15 @@ export class KitsDialog {
     if (!nombre) { this.error = 'El nombre del kit es obligatorio.'; return; }
     if (this.data.nombres.some(actual => actual.trim().toLowerCase() === nombre.toLowerCase())) { this.error = 'Ya existe un kit con ese nombre.'; return; }
     if (!this.kit.elementos.length) { this.error = 'Agrega al menos un producto al kit.'; return; }
+    const sinStock = this.kit.elementos.find(elemento => {
+      const stock = this.data.productos.find(producto => producto.idProducto === elemento.idProducto)?.stock || 0;
+      return elemento.cantidad > stock;
+    });
+    if (sinStock) {
+      const stock = this.data.productos.find(producto => producto.idProducto === sinStock.idProducto)?.stock || 0;
+      this.error = `No puedes usar ${sinStock.cantidad} unidades de ${sinStock.nombre}; solo hay ${stock} disponibles.`;
+      return;
+    }
     if (!Number.isFinite(precio) || precio < 0) { this.error = 'El precio no puede ser negativo.'; return; }
     this.dialogRef.close({ ...this.kit, nombre, descripcion: this.kit.descripcion.trim(), precio });
   }

@@ -51,7 +51,7 @@ export class Usuarios implements OnInit, AfterViewInit {
       this.empresas = estado.empresas;
       this.roles = estado.roles;
       this.almacenes = estado.almacenes;
-      this.dataSource.data = estado.usuarios;
+      this.dataSource.data = [...estado.usuarios].sort((a, b) => Number(a.id) - Number(b.id));
       this.applyFilter();
     });
   }

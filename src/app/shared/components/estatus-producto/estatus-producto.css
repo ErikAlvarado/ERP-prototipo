@@ -1,0 +1,40 @@
+:host {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.estatus-producto {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 26px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.estatus-producto.vigente {
+  color: #079455;
+  background: #dcfae6;
+}
+
+.estatus-producto.eliminado {
+  color: #b42318;
+  background: #fee4e2;
+}
+
+.estatus-producto.descontinuado {
+  color: #b54708;
+  background: #fef0c7;
+}

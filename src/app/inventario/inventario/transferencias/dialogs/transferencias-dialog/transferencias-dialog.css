@@ -1,5 +1,4 @@
-.blue-header { color: white; background: #0d4794; }
-.blue-header h2 { color: white; margin-top: 3px; }.blue-header span { font-size: 12px; opacity: .82; }.blue-header button { color: white; }
+.dialog-header span { display: block; margin-bottom: 3px; color: #1570ef; font-size: 12px; font-weight: 600; }
 .textarea { height: auto; min-height: 82px; padding: 10px 12px; resize: vertical; }
 .transfer-summary { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
 .transfer-summary div { padding: 14px; border: 1px solid #dbeafe; border-radius: 8px; background: white; }
@@ -10,3 +9,10 @@
 .form-error mat-icon, .form-warning mat-icon { font-size: 18px; width: 18px; height: 18px; }
 mat-dialog-actions.dialog-footer { display: block; }
 @media (max-width: 600px) { .transfer-summary { grid-template-columns: 1fr; } }
+.product-picker { display: grid; grid-template-columns: minmax(0, 1fr) 130px auto; align-items: start; gap: 12px; }
+.product-picker button { min-height: 48px; }
+.transfer-lines { display: grid; gap: 10px; }
+.transfer-line { display: grid; grid-template-columns: minmax(0, 1fr) 130px 44px; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #e4e7ec; border-radius: 10px; background: #f8fafc; }
+.transfer-line > div { display: grid; gap: 4px; }.transfer-line strong { color: #0f2742; }.transfer-line span { color: #667085; font-size: 12px; }
+.transfer-line mat-form-field { margin-bottom: -20px; }
+@media (max-width: 700px) { .product-picker, .transfer-line { grid-template-columns: 1fr; }.transfer-line > button { justify-self: end; } }

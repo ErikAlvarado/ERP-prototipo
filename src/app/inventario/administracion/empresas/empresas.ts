@@ -35,7 +35,7 @@ export class Empresas implements OnInit, AfterViewInit {
     };
     this.obs = this.dataSource.connect();
     this.datos.cargar().subscribe(estado => {
-      this.dataSource.data = estado.empresas;
+      this.dataSource.data = [...estado.empresas].sort((a, b) => Number(a.id) - Number(b.id));
       this.applyFilter();
     });
   }

@@ -133,6 +133,16 @@
   color: #d97706;
 }
 
+.badge-in {
+  color: #059669;
+  font-weight: 600;
+}
+
+.badge-out {
+  color: #dc2626;
+  font-weight: 600;
+}
+
 .empty-state {
   display: flex;
   align-items: center;

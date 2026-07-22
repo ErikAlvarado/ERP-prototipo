@@ -28,6 +28,7 @@ export class CatalogosPersistencia {
       if (!idsFuente.has(registro.id) && !eliminados.has(registro.id)) registros.push(registro);
     }
 
+    registros.sort((a, b) => this.numeroId(a.id) - this.numeroId(b.id));
     return { registros, eliminados: [...eliminados] };
   }
 
@@ -37,5 +38,12 @@ export class CatalogosPersistencia {
 
   nuevoId(): string {
     return `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  private numeroId(id: string): number {
+    const directo = Number(id);
+    if (Number.isFinite(directo)) return directo;
+    const numeros = id.match(/\d+/g);
+    return numeros?.length ? Number(numeros[numeros.length - 1]) : Number.MAX_SAFE_INTEGER;
   }
 }

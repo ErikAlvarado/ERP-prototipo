@@ -28,14 +28,14 @@ import {
 })
 export class Kardex implements OnInit, AfterViewInit {
   displayedColumns = [
-    'id', 'fecha', 'producto', 'almacen', 'tipo', 'lote', 'caducidad', 'anterior',
-    'cantidad', 'nueva', 'costo', 'referencia', 'usuario', 'acciones',
+    'id', 'fecha', 'producto', 'almacen', 'tipo', 'lote', 'caducidad',
+    'cantidad', 'existencia', 'costo', 'referencia', 'usuario', 'acciones',
   ];
   dataSource = new MatTableDataSource<MovimientoInventario>([]);
   obs!: Observable<MovimientoInventario[]>;
   contexto?: ContextoInventario;
   currentSearch = '';
-  currentSort = 'Recientes';
+  currentSort = 'Más antiguos';
   filtros: Record<string, ValorFiltroInventario> = {
     productoId: '',
     almacenId: '',
@@ -177,9 +177,10 @@ export class Kardex implements OnInit, AfterViewInit {
   ordenar(orden: string): void {
     this.currentSort = orden;
     const datos = [...this.dataSource.data];
-    this.dataSource.data = orden === 'Producto A-Z'
-      ? datos.sort((a, b) => a.producto.localeCompare(b.producto))
-      : datos.sort((a, b) => b.fecha.localeCompare(a.fecha));
+    if (orden === 'Producto A-Z') datos.sort((a, b) => a.producto.localeCompare(b.producto));
+    else if (orden === 'Más recientes') datos.sort((a, b) => this.numeroId(b.id) - this.numeroId(a.id));
+    else datos.sort((a, b) => this.numeroId(a.id) - this.numeroId(b.id));
+    this.dataSource.data = datos;
     this.applyFilter();
   }
 
@@ -202,9 +203,8 @@ export class Kardex implements OnInit, AfterViewInit {
       item.tipo,
       item.lote,
       item.caducidad,
-      item.anterior,
       item.cantidad,
-      item.nueva,
+      item.existencia,
       item.costoUnitario,
       item.referencia,
       item.observaciones,
@@ -212,7 +212,7 @@ export class Kardex implements OnInit, AfterViewInit {
     ]);
     this.archivos.descargarCsv(
       `kardex-${new Date().toISOString().slice(0, 10)}.csv`,
-      ['ID', 'Fecha', 'SKU', 'Producto', 'Almacén', 'Tipo', 'Lote', 'Caducidad', 'Anterior', 'Cantidad', 'Nueva', 'Costo unitario', 'Referencia', 'Observaciones', 'Usuario'],
+      ['ID', 'Fecha', 'SKU', 'Producto', 'Almacén', 'Tipo', 'Lote', 'Caducidad', 'Cantidad', 'Existencia', 'Costo unitario', 'Referencia', 'Observaciones', 'Usuario'],
       filas,
     );
   }
@@ -220,5 +220,10 @@ export class Kardex implements OnInit, AfterViewInit {
   private tieneValor(value: string): boolean {
     const normalized = (value || '').trim();
     return !!normalized && normalized !== '—' && normalized !== '-';
+  }
+
+  private numeroId(id: string): number {
+    const numeros = id.match(/\d+/g);
+    return numeros?.length ? Number(numeros[numeros.length - 1]) : Number.MAX_SAFE_INTEGER;
   }
 }

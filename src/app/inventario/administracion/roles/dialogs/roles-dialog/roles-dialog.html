@@ -20,4 +20,4 @@
     <div class="checks"><mat-checkbox [(ngModel)]="rol.estado">Activo</mat-checkbox></div>
   </div>
 </mat-dialog-content>
-<mat-dialog-actions align="end"><button mat-button mat-dialog-close>Cancelar</button><button mat-flat-button color="primary" [disabled]="!puedeGuardar" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button></mat-dialog-actions>
+<mat-dialog-actions align="end"><button mat-raised-button mat-dialog-close>Cancelar</button><button mat-raised-button color="primary" [disabled]="!puedeGuardar" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button></mat-dialog-actions>

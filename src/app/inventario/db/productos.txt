@@ -1,4 +1,14 @@
 id_producto|id_empresa|sku|codigo_barras|nombre_producto|tipo|descripcion|id_marca|id_categoria|id_unidad|estatus|ubicacion_default|en_punto_venta|en_catalogo_linea|requiere_receta|usar_existencias|usar_lotes_caducidades|clave_sat|fecha_creacion|fecha_actualizacion
+64|1|KIT002|750999000112|Kit Home Office|Kit|Monitor, teclado y mouse para oficina en casa|1|2|1|Vigente|Pasillo 3|1|1|0|1|0|43211700|2026-07-13|2026-07-13
+65|1|KIT003|750999000113|Kit Móvil Premium|Kit|Smartphone y audífonos inalámbricos|1|2|1|Vigente|Pasillo 3|1|1|0|1|0|43191500|2026-07-14|2026-07-14
+66|1|KIT004|750999000114|Kit Desayuno Completo|Kit|Cafetera, tostadora y hervidor eléctrico|4|5|1|Vigente|Pasillo 4|1|1|0|1|0|52141500|2026-07-15|2026-07-15
+67|1|KIT005|750999000115|Kit Deportivo Running|Kit|Camiseta, tenis y calcetines deportivos|3|4|1|Vigente|Pasillo 2|1|1|0|1|0|53102900|2026-07-16|2026-07-16
+68|1|KIT006|750999000116|Kit Botiquín Básico|Kit|Analgésicos y antihistamínico para el hogar|2|3|3|Vigente|Pasillo 1|1|0|0|1|1|42172001|2026-07-17|2026-07-17
+69|1|KIT007|750999000117|Kit Laptop Profesional|Kit|Laptop, mochila y memoria USB|1|2|1|Vigente|Pasillo 3|1|1|0|1|0|43211500|2026-07-18|2026-07-18
+70|1|KIT008|750999000118|Kit Limpieza Total|Kit|Limpiador, gel antibacterial y alcohol|7|8|5|Vigente|Pasillo 7|1|1|0|1|0|47131800|2026-07-19|2026-07-19
+71|1|KIT009|750999000119|Kit Gamer Inicial|Kit|Teclado mecánico, mouse y audífonos|1|2|1|Vigente|Pasillo 3|1|1|0|1|0|43211700|2026-07-20|2026-07-20
+72|1|KIT010|750999000120|Kit Cocina Familiar|Kit|Juego de sartenes y batería de cocina|4|5|1|Vigente|Pasillo 4|1|1|0|1|0|52151800|2026-07-21|2026-07-21
+73|1|KIT011|750999000121|Kit Escolar Digital|Kit|Cuadernos y memoria USB para estudiantes|5|6|7|Vigente|Pasillo 5|1|1|0|1|0|60121000|2026-07-22|2026-07-22
 53|1|KIT001|750999000111|Kit Oficina Esencial|Kit|Kit con teclado, mouse y memoria USB|1|2|1|Vigente|Pasillo 3|1|1|0|1|0|43211700|2024-01-28|2024-01-28
 1|1|SKU001|750123456789|Smartphone X|Físico|Teléfono inteligente 128GB|1|2|1|Vigente|Pasillo 3|1|1|0|1|0|43191501|2024-01-02|2024-01-02
 2|1|SKU002|750987654321|Paracetamol 500mg|Físico|Caja con 20 tabletas|2|3|3|Vigente|Pasillo 1|1|0|0|1|1|51142000|2024-01-02|2024-01-02
@@ -52,3 +62,13 @@ id_producto|id_empresa|sku|codigo_barras|nombre_producto|tipo|descripcion|id_mar
 50|1|SKU050|750212233445|Exprimidor de Cítricos|Físico|Exprimidor eléctrico de jugos con cono reversible|4|5|1|Vigente|Pasillo 4|1|1|0|1|0|52141506|2024-01-26|2024-01-26
 51|1|SKU051|750323344556|Wafflera Belga|Físico|Máquina para hacer waffles con placas antiadherentes|4|5|1|Vigente|Pasillo 4|1|1|0|1|0|52141518|2024-01-27|2024-01-27
 52|1|SKU052|750434455667|Estabilizador de Corriente|Físico|Regulador de voltaje 8 contactos contra pastilla|1|2|1|Vigente|Pasillo 3|1|1|0|1|0|39121011|2024-01-27|2024-01-27
+54|1|SKU054|750600000054|Cuaderno Profesional|Físico|Cuaderno cuadriculado de 100 hojas|5|6|7|Vigente|Pasillo 5|1|1|0|1|0|14111514|2026-07-01|2026-07-01
+55|1|SKU055|750600000055|Juego de Desarmadores|Físico|Juego de seis desarmadores de precisión|6|7|7|Vigente|Pasillo 6|1|1|0|1|0|27111701|2026-07-02|2026-07-02
+56|1|SKU056|750600000056|Limpiador Multiusos|Físico|Botella de limpiador biodegradable de 1 litro|7|8|5|Vigente|Pasillo 7|1|1|0|1|0|47131805|2026-07-03|2026-07-03
+57|1|SKU057|750600000057|Tijeras para Jardín|Físico|Tijeras de poda con mango ergonómico|8|9|7|Vigente|Pasillo 8|1|1|0|1|0|27112007|2026-07-04|2026-07-04
+58|1|SKU058|750600000058|Balón de Fútbol|Físico|Balón tamaño cinco para entrenamiento|9|10|7|Vigente|Pasillo 9|1|1|0|1|0|49161504|2026-07-05|2026-07-05
+59|1|SKU059|750600000059|Bloques de Construcción|Físico|Set de 120 bloques de colores|10|11|6|Vigente|Pasillo 10|1|1|0|1|0|60141006|2026-07-06|2026-07-06
+60|1|SKU060|750600000060|Alimento para Perro|Físico|Bolsa de alimento balanceado de 2 kilogramos|11|12|15|Vigente|Pasillo 11|1|1|0|1|1|10121800|2026-07-07|2026-07-07
+61|1|SKU061|750600000061|Aceite para Motor|Físico|Aceite multigrado para motor de 1 litro|12|13|5|Vigente|Pasillo 12|1|1|0|1|0|15121501|2026-07-08|2026-07-08
+62|1|SKU062|750600000062|Agua Mineral|Físico|Paquete con seis botellas de agua mineral|13|14|6|Vigente|Pasillo 13|1|1|0|1|1|50202310|2026-07-09|2026-07-09
+63|1|SKU063|750600000063|Galletas Integrales|Físico|Paquete de galletas integrales de 250 gramos|14|15|6|Vigente|Pasillo 14|1|1|0|1|1|50181905|2026-07-10|2026-07-10

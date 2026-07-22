@@ -36,7 +36,7 @@ export class ProductD {
   }
 
   get estatusDisponibles(): string[] {
-    return [...new Set([this.producto.estatus, 'Vigente', 'Inactivo'].filter(Boolean))];
+    return ['Vigente', 'Eliminado', 'Descontinuado'];
   }
 
   cambiarEmpresa(id: number): void {

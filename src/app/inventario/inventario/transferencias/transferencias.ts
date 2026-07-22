@@ -33,7 +33,7 @@ export class Transferencias implements OnInit, AfterViewInit {
   obs!: Observable<TransferenciaInventario[]>;
   contexto?: ContextoInventario;
   currentSearch = '';
-  currentSort = 'Recientes';
+  currentSort = 'Más antiguas';
   filtros: Record<string, ValorFiltroInventario> = {
     productoId: '',
     almacenId: '',
@@ -165,9 +165,10 @@ export class Transferencias implements OnInit, AfterViewInit {
   ordenar(orden: string): void {
     this.currentSort = orden;
     const datos = [...this.dataSource.data];
-    this.dataSource.data = orden === 'Folio'
-      ? datos.sort((a, b) => a.folio.localeCompare(b.folio))
-      : datos.sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id - a.id);
+    if (orden === 'Folio') datos.sort((a, b) => a.folio.localeCompare(b.folio));
+    else if (orden === 'Más recientes') datos.sort((a, b) => b.id - a.id);
+    else datos.sort((a, b) => a.id - b.id);
+    this.dataSource.data = datos;
     this.applyFilter();
   }
 
@@ -199,8 +200,12 @@ export class Transferencias implements OnInit, AfterViewInit {
       'Marcar recibida',
       () => {
         if (!this.contexto) return;
-        this.gestion.cambiarEstadoTransferencia(transferencia, 'Recibida', this.contexto);
-        this.cargar();
+        try {
+          this.gestion.cambiarEstadoTransferencia(transferencia, 'Recibida', this.contexto);
+          this.cargar();
+        } catch (error) {
+          this.mostrarError(error);
+        }
       },
     );
   }
@@ -243,7 +248,7 @@ export class Transferencias implements OnInit, AfterViewInit {
   private abrirDialogo(mode: 'add' | 'edit' | 'view', transferencia?: TransferenciaInventario): void {
     if (!this.contexto) return;
     this.dialog.open(TransferenciasDialog, {
-      width: '740px',
+      width: '720px',
       maxWidth: '96vw',
       panelClass: 'custom-dialog',
       data: {
@@ -254,11 +259,21 @@ export class Transferencias implements OnInit, AfterViewInit {
         usuarios: this.contexto.usuarios,
         estados: this.contexto.estadosTransferencia,
         existencias: this.contexto.existencias,
+        transferencias: this.contexto.transferencias,
       },
-    }).afterClosed().subscribe((resultado?: TransferenciaFormulario) => {
+    }).afterClosed().subscribe((resultado?: TransferenciaFormulario | TransferenciaFormulario[]) => {
       if (!resultado || mode === 'view' || !this.contexto) return;
-      this.gestion.guardarTransferencia(resultado, this.contexto, transferencia);
-      this.cargar();
+      try {
+        const formularios = Array.isArray(resultado) ? resultado : [resultado];
+        formularios.forEach((formulario, indice) => this.gestion.guardarTransferencia(
+          formulario,
+          this.contexto!,
+          indice === 0 ? transferencia : undefined,
+        ));
+        this.cargar();
+      } catch (error) {
+        this.mostrarError(error);
+      }
     });
   }
 
@@ -277,5 +292,10 @@ export class Transferencias implements OnInit, AfterViewInit {
       this.dataSource.data = contexto.transferencias;
       this.applyFilter();
     });
+  }
+
+  private mostrarError(error: unknown): void {
+    const mensaje = error instanceof Error ? error.message : 'No fue posible completar la operación de inventario.';
+    this.snackBar.open(mensaje, 'Cerrar', { duration: 6000 });
   }
 }
