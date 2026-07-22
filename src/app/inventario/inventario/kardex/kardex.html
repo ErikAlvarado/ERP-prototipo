@@ -3,7 +3,7 @@
     <h1>Kardex de inventario</h1>
     <p>Historial auditable de entradas, salidas, ajustes y transferencias.</p>
   </div>
-  <button mat-stroked-button color="primary" (click)="exportar()" [disabled]="!dataSource.filteredData.length">
+  <button mat-raised-button color="primary" (click)="exportar()" [disabled]="!dataSource.filteredData.length">
     <mat-icon>download</mat-icon>Exportar CSV
   </button>
 </div>
@@ -43,7 +43,8 @@
       <mat-icon>sort</mat-icon>{{ currentSort }}
     </button>
     <mat-menu #ordenMenu="matMenu">
-      <button mat-menu-item (click)="ordenar('Recientes')">Más recientes</button>
+      <button mat-menu-item (click)="ordenar('Más antiguos')">Más antiguos</button>
+      <button mat-menu-item (click)="ordenar('Más recientes')">Más recientes</button>
       <button mat-menu-item (click)="ordenar('Producto A-Z')">Producto A-Z</button>
     </mat-menu>
   </div>
@@ -79,17 +80,13 @@
       <th mat-header-cell *matHeaderCellDef>Caducidad</th>
       <td mat-cell *matCellDef="let e">{{ e.caducidad }}</td>
     </ng-container>
-    <ng-container matColumnDef="anterior">
-      <th mat-header-cell *matHeaderCellDef>Anterior</th>
-      <td mat-cell *matCellDef="let e">{{ e.anterior }}</td>
-    </ng-container>
     <ng-container matColumnDef="cantidad">
       <th mat-header-cell *matHeaderCellDef>Cantidad</th>
       <td mat-cell *matCellDef="let e"><strong class="quantity" [class.positive]="e.cantidad > 0" [class.negative]="e.cantidad < 0">{{ e.cantidad > 0 ? '+' : '' }}{{ e.cantidad }}</strong></td>
     </ng-container>
-    <ng-container matColumnDef="nueva">
-      <th mat-header-cell *matHeaderCellDef>Nueva</th>
-      <td mat-cell *matCellDef="let e"><strong>{{ e.nueva }}</strong></td>
+    <ng-container matColumnDef="existencia">
+      <th mat-header-cell *matHeaderCellDef>Existencia</th>
+      <td mat-cell *matCellDef="let e"><strong>{{ e.existencia }}</strong></td>
     </ng-container>
     <ng-container matColumnDef="costo">
       <th mat-header-cell *matHeaderCellDef>Costo unitario</th>
@@ -124,7 +121,7 @@
         <div><strong>Fecha:</strong> {{ e.fecha | date:'dd/MM/yyyy HH:mm' }}</div>
         <div><strong>Almacén:</strong> {{ e.almacen }}</div>
         <div><strong>Movimiento:</strong> {{ e.tipo }}</div>
-        <div><strong>Stock:</strong> {{ e.anterior }} → {{ e.nueva }}</div>
+        <div><strong>Existencia:</strong> {{ e.existencia }}</div>
         <div><strong>Lote:</strong> {{ e.lote }}</div>
         <div><strong>Caducidad:</strong> {{ e.caducidad }}</div>
         <div class="wide"><strong>Referencia:</strong> {{ e.referencia }}</div>

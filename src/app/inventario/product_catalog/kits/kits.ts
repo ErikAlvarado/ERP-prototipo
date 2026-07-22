@@ -18,6 +18,7 @@ export interface KitElemento {
   cantidad: number;
   costo: number;
   precio: number;
+  stock: number;
 }
 
 export interface Kit {
@@ -72,7 +73,8 @@ export class Kits implements OnInit, AfterViewInit {
       productos: this.db.leer<{ id_producto: string; sku: string; nombre_producto: string; estatus: string }>('productos.txt'),
       precios: this.db.leer<{ id_producto: string; precio_costo: string; precio_venta: string; fecha_inicio: string }>('productos_precios.txt'),
       componentes: this.db.leer<{ id_producto_kit: string; id_producto_hijo: string; cantidad: string }>('componentes_kit.txt'),
-    }).subscribe(({ productos, precios, componentes }) => {
+      inventario: this.db.leer<{ id_producto: string; stock: string }>('inventario.txt'),
+    }).subscribe(({ productos, precios, componentes, inventario }) => {
       this.productos = productos
         .filter(producto => !producto.estatus || producto.estatus.toLowerCase() === 'vigente')
         .map(producto => {
@@ -85,6 +87,9 @@ export class Kits implements OnInit, AfterViewInit {
             nombre: producto.nombre_producto,
             costo: Number(precio?.precio_costo) || 0,
             precio: Number(precio?.precio_venta) || 0,
+            stock: inventario
+              .filter(registro => registro.id_producto === producto.id_producto)
+              .reduce((total, registro) => total + (Number(registro.stock) || 0), 0),
           };
         });
 
@@ -111,6 +116,7 @@ export class Kits implements OnInit, AfterViewInit {
                   nombre: 'Producto no encontrado',
                   costo: 0,
                   precio: 0,
+                  stock: 0,
                 }),
                 cantidad: Number(componente.cantidad) || 1,
               })),

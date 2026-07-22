@@ -1,108 +1,22 @@
 <div class="dialog-container">
-  <div class="dialog-header">
-    <div>
-      <h2>Filtrar productos</h2>
-      <p>Usa los campos propios de productos.txt.</p>
-    </div>
-    <button mat-icon-button (click)="cerrar()" aria-label="Cerrar filtros"><mat-icon>close</mat-icon></button>
-  </div>
-
-  <div class="dialog-content">
-    <section class="filter-section">
-      <h3>Clasificación</h3>
-      <div class="fields-grid">
-        <label class="field-control">
-          <span>Empresa</span>
-          <select class="custom-select" [(ngModel)]="filtros.empresa">
-            <option value="">Todas las empresas</option>
-            @for (empresa of data.empresas; track empresa) { <option [value]="empresa">{{ empresa }}</option> }
-          </select>
-        </label>
-        <label class="field-control">
-          <span>Tipo</span>
-          <select class="custom-select" [(ngModel)]="filtros.tipo">
-            <option value="">Todos los tipos</option>
-            @for (tipo of data.tipos; track tipo) { <option [value]="tipo">{{ tipo }}</option> }
-          </select>
-        </label>
-        <label class="field-control">
-          <span>Categoría</span>
-          <select class="custom-select" [(ngModel)]="filtros.categoria">
-            <option value="">Todas las categorías</option>
-            @for (categoria of data.categorias; track categoria) { <option [value]="categoria">{{ categoria }}</option> }
-          </select>
-        </label>
-        <label class="field-control">
-          <span>Marca</span>
-          <select class="custom-select" [(ngModel)]="filtros.marca">
-            <option value="">Todas las marcas</option>
-            @for (marca of data.marcas; track marca) { <option [value]="marca">{{ marca }}</option> }
-          </select>
-        </label>
-        <label class="field-control">
-          <span>Unidad</span>
-          <select class="custom-select" [(ngModel)]="filtros.unidad">
-            <option value="">Todas las unidades</option>
-            @for (unidad of data.unidades; track unidad) { <option [value]="unidad">{{ unidad }}</option> }
-          </select>
-        </label>
-        <label class="field-control">
-          <span>Ubicación predeterminada</span>
-          <input class="custom-input" [(ngModel)]="filtros.ubicacion" placeholder="Ej. Pasillo 3">
-        </label>
-        <label class="field-control full-field">
-          <span>Clave SAT</span>
-          <input class="custom-input" [(ngModel)]="filtros.claveSat" placeholder="Buscar por clave SAT">
-        </label>
-      </div>
+  <div class="dialog-header"><div><h2>Filtrar productos</h2><p>Combina clasificación, ubicación y disponibilidad.</p></div><button mat-icon-button (click)="cerrar()" aria-label="Cerrar filtros"><mat-icon>close</mat-icon></button></div>
+  <mat-dialog-content class="dialog-content">
+    <section class="filter-section"><h3>Clasificación</h3><div class="fields-grid">
+      <mat-form-field appearance="outline"><mat-label>Empresa</mat-label><mat-select [(ngModel)]="filtros.empresa"><mat-option value="">Todas</mat-option>@for (empresa of data.empresas; track empresa) { <mat-option [value]="empresa">{{ empresa }}</mat-option> }</mat-select></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Tipo</mat-label><mat-select [(ngModel)]="filtros.tipo"><mat-option value="">Todos</mat-option>@for (tipo of data.tipos; track tipo) { <mat-option [value]="tipo">{{ tipo }}</mat-option> }</mat-select></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Categoría</mat-label><mat-select [(ngModel)]="filtros.categoria"><mat-option value="">Todas</mat-option>@for (categoria of data.categorias; track categoria) { <mat-option [value]="categoria">{{ categoria }}</mat-option> }</mat-select></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Marca</mat-label><mat-select [(ngModel)]="filtros.marca"><mat-option value="">Todas</mat-option>@for (marca of data.marcas; track marca) { <mat-option [value]="marca">{{ marca }}</mat-option> }</mat-select></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Unidad</mat-label><mat-select [(ngModel)]="filtros.unidad"><mat-option value="">Todas</mat-option>@for (unidad of data.unidades; track unidad) { <mat-option [value]="unidad">{{ unidad }}</mat-option> }</mat-select></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Ubicación</mat-label><input matInput [(ngModel)]="filtros.ubicacion"><mat-icon matPrefix>location_on</mat-icon></mat-form-field>
+      <mat-form-field appearance="outline" class="full-field"><mat-label>Clave SAT</mat-label><input matInput [(ngModel)]="filtros.claveSat"><mat-icon matPrefix>receipt_long</mat-icon></mat-form-field>
+    </div></section>
+    <section class="filter-section"><h3>Disponibilidad y control</h3>
+      <div class="toggle-row"><span>Código de barras</span><mat-chip-set><mat-chip-option [selected]="filtros.conCodigo === true" (click)="seleccionar('conCodigo', true)">Con código</mat-chip-option><mat-chip-option [selected]="filtros.conCodigo === false" (click)="seleccionar('conCodigo', false)">Sin código</mat-chip-option></mat-chip-set></div>
+      <div class="toggle-row"><span>Estatus</span><mat-chip-set><mat-chip-option [selected]="filtros.estado === true" (click)="seleccionar('estado', true)">Vigente</mat-chip-option><mat-chip-option [selected]="filtros.estado === false" (click)="seleccionar('estado', false)">No vigente</mat-chip-option></mat-chip-set></div>
+      <div class="toggle-row"><span>Canales</span><mat-chip-set><mat-chip-option [selected]="filtros.pos === true" (click)="seleccionar('pos', true)">En punto de venta</mat-chip-option><mat-chip-option [selected]="filtros.pos === false" (click)="seleccionar('pos', false)">Fuera de punto de venta</mat-chip-option><mat-chip-option [selected]="filtros.visible === true" (click)="seleccionar('visible', true)">En catálogo</mat-chip-option><mat-chip-option [selected]="filtros.visible === false" (click)="seleccionar('visible', false)">Fuera de catálogo</mat-chip-option></mat-chip-set></div>
+      <div class="toggle-row"><span>Inventario</span><mat-chip-set><mat-chip-option [selected]="filtros.usarExistencias === true" (click)="seleccionar('usarExistencias', true)">Controla existencias</mat-chip-option><mat-chip-option [selected]="filtros.usarExistencias === false" (click)="seleccionar('usarExistencias', false)">Sin control</mat-chip-option><mat-chip-option [selected]="filtros.usarLotes === true" (click)="seleccionar('usarLotes', true)">Usa lotes</mat-chip-option><mat-chip-option [selected]="filtros.usarLotes === false" (click)="seleccionar('usarLotes', false)">Sin lotes</mat-chip-option></mat-chip-set></div>
+      <div class="toggle-row"><span>Receta</span><mat-chip-set><mat-chip-option [selected]="filtros.requiereReceta === true" (click)="seleccionar('requiereReceta', true)">Requiere receta</mat-chip-option><mat-chip-option [selected]="filtros.requiereReceta === false" (click)="seleccionar('requiereReceta', false)">No requiere</mat-chip-option></mat-chip-set></div>
     </section>
-
-    <section class="filter-section">
-      <h3>Disponibilidad y control</h3>
-      <div class="toggle-row">
-        <span>Código de barras</span>
-        <div class="chips-group">
-          <button class="chip" [class.active]="filtros.conCodigo === true" (click)="seleccionar('conCodigo', true)">Con código</button>
-          <button class="chip" [class.active]="filtros.conCodigo === false" (click)="seleccionar('conCodigo', false)">Sin código</button>
-        </div>
-      </div>
-      <div class="toggle-row">
-        <span>Estatus</span>
-        <div class="chips-group">
-          <button class="chip" [class.active]="filtros.estado === true" (click)="seleccionar('estado', true)">Vigente</button>
-          <button class="chip" [class.active]="filtros.estado === false" (click)="seleccionar('estado', false)">No vigente</button>
-        </div>
-      </div>
-      <div class="toggle-row">
-        <span>Canales</span>
-        <div class="chips-group">
-          <button class="chip" [class.active]="filtros.pos === true" (click)="seleccionar('pos', true)">En punto de venta</button>
-          <button class="chip" [class.active]="filtros.pos === false" (click)="seleccionar('pos', false)">Fuera de punto de venta</button>
-          <button class="chip" [class.active]="filtros.visible === true" (click)="seleccionar('visible', true)">En catálogo</button>
-          <button class="chip" [class.active]="filtros.visible === false" (click)="seleccionar('visible', false)">Fuera de catálogo</button>
-        </div>
-      </div>
-      <div class="toggle-row">
-        <span>Inventario</span>
-        <div class="chips-group">
-          <button class="chip" [class.active]="filtros.usarExistencias === true" (click)="seleccionar('usarExistencias', true)">Controla existencias</button>
-          <button class="chip" [class.active]="filtros.usarExistencias === false" (click)="seleccionar('usarExistencias', false)">Sin control de existencias</button>
-          <button class="chip" [class.active]="filtros.usarLotes === true" (click)="seleccionar('usarLotes', true)">Usa lotes</button>
-          <button class="chip" [class.active]="filtros.usarLotes === false" (click)="seleccionar('usarLotes', false)">Sin lotes</button>
-        </div>
-      </div>
-      <div class="toggle-row">
-        <span>Receta</span>
-        <div class="chips-group">
-          <button class="chip" [class.active]="filtros.requiereReceta === true" (click)="seleccionar('requiereReceta', true)">Requiere receta</button>
-          <button class="chip" [class.active]="filtros.requiereReceta === false" (click)="seleccionar('requiereReceta', false)">No requiere receta</button>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <div class="dialog-footer">
-    <button mat-stroked-button class="btn-limpiar" (click)="limpiar()">Limpiar ({{ conteoFiltros }})</button>
-    <button mat-flat-button class="btn-resultados" (click)="aplicar()">Aplicar filtros</button>
-  </div>
+  </mat-dialog-content>
+  <mat-dialog-actions><button mat-raised-button (click)="limpiar()">Limpiar ({{ conteoFiltros }})</button><button mat-raised-button color="primary" (click)="aplicar()">Aplicar filtros</button></mat-dialog-actions>
 </div>

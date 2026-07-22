@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, CurrencyPipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatMenuModule } from '@angular/material/menu';
@@ -15,6 +15,7 @@ import {
 import { ProductD } from './dialogs/product-d/product-d';
 import { Filtro, FiltrosProducto } from './dialogs/filtro/filtro';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { EstatusProducto } from '../../../shared/components/estatus-producto/estatus-producto';
 
 export type PeriodicElement = ProductoCatalogo;
 
@@ -44,15 +45,15 @@ const FILTROS_VACIOS: FiltrosProducto = {
 
 @Component({
   selector: 'app-products',
-  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule, MatMenuModule],
+  imports: [...SHARED_IMPORTS, AsyncPipe, CurrencyPipe, MatPaginatorModule, MatMenuModule, EstatusProducto],
   templateUrl: './products.html',
   styleUrl: './products.css',
 })
 export class Products implements OnInit, AfterViewInit {
-  displayedColumns: string[] = ['sku', 'producto', 'tipo', 'marca', 'categoria', 'medida', 'estatus', 'acciones'];
+  displayedColumns: string[] = ['sku', 'producto', 'tipo', 'marca', 'categoria', 'medida', 'precio', 'estatus', 'acciones'];
   dataSource = new MatTableDataSource<PeriodicElement>([]);
   currentSearch = '';
-  currentSort = 'Más recientes';
+  currentSort = 'Más antiguos';
   filtrosAvanzados: FiltrosProducto = { ...FILTROS_VACIOS };
   opciones: OpcionesProducto = { ...OPCIONES_VACIAS };
   cargando = true;
@@ -131,7 +132,8 @@ export class Products implements OnInit, AfterViewInit {
       if (orden === 'A - Z') return a.producto.localeCompare(b.producto, 'es');
       if (orden === 'Z - A') return b.producto.localeCompare(a.producto, 'es');
       if (orden === 'SKU') return a.sku.localeCompare(b.sku, 'es', { numeric: true });
-      return b.fechaCreacion.localeCompare(a.fechaCreacion) || b.id - a.id;
+      if (orden === 'Más recientes') return b.id - a.id;
+      return a.id - b.id;
     });
     this.applyFilter();
   }
@@ -212,12 +214,16 @@ export class Products implements OnInit, AfterViewInit {
         cancelText: 'Cancelar',
       },
     }).afterClosed().subscribe(confirmado => {
-      if (confirmado) this.guardar(this.dataSource.data.filter(actual => actual.id !== producto.id));
+      if (!confirmado) return;
+      const hoy = new Date().toISOString().slice(0, 10);
+      this.guardar(this.dataSource.data.map(actual => actual.id === producto.id
+        ? { ...actual, estatus: 'Eliminado', estado: false, fechaActualizacion: hoy }
+        : actual));
     });
   }
 
   verDetalle(producto: PeriodicElement): void {
-    this.router.navigate(['/products', producto.id]);
+    this.router.navigate(['/products', producto.id], { state: { producto } });
   }
 
   reintentar(): void {

@@ -3,7 +3,7 @@
     <h1>Existencias</h1>
     <p>Stock actual por producto, lote y almacén.</p>
   </div>
-  <button mat-flat-button color="primary" routerLink="/ajustes">
+  <button mat-raised-button color="primary" routerLink="/ajustes">
     <mat-icon>tune</mat-icon>Ir a ajustes
   </button>
 </div>
@@ -43,6 +43,8 @@
       <mat-icon>sort</mat-icon>{{ currentSort }}
     </button>
     <mat-menu #ordenMenu="matMenu">
+      <button mat-menu-item (click)="ordenar('Más antiguos')">Más antiguos</button>
+      <button mat-menu-item (click)="ordenar('Más recientes')">Más recientes</button>
       <button mat-menu-item (click)="ordenar('Producto A-Z')">Producto A-Z</button>
       <button mat-menu-item (click)="ordenar('Menor existencia')">Menor existencia</button>
       <button mat-menu-item (click)="ordenar('Mayor existencia')">Mayor existencia</button>

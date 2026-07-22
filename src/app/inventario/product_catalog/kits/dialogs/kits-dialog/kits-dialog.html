@@ -8,17 +8,29 @@
     <section class="elementos-section">
       <h3>Productos incluidos</h3>
       <div class="product-picker">
-        <mat-form-field appearance="outline"><mat-label>Producto</mat-label><mat-select [(ngModel)]="nuevoProductoId">@for (producto of data.productos; track producto.idProducto) { <mat-option [value]="producto.idProducto">{{ producto.sku }} · {{ producto.nombre }}</mat-option> }</mat-select><mat-hint>{{ data.productos.length ? 'Productos vigentes del catálogo' : 'No hay productos disponibles' }}</mat-hint></mat-form-field>
-        <mat-form-field appearance="outline" class="quantity-field"><mat-label>Cantidad</mat-label><input matInput type="number" min="1" step="1" [(ngModel)]="cantidadNueva"></mat-form-field>
-        <button mat-flat-button color="primary" type="button" (click)="agregarElemento()" [disabled]="!data.productos.length"><mat-icon>add</mat-icon>Agregar</button>
+        <mat-form-field appearance="outline">
+          <mat-label>Producto</mat-label>
+          <mat-select [(ngModel)]="nuevoProductoId">
+            @for (producto of data.productos; track producto.idProducto) {
+              <mat-option [value]="producto.idProducto" [disabled]="producto.stock <= 0">{{ producto.sku }} · {{ producto.nombre }} · Stock: {{ producto.stock }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>{{ data.productos.length ? 'Productos vigentes con sus existencias actuales' : 'No hay productos disponibles' }}</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="quantity-field">
+          <mat-label>Cantidad</mat-label>
+          <input matInput type="number" min="1" [max]="stockSeleccionado || 1" step="1" [(ngModel)]="cantidadNueva">
+          <mat-hint>Disponible: {{ stockSeleccionado }}</mat-hint>
+        </mat-form-field>
+        <button mat-raised-button color="primary" type="button" (click)="agregarElemento()" [disabled]="!nuevoProductoId || stockSeleccionado <= 0"><mat-icon>add</mat-icon>Agregar</button>
       </div>
 
       @if (kit.elementos.length) {
         <div class="elements-list">
           @for (elemento of kit.elementos; track elemento.idProducto; let i = $index) {
             <div class="element-row">
-              <div class="element-name"><strong>{{ elemento.nombre }}</strong><span>{{ elemento.sku }} · Costo unitario {{ elemento.costo | currency:'MXN' }}</span></div>
-              <mat-form-field appearance="outline" class="element-quantity"><mat-label>Cantidad</mat-label><input matInput type="number" min="1" step="1" [(ngModel)]="elemento.cantidad" (change)="actualizarCantidad(elemento)"></mat-form-field>
+              <div class="element-name"><strong>{{ elemento.nombre }}</strong><span>{{ elemento.sku }} · Costo unitario {{ elemento.costo | currency:'MXN' }} · Stock: {{ elemento.stock }}</span></div>
+              <mat-form-field appearance="outline" class="element-quantity"><mat-label>Cantidad</mat-label><input matInput type="number" min="1" [max]="elemento.stock" step="1" [(ngModel)]="elemento.cantidad" (change)="actualizarCantidad(elemento)"></mat-form-field>
               <span class="subtotal">{{ elemento.costo * elemento.cantidad | currency:'MXN' }}</span>
               <button mat-icon-button color="warn" type="button" matTooltip="Quitar" (click)="removerElemento(i)"><mat-icon>close</mat-icon></button>
             </div>
@@ -34,4 +46,4 @@
     @if (error) { <p class="error-text full-width">{{ error }}</p> }
   </div>
 </mat-dialog-content>
-<mat-dialog-actions><button mat-button mat-dialog-close>Cancelar</button><button mat-flat-button color="primary" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button></mat-dialog-actions>
+<mat-dialog-actions><button mat-raised-button mat-dialog-close>Cancelar</button><button mat-raised-button color="primary" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button></mat-dialog-actions>

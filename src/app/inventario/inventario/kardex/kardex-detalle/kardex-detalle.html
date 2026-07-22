@@ -7,7 +7,7 @@
     <div class="summary">
       <div><small>Movimiento</small><strong>{{ movimiento.tipo }}</strong></div>
       <div><small>Cantidad</small><strong [class.positive]="movimiento.cantidad > 0" [class.negative]="movimiento.cantidad < 0">{{ movimiento.cantidad > 0 ? '+' : '' }}{{ movimiento.cantidad }}</strong></div>
-      <div><small>Existencias</small><strong>{{ movimiento.anterior }} → {{ movimiento.nueva }}</strong></div>
+      <div><small>Existencia</small><strong>{{ movimiento.existencia }}</strong></div>
     </div>
     <section>
       <h3>Información del movimiento</h3>

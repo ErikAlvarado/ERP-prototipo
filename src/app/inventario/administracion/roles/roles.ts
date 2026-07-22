@@ -48,7 +48,7 @@ export class Roles implements OnInit, AfterViewInit {
       this.empresas = estado.empresas;
       this.permisos = estado.permisos;
       this.usuarios = estado.usuarios;
-      this.dataSource.data = estado.roles;
+      this.dataSource.data = [...estado.roles].sort((a, b) => Number(a.id) - Number(b.id));
       this.applyFilter();
     });
   }

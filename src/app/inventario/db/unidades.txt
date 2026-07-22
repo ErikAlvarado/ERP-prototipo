@@ -4,3 +4,13 @@ id_unidad|id_empresa|nombre|abreviatura|permitir_decimales
 3|1|Caja|cja|0
 4|1|Metro|m|1
 5|1|Litro|l|1
+6|1|Paquete|paq|0
+7|1|Pieza|pza|0
+8|1|Kilogramo|kg|1
+9|1|Gramo|g|1
+10|1|Mililitro|ml|1
+11|1|Centímetro|cm|1
+12|1|Par|par|0
+13|1|Docena|doc|0
+14|1|Rollo|rollo|0
+15|1|Bolsa|bolsa|0

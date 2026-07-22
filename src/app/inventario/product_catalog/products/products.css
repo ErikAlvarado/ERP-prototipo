@@ -176,22 +176,6 @@ table {
   text-decoration: underline;
 }
 
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: #e5f6ed;
-  color: #067647;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.status-badge.inactive {
-  background: #f2f4f7;
-  color: #667085;
-}
-
 .empty-row td {
   padding: 32px !important;
   color: #667085;

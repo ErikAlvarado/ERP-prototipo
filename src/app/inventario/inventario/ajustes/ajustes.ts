@@ -28,12 +28,12 @@ import {
   styleUrl: './ajustes.css',
 })
 export class Ajustes implements OnInit, AfterViewInit {
-  displayedColumns = ['fecha', 'producto', 'almacen', 'anterior', 'ajuste', 'nueva', 'motivo', 'usuario', 'acciones'];
+  displayedColumns = ['fecha', 'producto', 'almacen', 'ajuste', 'existencia', 'motivo', 'usuario', 'acciones'];
   dataSource = new MatTableDataSource<AjusteInventario>([]);
   obs!: Observable<AjusteInventario[]>;
   contexto?: ContextoInventario;
   currentSearch = '';
-  currentSort = 'Recientes';
+  currentSort = 'Más antiguos';
   filtros: Record<string, ValorFiltroInventario> = {
     productoId: '',
     almacenId: '',
@@ -157,9 +157,10 @@ export class Ajustes implements OnInit, AfterViewInit {
   ordenar(orden: string): void {
     this.currentSort = orden;
     const datos = [...this.dataSource.data];
-    this.dataSource.data = orden === 'Producto A-Z'
-      ? datos.sort((a, b) => a.producto.localeCompare(b.producto))
-      : datos.sort((a, b) => b.fecha.localeCompare(a.fecha));
+    if (orden === 'Producto A-Z') datos.sort((a, b) => a.producto.localeCompare(b.producto));
+    else if (orden === 'Más recientes') datos.sort((a, b) => this.numeroId(b.id) - this.numeroId(a.id));
+    else datos.sort((a, b) => this.numeroId(a.id) - this.numeroId(b.id));
+    this.dataSource.data = datos;
     this.applyFilter();
   }
 
@@ -228,5 +229,10 @@ export class Ajustes implements OnInit, AfterViewInit {
         );
       }
     });
+  }
+
+  private numeroId(id: string): number {
+    const numeros = id.match(/\d+/g);
+    return numeros?.length ? Number(numeros[numeros.length - 1]) : Number.MAX_SAFE_INTEGER;
   }
 }

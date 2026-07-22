@@ -33,7 +33,7 @@ export class Existencias implements OnInit, AfterViewInit {
   obs!: Observable<ExistenciaInventario[]>;
   contexto?: ContextoInventario;
   currentSearch = '';
-  currentSort = 'Producto A-Z';
+  currentSort = 'Más antiguos';
   filtros: Record<string, ValorFiltroInventario> = {
     productoId: '',
     almacenId: '',
@@ -160,7 +160,9 @@ export class Existencias implements OnInit, AfterViewInit {
     const datos = [...this.dataSource.data];
     if (orden === 'Menor existencia') datos.sort((a, b) => a.stock - b.stock);
     else if (orden === 'Mayor existencia') datos.sort((a, b) => b.stock - a.stock);
-    else datos.sort((a, b) => a.producto.localeCompare(b.producto) || a.almacen.localeCompare(b.almacen));
+    else if (orden === 'Producto A-Z') datos.sort((a, b) => a.producto.localeCompare(b.producto) || a.almacen.localeCompare(b.almacen));
+    else if (orden === 'Más recientes') datos.sort((a, b) => Number(b.id) - Number(a.id));
+    else datos.sort((a, b) => Number(a.id) - Number(b.id));
     this.dataSource.data = datos;
     this.applyFilter();
   }

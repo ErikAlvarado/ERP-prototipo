@@ -1,3 +1,13 @@
 id_permiso|nombre|modulo|descripcion|accion
 1|crear_producto|Productos|Permite crear nuevos productos en el catálogo|Crear
 2|vender_pos|Ventas|Permite cobrar en el punto de venta|Crear
+3|editar_producto|Productos|Permite modificar productos del catálogo|Editar
+4|eliminar_producto|Productos|Permite desactivar productos del catálogo|Eliminar
+5|consultar_inventario|Inventario|Permite consultar existencias|Consultar
+6|ajustar_inventario|Inventario|Permite registrar ajustes de inventario|Crear
+7|transferir_inventario|Inventario|Permite transferir mercancía entre almacenes|Crear
+8|gestionar_usuarios|Administración|Permite administrar usuarios|Administrar
+9|gestionar_roles|Administración|Permite administrar roles y permisos|Administrar
+10|consultar_reportes|Reportes|Permite consultar y exportar reportes|Consultar
+11|gestionar_compras|Compras|Permite registrar y autorizar compras|Administrar
+12|gestionar_almacenes|Administración|Permite administrar almacenes|Administrar

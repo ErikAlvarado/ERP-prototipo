@@ -8,7 +8,7 @@
       <mat-card class="dashboard-card" appearance="outlined">
         <div class="card-header">
           <h2>Stock de Productos</h2>
-          <a class="link-report">Ver reporte</a>
+          <a class="link-report" routerLink="/existencias">Ver reporte</a>
         </div>
         <mat-card-content class="card-body">
           <div class="table-header">
@@ -24,6 +24,8 @@
                 </div>
                 <strong class="text-right">{{ item.stock }}</strong>
               </div>
+            } @empty {
+              <div class="empty-state">{{ loading ? 'Cargando existencias...' : 'No hay existencias registradas' }}</div>
             }
           </div>
         </mat-card-content>
@@ -32,7 +34,7 @@
       <mat-card class="dashboard-card" appearance="outlined">
         <div class="card-header">
           <h2>Entradas y Salidas</h2>
-          <a class="link-report">Ver reporte</a>
+          <a class="link-report" routerLink="/kardex">Ver reporte</a>
         </div>
         <mat-card-content class="card-body">
           <div class="table-header">
@@ -41,10 +43,10 @@
           </div>
           <div class="list-container">
             @if (recentMovements.length > 0) {
-              @for (item of recentMovements; track item.name) {
+              @for (item of recentMovements; track item.name + item.qty) {
                 <div class="list-row">
                   <span>{{ item.name }}</span>
-                  <span class="text-right" [class.badge-in]="item.type === 'Entrada'">{{ item.qty }}</span>
+                  <span class="text-right" [class.badge-in]="item.type === 'Entrada'" [class.badge-out]="item.type === 'Salida'">{{ item.qty }}</span>
                 </div>
               }
             } @else {
@@ -57,7 +59,7 @@
       <mat-card class="dashboard-card" appearance="outlined">
         <div class="card-header">
           <h2>Valor del Inventario</h2>
-          <a class="link-report">Ver reporte</a>
+          <a class="link-report" routerLink="/existencias">Ver reporte</a>
         </div>
         <mat-card-content class="card-body center-metrics">
           <div class="metric-block">
@@ -78,7 +80,7 @@
       <mat-card class="dashboard-card" appearance="outlined">
         <div class="card-header">
           <h2>Productos por Reponer</h2>
-          <a class="link-report">Ver reporte</a>
+          <a class="link-report" routerLink="/existencias">Ver reporte</a>
         </div>
         <mat-card-content class="card-body">
           <div class="table-header">
@@ -94,6 +96,8 @@
                 </div>
                 <span class="chip-duration" [class]="item.tone">{{ item.duration }}</span>
               </div>
+            } @empty {
+              <div class="empty-state">{{ loading ? 'Calculando niveles...' : 'No hay productos por reponer' }}</div>
             }
           </div>
         </mat-card-content>
@@ -102,7 +106,7 @@
       <mat-card class="dashboard-card" appearance="outlined">
         <div class="card-header">
           <h2>Productos Pronto a Expirar</h2>
-          <a class="link-report">Ver reporte</a>
+          <a class="link-report" routerLink="/existencias">Ver reporte</a>
         </div>
         <mat-card-content class="card-body">
           <div class="table-header">
@@ -127,7 +131,7 @@
       <mat-card class="dashboard-card" appearance="outlined">
         <div class="card-header">
           <h2>Productos Apartados</h2>
-          <a class="link-report">Ver reporte</a>
+          <a class="link-report" routerLink="/transferencias">Ver reporte</a>
         </div>
         <mat-card-content class="card-body">
           <div class="table-header">

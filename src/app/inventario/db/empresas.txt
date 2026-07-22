@@ -1,2 +1,12 @@
 id_empresa|nombre_empresa|razon_social|rfc|direccion|telefono|email|activo|fecha_creacion|fecha_actualizacion|creado_por_usuario|actualizado_por_usuario
 1|SuperMart|SuperMart S.A. de C.V.|SMA123456789|Calle Principal 100|555-1234|contacto@supermart.com|1|2024-01-01|2024-01-01|1|1
+2|SuperMart Norte|SuperMart Norte S.A. de C.V.|SMN240101AA1|Av. Norte 210|555-2001|norte@supermart.com|1|2024-02-01|2024-02-01|1|1
+3|SuperMart Sur|SuperMart Sur S.A. de C.V.|SMS240101BB2|Av. Sur 315|555-2002|sur@supermart.com|1|2024-02-02|2024-02-02|1|1
+4|SuperMart Oriente|SuperMart Oriente S.A. de C.V.|SMO240101CC3|Calzada Oriente 88|555-2003|oriente@supermart.com|1|2024-02-03|2024-02-03|1|1
+5|SuperMart Poniente|SuperMart Poniente S.A. de C.V.|SMP240101DD4|Boulevard Poniente 450|555-2004|poniente@supermart.com|1|2024-02-04|2024-02-04|1|1
+6|SuperMart Centro|SuperMart Centro S.A. de C.V.|SMC240101EE5|Centro Comercial Local 12|555-2005|centro@supermart.com|1|2024-02-05|2024-02-05|1|1
+7|SuperMart Express|SuperMart Express S.A. de C.V.|SME240101FF6|Av. Reforma 700|555-2006|express@supermart.com|1|2024-02-06|2024-02-06|1|1
+8|SuperMart Bajio|SuperMart Bajio S.A. de C.V.|SMB240101GG7|Carretera Estatal 45|555-2007|bajio@supermart.com|1|2024-02-07|2024-02-07|1|1
+9|SuperMart Pacifico|SuperMart Pacifico S.A. de C.V.|SMP240101HH8|Av. del Mar 190|555-2008|pacifico@supermart.com|1|2024-02-08|2024-02-08|1|1
+10|SuperMart Golfo|SuperMart Golfo S.A. de C.V.|SMG240101II9|Paseo del Puerto 25|555-2009|golfo@supermart.com|1|2024-02-09|2024-02-09|1|1
+11|SuperMart Sureste|SuperMart Sureste S.A. de C.V.|SMR240101JJ0|Av. Maya 330|555-2010|sureste@supermart.com|1|2024-02-10|2024-02-10|1|1

@@ -4,3 +4,13 @@ id_categoria|id_empresa|id_categoria_padre|nombre_categoria|activo
 3|1||Farmacia|1
 4|1||Ropa y accesorios|1
 5|1||Electrodomésticos y hogar|1
+6|1||Papelería|1
+7|1||Ferretería|1
+8|1||Limpieza|1
+9|1||Jardinería|1
+10|1||Deportes|1
+11|1||Juguetes|1
+12|1||Mascotas|1
+13|1||Automotriz|1
+14|1||Bebidas|1
+15|1||Alimentos|1

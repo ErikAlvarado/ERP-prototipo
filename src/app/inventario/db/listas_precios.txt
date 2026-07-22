@@ -1,3 +1,13 @@
 id_lista_precio|id_empresa|nombre|es_predeterminado|activo
 1|1|Público General|1|1
 2|1|Mayoreo|0|1
+3|1|Distribuidor|0|1
+4|1|Empleado|0|1
+5|1|Temporada|0|1
+6|1|Promoción semanal|0|1
+7|1|Clientes frecuentes|0|1
+8|1|Comercio electrónico|0|1
+9|1|Sucursal Norte|0|1
+10|1|Sucursal Sur|0|1
+11|1|Liquidación|0|1
+12|1|Corporativo|0|1
