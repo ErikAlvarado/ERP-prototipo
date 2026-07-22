@@ -1,99 +1,49 @@
 <div class="content-header">
   <h1>Lista de Almacenes</h1>
-<button
-  mat-raised-button
-  color="primary"
-  (click)="abrirDialogo()">
-
-  Agregar Almacén
-
-</button>
+  <button mat-raised-button color="primary" (click)="abrirDialogo()">Agregar almacén</button>
 </div>
 
 <div class="content-search">
-
-  <mat-form-field class="search-field" appearance="outline">
-    <mat-icon matPrefix>search</mat-icon>
-    <input
-      [(ngModel)]="currentSearch"
-      (keyup)="applyFilter()"
-      matInput
-      placeholder="Clave / Nombre">
-  </mat-form-field>
-
-  <mat-form-field class="select-field" appearance="outline">
-    <mat-label>Estado</mat-label>
-    <mat-select
-      [(ngModel)]="currentStatus"
-      (selectionChange)="applyFilter()">
-
-      <mat-option value="">Todos</mat-option>
-      <mat-option value="Activo">Activo</mat-option>
-      <mat-option value="Inactivo">Inactivo</mat-option>
-
-    </mat-select>
-  </mat-form-field>
-
+  <div class="custom-search">
+    <mat-icon>search</mat-icon>
+    <input [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar por clave, nombre, empresa o dirección">
+  </div>
+  <div class="custom-filters">
+    <button mat-stroked-button class="filter-btn" (click)="abrirFiltros()">
+      <mat-icon>tune</mat-icon>Filtrar@if (filtrosActivos) { <span class="filter-count">{{ filtrosActivos }}</span> }
+    </button>
+  </div>
 </div>
 
-<table mat-table [dataSource]="dataSource" class="mat-shadow-2">
+<div class="desktop-view table-responsive">
+  <table mat-table [dataSource]="dataSource">
+    <ng-container matColumnDef="clave"><th mat-header-cell *matHeaderCellDef>Clave</th><td mat-cell *matCellDef="let e">ALM-{{ e.id }}</td></ng-container>
+    <ng-container matColumnDef="nombre"><th mat-header-cell *matHeaderCellDef>Almacén</th><td mat-cell *matCellDef="let e">{{ e.nombre }}</td></ng-container>
+    <ng-container matColumnDef="empresa"><th mat-header-cell *matHeaderCellDef>Empresa</th><td mat-cell *matCellDef="let e">{{ nombreEmpresa(e.empresaId) }}</td></ng-container>
+    <ng-container matColumnDef="direccion"><th mat-header-cell *matHeaderCellDef>Dirección</th><td mat-cell *matCellDef="let e">{{ e.direccion || '—' }}</td></ng-container>
+    <ng-container matColumnDef="principal"><th mat-header-cell *matHeaderCellDef>Principal</th><td mat-cell *matCellDef="let e"><app-status [active]="e.principal"></app-status></td></ng-container>
+    <ng-container matColumnDef="estado"><th mat-header-cell *matHeaderCellDef>Estado</th><td mat-cell *matCellDef="let e"><app-status [active]="e.estado"></app-status></td></ng-container>
+    <ng-container matColumnDef="acciones">
+      <th mat-header-cell *matHeaderCellDef>Acciones</th>
+      <td mat-cell *matCellDef="let e" class="actions-cell">
+        <button mat-icon-button color="primary" matTooltip="Editar" (click)="editar(e)"><mat-icon>edit</mat-icon></button>
+        <button mat-icon-button color="warn" matTooltip="Eliminar" (click)="eliminar(e)"><mat-icon>delete</mat-icon></button>
+      </td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    <tr class="mat-row empty-row" *matNoDataRow><td class="mat-cell" [attr.colspan]="displayedColumns.length">No hay almacenes que coincidan con los filtros.</td></tr>
+  </table>
+</div>
 
-  <ng-container matColumnDef="clave">
-    <th mat-header-cell *matHeaderCellDef>Clave</th>
-    <td mat-cell *matCellDef="let element">{{element.clave}}</td>
-  </ng-container>
+<div class="cards-container">
+  @for (e of obs | async; track e.id) {
+    <article class="entity-card">
+      <div class="card-header"><div><h3>{{ e.nombre }}</h3><span class="card-subtitle">ALM-{{ e.id }}</span></div><app-status [active]="e.estado"></app-status></div>
+      <div class="card-body"><span><strong>Empresa:</strong> {{ nombreEmpresa(e.empresaId) }}</span><span><strong>Tipo:</strong> {{ e.principal ? 'Principal' : 'Secundario' }}</span><span><strong>Dirección:</strong> {{ e.direccion || '—' }}</span></div>
+      <div class="card-actions"><button mat-icon-button color="primary" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" (click)="eliminar(e)"><mat-icon>delete</mat-icon></button></div>
+    </article>
+  } @empty { <div class="entity-card">No hay almacenes que coincidan con los filtros.</div> }
+</div>
 
-  <ng-container matColumnDef="nombre">
-    <th mat-header-cell *matHeaderCellDef>Nombre</th>
-    <td mat-cell *matCellDef="let element">{{element.nombre}}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="responsable">
-    <th mat-header-cell *matHeaderCellDef>Responsable</th>
-    <td mat-cell *matCellDef="let element">{{element.responsable}}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="telefono">
-    <th mat-header-cell *matHeaderCellDef>Teléfono</th>
-    <td mat-cell *matCellDef="let element">{{element.telefono}}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="direccion">
-    <th mat-header-cell *matHeaderCellDef>Dirección</th>
-    <td mat-cell *matCellDef="let element">{{element.direccion}}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="estado">
-    <th mat-header-cell *matHeaderCellDef>Estado</th>
-    <td mat-cell *matCellDef="let element">
-     <app-status [active]="element.estado"></app-status>
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="acciones">
-    <th mat-header-cell *matHeaderCellDef></th>
-    <td mat-cell *matCellDef="let element">
-    <button
-      mat-icon-button
-      color="primary"
-      (click)="editar(element)">
-
-      <mat-icon>edit</mat-icon>
-
-    </button>
-
-    <button
-      mat-icon-button
-      color="warn"
-      (click)="eliminar(element)">
-
-      <mat-icon>delete</mat-icon>
-
-    </button>
-    </td>
-  </ng-container>
-
-  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-</table>
+<div class="paginator-container"><mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 50]" showFirstLastButtons></mat-paginator></div>

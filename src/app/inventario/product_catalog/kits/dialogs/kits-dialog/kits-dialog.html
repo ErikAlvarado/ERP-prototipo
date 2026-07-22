@@ -1,85 +1,37 @@
-<h2 mat-dialog-title>
-  {{ data.mode === 'add' ? 'Agregar Kit' : 'Actualizar Kit' }}
-</h2>
-
+<h2 mat-dialog-title>{{ data.mode === 'add' ? 'Agregar kit' : 'Actualizar kit' }}</h2>
 <mat-dialog-content>
   <div class="formulario">
+    <mat-form-field appearance="outline"><mat-label>Nombre del kit</mat-label><input matInput [(ngModel)]="kit.nombre" maxlength="120" required></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Precio de venta</mat-label><span matTextPrefix>$&nbsp;</span><input matInput type="number" min="0" step="0.01" [(ngModel)]="kit.precio" (input)="calcularTotales()" required></mat-form-field>
+    <mat-form-field appearance="outline" class="full-width"><mat-label>Descripción</mat-label><textarea matInput [(ngModel)]="kit.descripcion" rows="2" maxlength="300"></textarea></mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Nombre del Kit</mat-label>
-      <input matInput [(ngModel)]="kit.nombre">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Descripción</mat-label>
-      <textarea matInput [(ngModel)]="kit.descripcion" rows="2"></textarea>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Costo ($)</mat-label>
-      <input matInput type="number" [(ngModel)]="kit.costo" (input)="calcularMargen()">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Precio de Venta ($)</mat-label>
-      <input matInput type="number" [(ngModel)]="kit.precio" (input)="calcularMargen()">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Margen (%)</mat-label>
-      <input matInput type="number" [(ngModel)]="kit.margen" readonly>
-      <mat-hint>Calculado automáticamente</mat-hint>
-    </mat-form-field>
-    <div class="elementos-section" style="margin-top: 15px; margin-bottom: 15px;">
-      <h3 style="margin-bottom: 8px;">Productos incluidos en el Kit</h3>
-      
-      <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-        <mat-form-field appearance="outline" style="flex: 1; margin-bottom: 0;">
-          <mat-label>Seleccionar producto</mat-label>
-          <mat-select [(ngModel)]="nuevoProductoSeleccionado">
-            @for (prod of misProductos; track prod.id_producto) {
-              <mat-option [value]="prod">{{ prod.nombre_producto }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        
-        <button mat-mini-fab color="primary" type="button" (click)="agregarElemento()" style="margin-top: 4px;">
-          <mat-icon>add</mat-icon>
-        </button>
+    <section class="elementos-section">
+      <h3>Productos incluidos</h3>
+      <div class="product-picker">
+        <mat-form-field appearance="outline"><mat-label>Producto</mat-label><mat-select [(ngModel)]="nuevoProductoId">@for (producto of data.productos; track producto.idProducto) { <mat-option [value]="producto.idProducto">{{ producto.sku }} · {{ producto.nombre }}</mat-option> }</mat-select><mat-hint>{{ data.productos.length ? 'Productos vigentes del catálogo' : 'No hay productos disponibles' }}</mat-hint></mat-form-field>
+        <mat-form-field appearance="outline" class="quantity-field"><mat-label>Cantidad</mat-label><input matInput type="number" min="1" step="1" [(ngModel)]="cantidadNueva"></mat-form-field>
+        <button mat-flat-button color="primary" type="button" (click)="agregarElemento()" [disabled]="!data.productos.length"><mat-icon>add</mat-icon>Agregar</button>
       </div>
 
-      <mat-chip-set>
-        @for (item of kit.elementos; track item.id_producto; let i = $index) {
-          <mat-chip>
-            {{ item.nombre_producto }}
-            <button matChipRemove (click)="removerElemento(i)">
-              <mat-icon>cancel</mat-icon>
-            </button>
-          </mat-chip>
-        } @empty {
-          <p style="color: gray; font-size: 13px;">No hay productos agregados a este kit aún.</p>
-        }
-      </mat-chip-set>
-    </div>
+      @if (kit.elementos.length) {
+        <div class="elements-list">
+          @for (elemento of kit.elementos; track elemento.idProducto; let i = $index) {
+            <div class="element-row">
+              <div class="element-name"><strong>{{ elemento.nombre }}</strong><span>{{ elemento.sku }} · Costo unitario {{ elemento.costo | currency:'MXN' }}</span></div>
+              <mat-form-field appearance="outline" class="element-quantity"><mat-label>Cantidad</mat-label><input matInput type="number" min="1" step="1" [(ngModel)]="elemento.cantidad" (change)="actualizarCantidad(elemento)"></mat-form-field>
+              <span class="subtotal">{{ elemento.costo * elemento.cantidad | currency:'MXN' }}</span>
+              <button mat-icon-button color="warn" type="button" matTooltip="Quitar" (click)="removerElemento(i)"><mat-icon>close</mat-icon></button>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="no-products">Aún no has agregado productos.</p>
+      }
+    </section>
 
-    <div class="checks">
-      <mat-checkbox [(ngModel)]="kit.estado">
-        Activo
-      </mat-checkbox>
-    </div>
-
+    <div class="totals full-width"><div><span>Costo calculado</span><strong>{{ kit.costo | currency:'MXN' }}</strong></div><div><span>Margen</span><strong [class.negative]="kit.margen < 0">{{ kit.margen }}%</strong></div></div>
+    <div class="checks"><mat-checkbox [(ngModel)]="kit.estado">Kit activo</mat-checkbox></div>
+    @if (error) { <p class="error-text full-width">{{ error }}</p> }
   </div>
 </mat-dialog-content>
-
-<mat-dialog-actions>
-  <button mat-button mat-dialog-close>
-    Cancelar
-  </button>
-
-  <button
-    mat-flat-button
-    color="primary"
-    (click)="guardar()">
-    {{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}
-  </button>
-</mat-dialog-actions>
+<mat-dialog-actions><button mat-button mat-dialog-close>Cancelar</button><button mat-flat-button color="primary" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button></mat-dialog-actions>

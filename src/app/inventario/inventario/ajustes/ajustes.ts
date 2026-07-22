@@ -1,247 +1,232 @@
-import { Component, importProvidersFrom } from '@angular/core';
-import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
-import { MatTableDataSource } from '@angular/material/table';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AsyncPipe, DatePipe } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-import { AjustesDialog } from './dialogs/ajustes-dialog/ajustes-dialog';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatTableDataSource } from '@angular/material/table';
+import { Observable } from 'rxjs';
+import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
-
-
-
-export interface PeriodicElement {
-
-    fecha:string;
-    producto:string;
-    almacen:string;
-    anterior:number;
-    ajuste:number;
-    nueva:number;
-    motivo:string;
-    usuario:string;
-
-}
-
-
-
-const ELEMENT_DATA:PeriodicElement[]=[
-
-
-  {
-    fecha:'16/07/2026',
-    producto:'Taladro Bosch',
-    almacen:'Principal',
-    anterior:25,
-    ajuste:5,
-    nueva:30,
-    motivo:'Conteo físico',
-    usuario:'Administrador'
-  },
-
-
-  {
-    fecha:'15/07/2026',
-    producto:'Cable eléctrico',
-    almacen:'Norte',
-    anterior:100,
-    ajuste:-8,
-    nueva:92,
-    motivo:'Producto dañado',
-    usuario:'Juan Pérez'
-  },
-
-
-  {
-    fecha:'14/07/2026',
-    producto:'Martillo',
-    almacen:'Sur',
-    anterior:15,
-    ajuste:2,
-    nueva:17,
-    motivo:'Diferencia inventario',
-    usuario:'María López'
-  }
-
-
-];
-
+import {
+  AjusteFormulario,
+  AjusteInventario,
+  ContextoInventario,
+  GestionInventario,
+} from '../gestion-inventario';
+import { AjustesDialog } from './dialogs/ajustes-dialog/ajustes-dialog';
+import {
+  CampoFiltroInventario,
+  FiltrosInventarioDialog,
+  ValorFiltroInventario,
+} from '../filtros-inventario-dialog/filtros-inventario-dialog';
 
 @Component({
   selector: 'app-ajustes',
-  imports: [SHARED_IMPORTS],
+  imports: [...SHARED_IMPORTS, AsyncPipe, DatePipe, MatPaginatorModule, MatMenuModule],
   templateUrl: './ajustes.html',
   styleUrl: './ajustes.css',
 })
-export class Ajustes {
-  constructor(private dialog: MatDialog) {}
+export class Ajustes implements OnInit, AfterViewInit {
+  displayedColumns = ['fecha', 'producto', 'almacen', 'anterior', 'ajuste', 'nueva', 'motivo', 'usuario', 'acciones'];
+  dataSource = new MatTableDataSource<AjusteInventario>([]);
+  obs!: Observable<AjusteInventario[]>;
+  contexto?: ContextoInventario;
+  currentSearch = '';
+  currentSort = 'Recientes';
+  filtros: Record<string, ValorFiltroInventario> = {
+    productoId: '',
+    almacenId: '',
+    tipo: '',
+    usuarioId: '',
+    fechaDesde: '',
+    fechaHasta: '',
+    ajusteMinimo: null,
+    ajusteMaximo: null,
+  };
+  private presetProcesado = false;
 
-displayedColumns = [
-  'fecha',
-  'producto',
-  'almacen',
-  'anterior',
-  'ajuste',
-  'nueva',
-  'motivo',
-  'usuario',
-];
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
 
+  constructor(
+    private dialog: MatDialog,
+    private gestion: GestionInventario,
+    private route: ActivatedRoute,
+  ) {}
 
-
-dataSource=new MatTableDataSource(ELEMENT_DATA);
-
-
-
-currentSearch='';
-currentWarehouse='';
-
-
-
-applyFilter(){
-
-
-  this.dataSource.filter=JSON.stringify({
-
-  search:this.currentSearch.trim().toLowerCase(),
-
-  warehouse:this.currentWarehouse
-
-
-  });
-
-
-  }
-
-
-
-  ngOnInit(){
-
-
-    this.dataSource.filterPredicate=(
-
-      data:PeriodicElement,
-
-      filter:string
-
-      )=>{
-
-
-      const search=JSON.parse(filter);
-
-
-
-      const matchSearch=
-
-      data.producto
-      .toLowerCase()
-      .includes(search.search);
-
-
-
-      const matchWarehouse=
-
-      search.warehouse === '' ||
-
-      data.almacen === search.warehouse;
-
-
-
-      return matchSearch && matchWarehouse;
-
+  ngOnInit(): void {
+    this.dataSource.filterPredicate = (item, filtro) => {
+      const f = JSON.parse(filtro) as {
+        search: string;
+        productoId: string;
+        almacenId: string;
+        tipo: string;
+        usuarioId: string;
+        fechaDesde: string;
+        fechaHasta: string;
+        ajusteMinimo: number | null;
+        ajusteMaximo: number | null;
+      };
+      const coincideTexto = `${item.id} ${item.sku} ${item.producto} ${item.almacen} ${item.motivo} ${item.usuario}`
+        .toLowerCase().includes(f.search);
+      const coincideTipo = !f.tipo || (f.tipo === 'Entrada' ? item.ajuste > 0 : item.ajuste < 0);
+      return coincideTexto
+        && (!f.productoId || item.productoId === Number(f.productoId))
+        && (!f.almacenId || item.almacenId === Number(f.almacenId))
+        && coincideTipo
+        && (!f.usuarioId || item.usuarioId === Number(f.usuarioId))
+        && (!f.fechaDesde || item.fecha.slice(0, 10) >= f.fechaDesde)
+        && (!f.fechaHasta || item.fecha.slice(0, 10) <= f.fechaHasta)
+        && (f.ajusteMinimo == null || item.ajuste >= Number(f.ajusteMinimo))
+        && (f.ajusteMaximo == null || item.ajuste <= Number(f.ajusteMaximo));
     };
+    this.obs = this.dataSource.connect();
+    this.cargar();
   }
 
-  abrirAgregar() {
+  ngAfterViewInit(): void {
+    this.dataSource.paginator = this.paginator;
+  }
 
-  this.dialog.open(AjustesDialog, {
+  get nombreAlmacen(): string {
+    return this.contexto?.almacenes.find((item) => item.id === Number(this.filtros['almacenId']))?.nombre || 'Almacén';
+  }
 
-    width: '700px',
+  get currentType(): string {
+    return String(this.filtros['tipo'] || '');
+  }
 
-    data: {
-      mode: 'add'
-    }
+  get conteoFiltros(): number {
+    return Object.values(this.filtros).filter((value) => value !== '' && value !== null).length;
+  }
 
-  }).afterClosed().subscribe(result => {
+  applyFilter(): void {
+    this.dataSource.filter = JSON.stringify({
+      search: this.currentSearch.trim().toLowerCase(),
+      ...this.filtros,
+    });
+    this.paginator?.firstPage();
+  }
 
-    if (!result) return;
+  setAlmacen(id: number | null): void {
+    this.filtros = { ...this.filtros, almacenId: id == null ? '' : String(id) };
+    this.applyFilter();
+  }
 
-    this.dataSource.data = [
-      ...this.dataSource.data,
-      result
+  setTipo(tipo: string): void {
+    this.filtros = { ...this.filtros, tipo };
+    this.applyFilter();
+  }
+
+  abrirFiltros(): void {
+    if (!this.contexto) return;
+    const fields: CampoFiltroInventario[] = [
+      {
+        key: 'productoId', label: 'Producto', icon: 'inventory_2', type: 'select', emptyLabel: 'Todos los productos',
+        options: this.contexto.productos.map((item) => ({ value: String(item.id), label: `${item.sku} · ${item.nombre}` })),
+      },
+      {
+        key: 'almacenId', label: 'Almacén', icon: 'warehouse', type: 'select', emptyLabel: 'Todos los almacenes',
+        options: this.contexto.almacenes.map((item) => ({ value: String(item.id), label: item.nombre })),
+      },
+      {
+        key: 'tipo', label: 'Tipo de ajuste', icon: 'swap_vert', type: 'select', emptyLabel: 'Entradas y salidas',
+        options: [{ value: 'Entrada', label: 'Entrada' }, { value: 'Salida', label: 'Salida' }],
+      },
+      {
+        key: 'usuarioId', label: 'Responsable', icon: 'person', type: 'select', emptyLabel: 'Todos los responsables',
+        options: this.contexto.usuarios.map((item) => ({ value: String(item.id), label: item.nombre })),
+      },
+      { key: 'fechaDesde', label: 'Fecha desde', icon: 'calendar_today', type: 'date' },
+      { key: 'fechaHasta', label: 'Fecha hasta', icon: 'event', type: 'date' },
+      { key: 'ajusteMinimo', label: 'Ajuste mínimo', icon: 'remove', type: 'number', defaultValue: null, step: 1 },
+      { key: 'ajusteMaximo', label: 'Ajuste máximo', icon: 'add', type: 'number', defaultValue: null, step: 1 },
     ];
+    this.dialog.open(FiltrosInventarioDialog, {
+      width: '680px',
+      maxWidth: '96vw',
+      panelClass: 'custom-dialog',
+      data: { title: 'Filtrar ajustes', filters: this.filtros, fields },
+    }).afterClosed().subscribe((filters?: Record<string, ValorFiltroInventario>) => {
+      if (!filters) return;
+      this.filtros = filters;
+      this.applyFilter();
+    });
+  }
 
-  });
+  ordenar(orden: string): void {
+    this.currentSort = orden;
+    const datos = [...this.dataSource.data];
+    this.dataSource.data = orden === 'Producto A-Z'
+      ? datos.sort((a, b) => a.producto.localeCompare(b.producto))
+      : datos.sort((a, b) => b.fecha.localeCompare(a.fecha));
+    this.applyFilter();
+  }
 
-}
+  abrirAgregar(productoId?: number, almacenId?: number): void {
+    if (!this.contexto) return;
+    this.dialog.open(AjustesDialog, {
+      width: '720px',
+      maxWidth: '96vw',
+      panelClass: 'custom-dialog',
+      data: {
+        mode: 'add',
+        productos: this.contexto.productos,
+        almacenes: this.contexto.almacenes,
+        usuarios: this.contexto.usuarios,
+        existencias: this.contexto.existencias,
+        productoId,
+        almacenId,
+      },
+    }).afterClosed().subscribe((resultado?: AjusteFormulario) => {
+      if (!resultado || !this.contexto) return;
+      const producto = this.contexto.productos.find((item) => item.id === Number(resultado.productoId));
+      const almacen = this.contexto.almacenes.find((item) => item.id === Number(resultado.almacenId));
+      this.dialog.open(ConfirmDialog, {
+        width: '420px',
+        data: {
+          title: 'Aplicar ajuste',
+          message: `Se aplicará un ajuste de ${resultado.ajuste > 0 ? '+' : ''}${resultado.ajuste} a "${producto?.nombre}" en "${almacen?.nombre}". Esta operación quedará registrada en Kardex.`,
+          confirmText: 'Aplicar ajuste',
+          cancelText: 'Cancelar',
+        },
+      }).afterClosed().subscribe((confirmado) => {
+        if (!confirmado || !this.contexto) return;
+        this.gestion.crearAjuste(resultado, this.contexto);
+        this.cargar();
+      });
+    });
+  }
 
-editar(ajuste: PeriodicElement) {
+  verDetalle(ajuste: AjusteInventario): void {
+    if (!this.contexto) return;
+    this.dialog.open(AjustesDialog, {
+      width: '720px',
+      maxWidth: '96vw',
+      panelClass: 'custom-dialog',
+      data: {
+        mode: 'view',
+        ajuste,
+        productos: this.contexto.productos,
+        almacenes: this.contexto.almacenes,
+        usuarios: this.contexto.usuarios,
+        existencias: this.contexto.existencias,
+      },
+    });
+  }
 
-  this.dialog.open(AjustesDialog, {
-
-    width: '700px',
-
-    data: {
-      mode: 'edit',
-      ajuste: ajuste
-    }
-
-  }).afterClosed().subscribe(result => {
-
-    if (!result) return;
-
-    const index = this.dataSource.data.findIndex(
-      a =>
-        a.fecha === ajuste.fecha &&
-        a.producto === ajuste.producto &&
-        a.almacen === ajuste.almacen
-    );
-
-    if (index !== -1) {
-
-      this.dataSource.data[index] = result;
-
-      this.dataSource.data = [
-        ...this.dataSource.data
-      ];
-
-    }
-
-  });
-
-}
-
-eliminar(ajuste: PeriodicElement) {
-
-  this.dialog.open(ConfirmDialog, {
-
-    width: '400px',
-
-    data: {
-
-      title: 'Eliminar ajuste',
-
-      message: `¿Deseas eliminar el ajuste de "${ajuste.producto}"?`,
-
-      confirmText: 'Eliminar',
-
-      cancelText: 'Cancelar'
-
-    }
-
-  }).afterClosed().subscribe(confirmado => {
-
-    if (!confirmado) return;
-
-    this.dataSource.data = this.dataSource.data.filter(
-
-      a =>
-        !(
-          a.fecha === ajuste.fecha &&
-          a.producto === ajuste.producto &&
-          a.almacen === ajuste.almacen
-        )
-
-    );
-
-  });
-
-}
+  private cargar(): void {
+    this.gestion.cargar().subscribe((contexto) => {
+      this.contexto = contexto;
+      this.dataSource.data = contexto.ajustes;
+      this.applyFilter();
+      if (!this.presetProcesado && this.route.snapshot.queryParamMap.get('nuevo') === '1') {
+        this.presetProcesado = true;
+        this.abrirAgregar(
+          Number(this.route.snapshot.queryParamMap.get('producto')) || undefined,
+          Number(this.route.snapshot.queryParamMap.get('almacen')) || undefined,
+        );
+      }
+    });
+  }
 }

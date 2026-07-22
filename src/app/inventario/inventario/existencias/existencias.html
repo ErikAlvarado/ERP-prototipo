@@ -1,119 +1,144 @@
 <div class="content-header">
+  <div>
     <h1>Existencias</h1>
-
-    <!-- <button mat-raised-button color="primary">
-        Ajuste de Inventario
-    </button> -->
+    <p>Stock actual por producto, lote y almacén.</p>
+  </div>
+  <button mat-flat-button color="primary" routerLink="/ajustes">
+    <mat-icon>tune</mat-icon>Ir a ajustes
+  </button>
 </div>
 
 <div class="content-search">
+  <div class="custom-search">
+    <mat-icon>search</mat-icon>
+    <input [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar por SKU, producto, lote, almacén o anaquel">
+  </div>
+  <div class="custom-filters">
+    <button mat-stroked-button class="filter-btn" (click)="abrirFiltros()">
+      <mat-icon>tune</mat-icon>Filtrar
+      @if (conteoFiltros) { <span class="filter-count">{{ conteoFiltros }}</span> }
+    </button>
 
-    <mat-form-field class="search-field" appearance="outline">
-        <mat-icon matPrefix>search</mat-icon>
-        <input
-            [(ngModel)]="currentSearch"
-            (keyup)="applyFilter()"
-            matInput
-            placeholder="SKU / Producto">
-    </mat-form-field>
+    <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="almacenMenu">
+      <mat-icon>warehouse</mat-icon>{{ nombreAlmacen }}
+    </button>
+    <mat-menu #almacenMenu="matMenu">
+      <button mat-menu-item (click)="setAlmacen(null)">Todos los almacenes</button>
+      @for (almacen of contexto?.almacenes ?? []; track almacen.id) {
+        <button mat-menu-item (click)="setAlmacen(almacen.id)">{{ almacen.nombre }}</button>
+      }
+    </mat-menu>
 
-    <mat-form-field class="select-field" appearance="outline">
-        <mat-label>almacen</mat-label>
+    <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="estadoMenu">
+      <mat-icon>inventory_2</mat-icon>{{ currentStock || 'Estado' }}
+    </button>
+    <mat-menu #estadoMenu="matMenu">
+      <button mat-menu-item (click)="setEstado('')">Todos</button>
+      @for (estado of ['Normal', 'Bajo', 'Crítico', 'Agotado']; track estado) {
+        <button mat-menu-item (click)="setEstado(estado)">{{ estado }}</button>
+      }
+    </mat-menu>
 
-        <mat-select
-            [(ngModel)]="currentBranch"
-            (selectionChange)="applyFilter()">
-
-            <mat-option value="">Todas</mat-option>
-            <mat-option value="Matriz">Matriz</mat-option>
-            <mat-option value="Norte">Norte</mat-option>
-            <mat-option value="Sur">Sur</mat-option>
-
-        </mat-select>
-    </mat-form-field>
-
-    <mat-form-field class="select-field" appearance="outline">
-        <mat-label>Estado</mat-label>
-
-        <mat-select
-            [(ngModel)]="currentStock"
-            (selectionChange)="applyFilter()">
-
-            <mat-option value="">Todos</mat-option>
-            <mat-option value="Normal">Normal</mat-option>
-            <mat-option value="Bajo">Bajo</mat-option>
-            <mat-option value="Crítico">Crítico</mat-option>
-
-        </mat-select>
-
-    </mat-form-field>
-
+    <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="ordenMenu">
+      <mat-icon>sort</mat-icon>{{ currentSort }}
+    </button>
+    <mat-menu #ordenMenu="matMenu">
+      <button mat-menu-item (click)="ordenar('Producto A-Z')">Producto A-Z</button>
+      <button mat-menu-item (click)="ordenar('Menor existencia')">Menor existencia</button>
+      <button mat-menu-item (click)="ordenar('Mayor existencia')">Mayor existencia</button>
+    </mat-menu>
+  </div>
 </div>
 
-<div class="table-responsive">
-
-<table mat-table [dataSource]="dataSource" class="mat-shadow-2">
-
-    <ng-container matColumnDef="sku">
-        <th mat-header-cell *matHeaderCellDef>SKU</th>
-        <td mat-cell *matCellDef="let element">{{element.sku}}</td>
-    </ng-container>
-
+<div class="desktop-view table-responsive">
+  <table mat-table [dataSource]="dataSource">
     <ng-container matColumnDef="producto">
-        <th mat-header-cell *matHeaderCellDef>Producto</th>
-        <td mat-cell *matCellDef="let element">{{element.producto}}</td>
+      <th mat-header-cell *matHeaderCellDef>Producto</th>
+      <td mat-cell *matCellDef="let e"><strong>{{ e.producto }}</strong><small>{{ e.sku }}</small></td>
     </ng-container>
-
     <ng-container matColumnDef="almacen">
-        <th mat-header-cell *matHeaderCellDef>almacen</th>
-        <td mat-cell *matCellDef="let element">{{element.almacen}}</td>
+      <th mat-header-cell *matHeaderCellDef>Almacén</th>
+      <td mat-cell *matCellDef="let e">{{ e.almacen }}</td>
     </ng-container>
-
+    <ng-container matColumnDef="lote">
+      <th mat-header-cell *matHeaderCellDef>Lote</th>
+      <td mat-cell *matCellDef="let e">{{ e.lote }}</td>
+    </ng-container>
+    <ng-container matColumnDef="caducidad">
+      <th mat-header-cell *matHeaderCellDef>Caducidad</th>
+      <td mat-cell *matCellDef="let e">
+        <span>{{ e.caducidad }}</span>
+        <small>{{ estadoCaducidad(e) }}</small>
+      </td>
+    </ng-container>
     <ng-container matColumnDef="stock">
-        <th mat-header-cell *matHeaderCellDef>Existencia</th>
-        <td mat-cell *matCellDef="let element">{{element.stock}}</td>
+      <th mat-header-cell *matHeaderCellDef>Existencia</th>
+      <td mat-cell *matCellDef="let e"><strong class="stock">{{ e.stock }}</strong><small>{{ e.unidad }}</small></td>
     </ng-container>
-
-    <ng-container matColumnDef="minimo">
-        <th mat-header-cell *matHeaderCellDef>Mínimo</th>
-        <td mat-cell *matCellDef="let element">{{element.minimo}}</td>
+    <ng-container matColumnDef="estado">
+      <th mat-header-cell *matHeaderCellDef>Estado</th>
+      <td mat-cell *matCellDef="let e"><span class="stock-badge" [class]="'stock-badge ' + claseNivel(e)">{{ nivel(e) }}</span></td>
     </ng-container>
-
+    <ng-container matColumnDef="reorden">
+      <th mat-header-cell *matHeaderCellDef>Reorden</th>
+      <td mat-cell *matCellDef="let e">{{ e.reorden }}</td>
+    </ng-container>
     <ng-container matColumnDef="critico">
-        <th mat-header-cell *matHeaderCellDef>Crítico</th>
-        <td mat-cell *matCellDef="let element">{{element.critico}}</td>
+      <th mat-header-cell *matHeaderCellDef>Crítico</th>
+      <td mat-cell *matCellDef="let e">{{ e.critico }}</td>
     </ng-container>
-
+    <ng-container matColumnDef="maximo">
+      <th mat-header-cell *matHeaderCellDef>Máximo</th>
+      <td mat-cell *matCellDef="let e">{{ e.maximo }}</td>
+    </ng-container>
     <ng-container matColumnDef="anaquel">
-        <th mat-header-cell *matHeaderCellDef>Anaquel</th>
-        <td mat-cell *matCellDef="let element">{{element.anaquel}}</td>
+      <th mat-header-cell *matHeaderCellDef>Anaquel</th>
+      <td mat-cell *matCellDef="let e">{{ e.anaquel }}</td>
     </ng-container>
-
     <ng-container matColumnDef="actualizacion">
-        <th mat-header-cell *matHeaderCellDef>Actualización</th>
-        <td mat-cell *matCellDef="let element">{{element.actualizacion}}</td>
+      <th mat-header-cell *matHeaderCellDef>Actualización</th>
+      <td mat-cell *matCellDef="let e">{{ e.actualizacion === '—' ? '—' : (e.actualizacion | date:'dd/MM/yyyy HH:mm') }}</td>
     </ng-container>
-<!-- 
     <ng-container matColumnDef="acciones">
-        <th mat-header-cell *matHeaderCellDef></th>
-
-        <td mat-cell *matCellDef="let element">
-
-            <button mat-icon-button color="primary">
-                <mat-icon>edit</mat-icon>
-            </button>
-
-            <button mat-icon-button>
-                <mat-icon>history</mat-icon>
-            </button>
-
-        </td>
-
-    </ng-container> -->
-
+      <th mat-header-cell *matHeaderCellDef>Acciones</th>
+      <td mat-cell *matCellDef="let e">
+        <button mat-icon-button color="primary" matTooltip="Crear ajuste" (click)="nuevoAjuste(e)"><mat-icon>tune</mat-icon></button>
+        <button mat-icon-button matTooltip="Ver Kardex" (click)="verKardex(e)"><mat-icon>history</mat-icon></button>
+      </td>
+    </ng-container>
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    <tr class="empty-row" *matNoDataRow><td [attr.colspan]="displayedColumns.length">No hay existencias que coincidan con los filtros.</td></tr>
+  </table>
+</div>
 
-</table>
+<div class="cards-container">
+  @for (e of obs | async; track e.id) {
+    <article class="product-card">
+      <div class="card-header">
+        <div><h3>{{ e.producto }}</h3><span class="brand-badge">{{ e.sku }}</span></div>
+        <strong class="stock">{{ e.stock }} {{ e.unidad }}</strong>
+      </div>
+      <div class="card-body">
+        <div><strong>Almacén:</strong> {{ e.almacen }}</div>
+        <div><span class="stock-badge" [class]="'stock-badge ' + claseNivel(e)">{{ nivel(e) }}</span></div>
+        <div><strong>Lote:</strong> {{ e.lote }}</div>
+        <div><strong>Caducidad:</strong> {{ e.caducidad }}</div>
+        <div><strong>Reorden:</strong> {{ e.reorden }}</div>
+        <div><strong>Crítico:</strong> {{ e.critico }}</div>
+        <div><strong>Máximo:</strong> {{ e.maximo }}</div>
+        <div><strong>Anaquel:</strong> {{ e.anaquel }}</div>
+      </div>
+      <div class="card-actions">
+        <button mat-stroked-button color="primary" (click)="nuevoAjuste(e)">Ajustar</button>
+        <button mat-icon-button matTooltip="Ver Kardex" (click)="verKardex(e)"><mat-icon>history</mat-icon></button>
+      </div>
+    </article>
+  } @empty {
+    <div class="empty-card">No hay existencias que coincidan con los filtros.</div>
+  }
+</div>
 
+<div class="paginator-container">
+  <mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 50]" showFirstLastButtons></mat-paginator>
 </div>

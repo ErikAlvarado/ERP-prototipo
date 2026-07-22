@@ -1,0 +1,173 @@
+@if (producto; as p) {
+  <main class="detail-page">
+    
+    <!-- Encabezado de la página de detalle -->
+    <header class="detail-header">
+      <div class="heading">
+        <button mat-icon-button class="back-button" (click)="volver()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <h1>Detalle del producto</h1>
+      </div>
+      
+      <div class="header-actions">
+        <button mat-stroked-button class="delete-button" (click)="eliminar()">
+          <mat-icon>delete_outline</mat-icon>Eliminar
+        </button>
+        <button mat-flat-button class="edit-button" (click)="editar()">
+          <mat-icon>edit</mat-icon>Editar
+        </button>
+      </div>
+    </header>
+
+    <!-- Tarjeta de vista general -->
+    <section class="card overview-card">
+      <div class="overview">
+        <p class="eyebrow">{{ p.categoria }}</p>
+        <h2>{{ p.producto }}</h2>
+        <p class="barcode">SKU: {{ p.sku }} · Código: {{ p.codigo || 'Sin código de barras' }}</p>
+        
+        <div class="metrics">
+          <div>
+            <span>Precio de venta</span>
+            <strong>{{ p.precio | currency:'MXN' }}</strong>
+            <small>Impuestos incluidos</small>
+          </div>
+          <div>
+            <span>Costo</span>
+            <strong>{{ p.costo | currency:'MXN' }}</strong>
+            <small>Margen: {{ p.margen }}%</small>
+          </div>
+          <div>
+            <span>Existencias</span>
+            <strong>{{ p.stock }}</strong>
+            <small>{{ p.medida }}</small>
+          </div>
+        </div>
+      </div>
+      
+      <div class="image-box">
+        @if (p.imagen) {
+          <img [src]="p.imagen" [alt]="p.producto">
+        } @else {
+          <mat-icon>inventory_2</mat-icon>
+          <span>Sin imagen</span>
+        }
+      </div>
+    </section>
+
+    <!-- Sección: Inventario por ubicación -->
+    <section class="card">
+      <h3>Inventario por ubicación</h3>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Almacén</th>
+              <th>Existencias</th>
+              <th>Reorden</th>
+              <th>Crítico</th>
+              <th>Máximo</th>
+              <th>Anaquel</th>
+              <th>Lote</th>
+              <th>Caducidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ p.almacen }}</td>
+              <td>{{ p.stock }}</td>
+              <td>{{ p.stockReorden }}</td>
+              <td>{{ p.stockCritico }}</td>
+              <td>{{ p.stockMaximo }}</td>
+              <td>{{ p.anaquel }}</td>
+              <td>{{ p.lote }}</td>
+              <td>{{ p.caducidad }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Sección: Precio -->
+    <section class="card">
+      <h3>Precio</h3>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Lista de precios</th>
+              <th>Precio de venta</th>
+              <th>Costo</th>
+              <th>Margen</th>
+              <th>Ganancia estimada</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Precio general</td>
+              <td>{{ p.precio | currency:'MXN' }}</td>
+              <td>{{ p.costo | currency:'MXN' }}</td>
+              <td>{{ p.margen }}%</td>
+              <td>{{ (p.precio - p.costo) | currency:'MXN' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Sección: Información adicional -->
+    <section class="card">
+      <h3>Información adicional</h3>
+      <div class="details-grid">
+        <div>
+          <span>Descripción</span>
+          <p>{{ p.descripcion || 'Sin descripción' }}</p>
+        </div>
+        <div>
+          <span>Clave SAT</span>
+          <p>{{ p.claveSat }}</p>
+        </div>
+        <div>
+          <span>Ubicación predeterminada</span>
+          <p>{{ p.ubicacionDefault }}</p>
+        </div>
+        <div>
+          <span>Configuración</span>
+          <p>POS: {{ p.pos ? 'Sí' : 'No' }} · En línea: {{ p.linea ? 'Sí' : 'No' }} · Lotes: {{ p.usarLotes ? 'Sí' : 'No' }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección: Último movimiento -->
+    <section class="card">
+      <h3>Último movimiento</h3>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Movimiento</th>
+              <th>Producto</th>
+              <th>Actualizado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ p.ultimoMovimiento }}</td>
+              <td>Registro de kardex</td>
+              <td>{{ p.producto }}</td>
+              <td>{{ p.fechaActualizacion || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+} @else {
+  <div class="empty-state">
+    <h2>Producto no encontrado</h2>
+    <button mat-flat-button (click)="volver()">Volver a productos</button>
+  </div>
+}

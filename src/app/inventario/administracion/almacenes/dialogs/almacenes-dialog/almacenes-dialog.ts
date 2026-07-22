@@ -1,13 +1,12 @@
 import { Component, Inject } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SHARED_IMPORTS } from '../../../../../shared/imports/shared-imports';
-import {
-  MAT_DIALOG_DATA,
-  MatDialogRef
-} from '@angular/material/dialog';
+import { AlmacenAdministracion, EmpresaAdministracion } from '../../../administracion-datos';
 
 export interface AlmacenesDialogData {
   mode: 'add' | 'edit';
-  almacen?: any;
+  almacen?: AlmacenAdministracion;
+  empresas: EmpresaAdministracion[];
 }
 
 @Component({
@@ -17,29 +16,22 @@ export interface AlmacenesDialogData {
   styleUrl: './almacenes-dialog.css',
 })
 export class AlmacenesDialog {
-
-  almacen: any;
+  almacen: AlmacenAdministracion;
 
   constructor(
     private dialogRef: MatDialogRef<AlmacenesDialog>,
-    @Inject(MAT_DIALOG_DATA) public data: AlmacenesDialogData
+    @Inject(MAT_DIALOG_DATA) public data: AlmacenesDialogData,
   ) {
-
-    this.almacen = data.almacen
-      ? { ...data.almacen }
-      : {
-          clave: '',
-          nombre: '',
-          responsable: '',
-          telefono: '',
-          direccion: '',
-          estado: true
-        };
-
+    this.almacen = data.almacen ? { ...data.almacen } : {
+      id: '', empresaId: data.empresas[0]?.id || '', nombre: '', direccion: '', principal: false,
+      estado: true, fechaCreacion: '', fechaActualizacion: '',
+    };
   }
 
-  guardar() {
-    this.dialogRef.close(this.almacen);
-  }
+  get puedeGuardar(): boolean { return !!this.almacen.nombre.trim() && !!this.almacen.empresaId; }
 
+  guardar(): void {
+    if (!this.puedeGuardar) return;
+    this.dialogRef.close({ ...this.almacen, nombre: this.almacen.nombre.trim(), direccion: this.almacen.direccion.trim() });
+  }
 }

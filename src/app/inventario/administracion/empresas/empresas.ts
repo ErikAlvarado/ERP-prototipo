@@ -1,146 +1,112 @@
-import { Component } from '@angular/core';
-import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
-import { MatTableDataSource } from '@angular/material/table';
-import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatTableDataSource } from '@angular/material/table';
+import { Observable } from 'rxjs';
+import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
+import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { AdministracionDatos, EmpresaAdministracion } from '../administracion-datos';
+import { FiltrosAdministracionDialog, ValorFiltroAdministracion } from '../filtros-administracion-dialog/filtros-administracion-dialog';
 import { EmpresasDialog } from './dialogs/empresas-dialog/empresas-dialog';
-
-export interface PeriodicElement {
-
-  empresa: string;
-  razonSocial: string;
-  rfc: string;
-  telefono: string;
-  estado: boolean;
-  acciones?: string;
-
-}
-
-const ELEMENT_DATA: PeriodicElement[] = [
-
-  {
-    empresa: 'Ferretería Central',
-    razonSocial: 'Ferretería Central S.A. de C.V.',
-    rfc: 'FCE240101ABC',
-    telefono: '8123456789',
-    estado: true
-  },
-  {
-    empresa: 'Materiales del Norte',
-    razonSocial: 'Materiales del Norte S.A. de C.V.',
-    rfc: 'MDN240201XYZ',
-    telefono: '8187654321',
-    estado: true
-  },
-  {
-    empresa: 'ConstruMax',
-    razonSocial: 'ConstruMax Comercializadora S.A. de C.V.',
-    rfc: 'CON240301AAA',
-    telefono: '8112345678',
-    estado: false
-  }
-
-];
 
 @Component({
   selector: 'app-empresas',
-  imports: [SHARED_IMPORTS],
+  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule],
   templateUrl: './empresas.html',
-  styleUrl: './empresas.css',
+  styleUrls: ['../administracion-listas.css'],
 })
-export class Empresas {
-  constructor(private dialog: MatDialog) {}
-  displayedColumns = [
-    'empresa',
-    'razonSocial',
-    'rfc',
-    'telefono',
-    'estado',
-    'acciones'
-  ];
-
-  dataSource = new MatTableDataSource(ELEMENT_DATA);
-
+export class Empresas implements OnInit, AfterViewInit {
+  displayedColumns = ['clave', 'empresa', 'razonSocial', 'rfc', 'contacto', 'estado', 'acciones'];
+  dataSource = new MatTableDataSource<EmpresaAdministracion>([]);
+  obs!: Observable<EmpresaAdministracion[]>;
   currentSearch = '';
-  currentStatus = '';
+  currentStatus: boolean | null = null;
 
-  applyFilter() {
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-    this.dataSource.filter = JSON.stringify({
+  constructor(private dialog: MatDialog, private datos: AdministracionDatos) {}
 
-      search: this.currentSearch.trim().toLowerCase(),
-      status: this.currentStatus
-
-    });
-
-  }
-
-  ngOnInit() {
-
-    this.dataSource.filterPredicate = (
-      data: PeriodicElement,
-      filter: string
-    ) => {
-
-      const search = JSON.parse(filter);
-
-      const matchSearch =
-        data.empresa.toLowerCase().includes(search.search) ||
-        data.rfc.toLowerCase().includes(search.search);
-
-      const matchStatus =
-        search.status === '' ||
-        data.estado.toString() === search.status;
-
-      return matchSearch && matchStatus;
-
+  ngOnInit(): void {
+    this.dataSource.filterPredicate = (empresa, filtro) => {
+      const filtros = JSON.parse(filtro) as { search: string; status: boolean | null };
+      const texto = `${empresa.id} ${empresa.nombre} ${empresa.razonSocial} ${empresa.rfc} ${empresa.telefono} ${empresa.email}`.toLowerCase();
+      return (!filtros.search || texto.includes(filtros.search)) && (filtros.status === null || empresa.estado === filtros.status);
     };
-
+    this.obs = this.dataSource.connect();
+    this.datos.cargar().subscribe(estado => {
+      this.dataSource.data = estado.empresas;
+      this.applyFilter();
+    });
   }
-  abrirDialogo() {
-  this.dialog.open(EmpresasDialog, {
-    width: '700px',
-    data: { mode: 'add' }
-  }).afterClosed().subscribe(result => {
-    if (!result) return;
-    this.dataSource.data = [...this.dataSource.data, result];
-  });
-}
-editar(empresa: PeriodicElement) {
+
+  ngAfterViewInit(): void { this.dataSource.paginator = this.paginator; }
+
+  applyFilter(): void {
+    this.dataSource.filter = JSON.stringify({ search: this.currentSearch.trim().toLowerCase(), status: this.currentStatus });
+    this.dataSource.paginator?.firstPage();
+  }
+
+  setStatus(estado: boolean | null): void { this.currentStatus = estado; this.applyFilter(); }
+
+  get filtrosActivos(): number { return this.currentStatus === null ? 0 : 1; }
+
+  abrirFiltros(): void {
+    this.dialog.open(FiltrosAdministracionDialog, {
+      width: '560px', panelClass: 'custom-dialog', data: {
+        titulo: 'Filtrar empresas',
+        filtros: { estado: this.currentStatus },
+        campos: [{
+          clave: 'estado', etiqueta: 'Estado', icono: 'toggle_on', valorVacio: null,
+          opciones: [{ valor: true, etiqueta: 'Activas' }, { valor: false, etiqueta: 'Inactivas' }],
+        }],
+      },
+    }).afterClosed().subscribe((resultado?: Record<string, ValorFiltroAdministracion>) => {
+      if (!resultado) return;
+      this.currentStatus = resultado['estado'] as boolean | null;
+      this.applyFilter();
+    });
+  }
+
+  abrirDialogo(): void {
     this.dialog.open(EmpresasDialog, {
-      width: '700px',
-      data: {
-        mode: 'edit',
-        empresa: empresa
-      }
-    }).afterClosed().subscribe(result => {
-      if (!result) return;
-      const index = this.dataSource.data.findIndex(
-        e => e.rfc === empresa.rfc
-      );
-
-      if (index !== -1) {
-        this.dataSource.data[index] = result;
-        this.dataSource.data = [...this.dataSource.data]; 
-      }
+      width: '700px', panelClass: 'custom-dialog', data: { mode: 'add', rfcs: this.dataSource.data.map(empresa => empresa.rfc) },
+    }).afterClosed().subscribe((resultado?: EmpresaAdministracion) => {
+      if (!resultado) return;
+      const fecha = new Date().toISOString().slice(0, 10);
+      this.guardar([{ ...resultado, id: this.siguienteId(), fechaCreacion: fecha, fechaActualizacion: fecha }, ...this.dataSource.data]);
     });
   }
 
-  eliminar(empresa: PeriodicElement) {
-    this.dialog.open(ConfirmDialog, {
-      width: '400px',
-      data: {
-        title: 'Eliminar empresa',
-        message: `¿Deseas eliminar "${empresa.empresa}"?`,
-        confirmText: 'Eliminar',
-        cancelText: 'Cancelar'
-      }
-    }).afterClosed().subscribe(confirmado => {
-      if (!confirmado) return;
-
-      this.dataSource.data = this.dataSource.data.filter(
-        e => e.rfc !== empresa.rfc
-      );
+  editar(empresa: EmpresaAdministracion): void {
+    this.dialog.open(EmpresasDialog, {
+      width: '700px', panelClass: 'custom-dialog',
+      data: { mode: 'edit', empresa, rfcs: this.dataSource.data.filter(actual => actual.id !== empresa.id).map(actual => actual.rfc) },
+    }).afterClosed().subscribe((resultado?: EmpresaAdministracion) => {
+      if (!resultado) return;
+      const actualizada = { ...resultado, id: empresa.id, fechaCreacion: empresa.fechaCreacion, fechaActualizacion: new Date().toISOString().slice(0, 10) };
+      this.guardar(this.dataSource.data.map(actual => actual.id === empresa.id ? actualizada : actual));
     });
+  }
+
+  eliminar(empresa: EmpresaAdministracion): void {
+    this.dialog.open(ConfirmDialog, {
+      width: '430px', data: {
+        title: 'Eliminar empresa',
+        message: `¿Deseas eliminar "${empresa.nombre}"? Sus almacenes, roles y usuarios quedarán sin empresa asignada.`,
+        confirmText: 'Eliminar', cancelText: 'Cancelar',
+      },
+    }).afterClosed().subscribe(confirmado => {
+      if (confirmado) this.guardar(this.dataSource.data.filter(actual => actual.id !== empresa.id));
+    });
+  }
+
+  private siguienteId(): string {
+    return String(Math.max(0, ...this.dataSource.data.map(empresa => Number(empresa.id) || 0)) + 1);
+  }
+
+  private guardar(empresas: EmpresaAdministracion[]): void {
+    this.datos.guardarEmpresas(empresas);
+    this.applyFilter();
   }
 }

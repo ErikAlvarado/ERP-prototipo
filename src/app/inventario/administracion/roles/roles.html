@@ -1,88 +1,38 @@
 <div class="content-header">
-    <h1>Lista de Roles</h1>
-    <button
-        mat-raised-button
-        color="primary"
-        (click)="abrirDialogo()">
-        Agregar Rol
-    </button>
+  <h1>Lista de Roles</h1>
+  <button mat-raised-button color="primary" (click)="abrirDialogo()">Agregar rol</button>
 </div>
 
 <div class="content-search">
-
-    <mat-form-field class="search-field" appearance="outline">
-        <mat-icon matPrefix>search</mat-icon>
-
-        <input
-            [(ngModel)]="currentSearch"
-            (keyup)="applyFilter()"
-            matInput
-            placeholder="Buscar rol">
-    </mat-form-field>
-
+  <div class="custom-search"><mat-icon>search</mat-icon><input [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar por rol, descripción, empresa o permiso"></div>
+  <div class="custom-filters">
+    <button mat-stroked-button class="filter-btn" (click)="abrirFiltros()"><mat-icon>tune</mat-icon>Filtrar@if (filtrosActivos) { <span class="filter-count">{{ filtrosActivos }}</span> }</button>
+  </div>
 </div>
 
-<div class="table-responsive">
-
-    <table mat-table [dataSource]="dataSource" class="mat-shadow-2">
-
-        <ng-container matColumnDef="nombre">
-            <th mat-header-cell *matHeaderCellDef>
-                Rol
-            </th>
-
-            <td mat-cell *matCellDef="let element">
-                {{element.nombre}}
-            </td>
-        </ng-container>
-
-        <ng-container matColumnDef="descripcion">
-            <th mat-header-cell *matHeaderCellDef>
-                Descripción
-            </th>
-
-            <td mat-cell *matCellDef="let element">
-                {{element.descripcion}}
-            </td>
-        </ng-container>
-
-        <ng-container matColumnDef="usuarios">
-            <th mat-header-cell *matHeaderCellDef>
-                Usuarios
-            </th>
-
-            <td mat-cell *matCellDef="let element">
-                {{element.usuarios}}
-            </td>
-        </ng-container>
-
-        <ng-container matColumnDef="acciones">
-
-            <th mat-header-cell *matHeaderCellDef></th>
-
-            <td mat-cell *matCellDef="let element">
-
-                <button
-                    mat-icon-button
-                    color="primary"
-                    (click)="editar(element)">
-                    <mat-icon>edit</mat-icon>
-                </button>
-
-                <button
-                    mat-icon-button
-                    color="warn"
-                    (click)="eliminar(element)">
-                    <mat-icon>delete</mat-icon>
-                </button>
-
-            </td>
-
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-    </table>
-
+<div class="desktop-view table-responsive">
+  <table mat-table [dataSource]="dataSource">
+    <ng-container matColumnDef="clave"><th mat-header-cell *matHeaderCellDef>Clave</th><td mat-cell *matCellDef="let e">ROL-{{ e.id }}</td></ng-container>
+    <ng-container matColumnDef="nombre"><th mat-header-cell *matHeaderCellDef>Rol</th><td mat-cell *matCellDef="let e">{{ e.nombre }}</td></ng-container>
+    <ng-container matColumnDef="empresa"><th mat-header-cell *matHeaderCellDef>Empresa</th><td mat-cell *matCellDef="let e">{{ nombreEmpresa(e.empresaId) }}</td></ng-container>
+    <ng-container matColumnDef="descripcion"><th mat-header-cell *matHeaderCellDef>Descripción</th><td mat-cell *matCellDef="let e">{{ e.descripcion || '—' }}</td></ng-container>
+    <ng-container matColumnDef="usuarios"><th mat-header-cell *matHeaderCellDef>Usuarios</th><td mat-cell *matCellDef="let e">{{ usuariosPorRol(e.id) }}</td></ng-container>
+    <ng-container matColumnDef="permisos"><th mat-header-cell *matHeaderCellDef>Permisos</th><td mat-cell *matCellDef="let e">{{ e.permisoIds.length }}</td></ng-container>
+    <ng-container matColumnDef="estado"><th mat-header-cell *matHeaderCellDef>Estado</th><td mat-cell *matCellDef="let e"><app-status [active]="e.estado"></app-status></td></ng-container>
+    <ng-container matColumnDef="acciones"><th mat-header-cell *matHeaderCellDef>Acciones</th><td mat-cell *matCellDef="let e" class="actions-cell"><button mat-icon-button color="primary" matTooltip="Editar" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" matTooltip="Eliminar" (click)="eliminar(e)"><mat-icon>delete</mat-icon></button></td></ng-container>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr><tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    <tr class="mat-row empty-row" *matNoDataRow><td class="mat-cell" [attr.colspan]="displayedColumns.length">No hay roles que coincidan con los filtros.</td></tr>
+  </table>
 </div>
+
+<div class="cards-container">
+  @for (e of obs | async; track e.id) {
+    <article class="entity-card">
+      <div class="card-header"><div><h3>{{ e.nombre }}</h3><span class="card-subtitle">{{ nombreEmpresa(e.empresaId) }}</span></div><app-status [active]="e.estado"></app-status></div>
+      <div class="card-body"><span><strong>Descripción:</strong> {{ e.descripcion || '—' }}</span><span><strong>Usuarios:</strong> {{ usuariosPorRol(e.id) }}</span><span><strong>Permisos:</strong> {{ e.permisoIds.length }}</span></div>
+      <div class="card-actions"><button mat-icon-button color="primary" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" (click)="eliminar(e)"><mat-icon>delete</mat-icon></button></div>
+    </article>
+  } @empty { <div class="entity-card">No hay roles que coincidan con los filtros.</div> }
+</div>
+
+<div class="paginator-container"><mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 50]" showFirstLastButtons></mat-paginator></div>

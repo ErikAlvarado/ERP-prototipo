@@ -1,182 +1,154 @@
-import { Component } from '@angular/core';
-import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
-import { MatTableDataSource } from '@angular/material/table';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
-import { UsuariosDialog } from './dialogs/usuarios-dialog/usuarios-dialog';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatTableDataSource } from '@angular/material/table';
+import { Observable } from 'rxjs';
+import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
-
-export interface Usuario {
-  nombre: string;
-  usuario: string;
-  correo: string;
-  rol: string;
-  almacen: string;
-  estado: boolean;
-}
-
-const ELEMENT_DATA: Usuario[] = [
-  {
-    nombre: 'Juan Pérez',
-    usuario: 'jperez',
-    correo: 'juan@empresa.com',
-    rol: 'Administrador',
-    almacen: 'Almacén Principal',
-    estado: true
-  },
-  {
-    nombre: 'María López',
-    usuario: 'mlopez',
-    correo: 'maria@empresa.com',
-    rol: 'Gerente',
-    almacen: 'Almacén Norte',
-    estado: true
-  },
-  {
-    nombre: 'Carlos Ramírez',
-    usuario: 'cramirez',
-    correo: 'carlos@empresa.com',
-    rol: 'Cajero',
-    almacen: 'Almacén Principal',
-    estado: false
-  },
-  {
-    nombre: 'Ana Torres',
-    usuario: 'atorres',
-    correo: 'ana@empresa.com',
-    rol: 'Almacenista',
-    almacen: 'Almacén Sur',
-    estado: true
-  }
-];
+import {
+  AdministracionDatos, AlmacenAdministracion, EmpresaAdministracion,
+  RolAdministracion, UsuarioAdministracion,
+} from '../administracion-datos';
+import { FiltrosAdministracionDialog, ValorFiltroAdministracion } from '../filtros-administracion-dialog/filtros-administracion-dialog';
+import { UsuariosDialog } from './dialogs/usuarios-dialog/usuarios-dialog';
 
 @Component({
   selector: 'app-usuarios',
-  imports: [SHARED_IMPORTS],
+  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule],
   templateUrl: './usuarios.html',
-  styleUrl: './usuarios.css',
+  styleUrls: ['../administracion-listas.css'],
 })
-export class Usuarios {
-  constructor(private dialog: MatDialog) {}
-  displayedColumns: string[] = [
-    'nombre',
-    'usuario',
-    'correo',
-    'rol',
-    'almacen',
-    'estado',
-    'acciones'
-  ];
+export class Usuarios implements OnInit, AfterViewInit {
+  displayedColumns = ['clave', 'nombre', 'correo', 'empresa', 'roles', 'almacen', 'estado', 'acciones'];
+  dataSource = new MatTableDataSource<UsuarioAdministracion>([]);
+  obs!: Observable<UsuarioAdministracion[]>;
+  empresas: EmpresaAdministracion[] = [];
+  roles: RolAdministracion[] = [];
+  almacenes: AlmacenAdministracion[] = [];
+  currentSearch = '';
+  currentEmpresa = '';
+  currentRole = '';
+  currentAlmacen = '';
+  currentStatus: boolean | null = null;
 
-  dataSource = new MatTableDataSource(ELEMENT_DATA);
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  currentSearch: string = '';
-  currentRole: string = '';
+  constructor(private dialog: MatDialog, private datos: AdministracionDatos) {}
 
-  applyFilter() {
-    this.dataSource.filter = JSON.stringify({
-      search: this.currentSearch.trim().toLowerCase(),
-      role: this.currentRole
+  ngOnInit(): void {
+    this.dataSource.filterPredicate = (usuario, filtro) => {
+      const filtros = JSON.parse(filtro) as { search: string; empresa: string; role: string; almacen: string; status: boolean | null };
+      const texto = `${usuario.id} ${this.nombreCompleto(usuario)} ${usuario.email} ${usuario.telefono} ${this.nombreEmpresa(usuario.empresaId)} ${this.nombresRoles(usuario.rolIds)} ${this.nombreAlmacen(usuario.almacenId)}`.toLowerCase();
+      return (!filtros.search || texto.includes(filtros.search)) &&
+        (!filtros.empresa || usuario.empresaId === filtros.empresa) &&
+        (!filtros.role || usuario.rolIds.includes(filtros.role)) &&
+        (!filtros.almacen || usuario.almacenId === filtros.almacen) &&
+        (filtros.status === null || usuario.estado === filtros.status);
+    };
+    this.obs = this.dataSource.connect();
+    this.datos.cargar().subscribe(estado => {
+      this.empresas = estado.empresas;
+      this.roles = estado.roles;
+      this.almacenes = estado.almacenes;
+      this.dataSource.data = estado.usuarios;
+      this.applyFilter();
     });
   }
 
-  ngOnInit() {
-    this.dataSource.filterPredicate = (data: Usuario, filter: string) => {
+  ngAfterViewInit(): void { this.dataSource.paginator = this.paginator; }
 
-      const search = JSON.parse(filter);
-
-      const matchSearch =
-        data.nombre.toLowerCase().includes(search.search) ||
-        data.usuario.toLowerCase().includes(search.search) ||
-        data.correo.toLowerCase().includes(search.search);
-
-      const matchRole =
-        search.role === '' || data.rol === search.role;
-
-      return matchSearch && matchRole;
-    };
+  applyFilter(): void {
+    this.dataSource.filter = JSON.stringify({
+      search: this.currentSearch.trim().toLowerCase(), empresa: this.currentEmpresa, role: this.currentRole,
+      almacen: this.currentAlmacen, status: this.currentStatus,
+    });
+    this.dataSource.paginator?.firstPage();
   }
 
-abrirDialogo() {
+  setEmpresa(id: string): void { this.currentEmpresa = id; this.applyFilter(); }
+  setRole(id: string): void { this.currentRole = id; this.applyFilter(); }
+  setAlmacen(id: string): void { this.currentAlmacen = id; this.applyFilter(); }
+  setStatus(estado: boolean | null): void { this.currentStatus = estado; this.applyFilter(); }
 
-  this.dialog.open(UsuariosDialog, {
+  get filtrosActivos(): number {
+    return Number(!!this.currentEmpresa) + Number(!!this.currentRole) + Number(!!this.currentAlmacen) + Number(this.currentStatus !== null);
+  }
 
-    width: '700px',
+  abrirFiltros(): void {
+    this.dialog.open(FiltrosAdministracionDialog, {
+      width: '640px', panelClass: 'custom-dialog', data: {
+        titulo: 'Filtrar usuarios',
+        filtros: { empresa: this.currentEmpresa, rol: this.currentRole, almacen: this.currentAlmacen, estado: this.currentStatus },
+        campos: [
+          { clave: 'empresa', etiqueta: 'Empresa', icono: 'business', valorVacio: '', opciones: this.empresas.map(empresa => ({ valor: empresa.id, etiqueta: empresa.nombre })) },
+          { clave: 'rol', etiqueta: 'Rol', icono: 'badge', valorVacio: '', opciones: this.roles.map(rol => ({ valor: rol.id, etiqueta: rol.nombre })) },
+          { clave: 'almacen', etiqueta: 'Almacén', icono: 'warehouse', valorVacio: '', opciones: this.almacenes.map(almacen => ({ valor: almacen.id, etiqueta: almacen.nombre })) },
+          { clave: 'estado', etiqueta: 'Estado', icono: 'toggle_on', valorVacio: null, opciones: [{ valor: true, etiqueta: 'Activos' }, { valor: false, etiqueta: 'Inactivos' }] },
+        ],
+      },
+    }).afterClosed().subscribe((resultado?: Record<string, ValorFiltroAdministracion>) => {
+      if (!resultado) return;
+      this.currentEmpresa = String(resultado['empresa'] || '');
+      this.currentRole = String(resultado['rol'] || '');
+      this.currentAlmacen = String(resultado['almacen'] || '');
+      this.currentStatus = resultado['estado'] as boolean | null;
+      this.applyFilter();
+    });
+  }
 
-    data: {
-      mode: 'add'
-    }
+  abrirDialogo(): void {
+    this.dialog.open(UsuariosDialog, {
+      width: '760px', panelClass: 'custom-dialog', data: {
+        mode: 'add', empresas: this.empresas, roles: this.roles, almacenes: this.almacenes,
+        emails: this.dataSource.data.map(usuario => usuario.email),
+      },
+    }).afterClosed().subscribe((resultado?: UsuarioAdministracion) => {
+      if (!resultado) return;
+      const fecha = new Date().toISOString().slice(0, 10);
+      this.guardar([{ ...resultado, id: this.siguienteId(), fechaCreacion: fecha, fechaActualizacion: fecha }, ...this.dataSource.data]);
+    });
+  }
 
-  }).afterClosed().subscribe(result => {
+  editar(usuario: UsuarioAdministracion): void {
+    this.dialog.open(UsuariosDialog, {
+      width: '760px', panelClass: 'custom-dialog', data: {
+        mode: 'edit', usuario, empresas: this.empresas, roles: this.roles, almacenes: this.almacenes,
+        emails: this.dataSource.data.filter(actual => actual.id !== usuario.id).map(actual => actual.email),
+      },
+    }).afterClosed().subscribe((resultado?: UsuarioAdministracion) => {
+      if (!resultado) return;
+      const actualizado = { ...resultado, id: usuario.id, fechaCreacion: usuario.fechaCreacion, fechaActualizacion: new Date().toISOString().slice(0, 10) };
+      this.guardar(this.dataSource.data.map(actual => actual.id === usuario.id ? actualizado : actual));
+    });
+  }
 
-    if (!result) return;
+  eliminar(usuario: UsuarioAdministracion): void {
+    this.dialog.open(ConfirmDialog, {
+      width: '400px', data: {
+        title: 'Eliminar usuario', message: `¿Deseas eliminar a "${this.nombreCompleto(usuario)}"?`,
+        confirmText: 'Eliminar', cancelText: 'Cancelar',
+      },
+    }).afterClosed().subscribe(confirmado => {
+      if (confirmado) this.guardar(this.dataSource.data.filter(actual => actual.id !== usuario.id));
+    });
+  }
 
-    this.dataSource.data = [
-      ...this.dataSource.data,
-      result
-    ];
+  nombreCompleto(usuario: UsuarioAdministracion): string {
+    return [usuario.nombres, usuario.apellidoPaterno, usuario.apellidoMaterno].filter(Boolean).join(' ');
+  }
 
-  });
+  nombreEmpresa(id: string): string { return this.empresas.find(empresa => empresa.id === id)?.nombre || 'Sin empresa'; }
+  nombreAlmacen(id: string): string { return this.almacenes.find(almacen => almacen.id === id)?.nombre || 'Sin almacén'; }
+  nombreRol(id: string): string { return this.roles.find(rol => rol.id === id)?.nombre || 'Rol no disponible'; }
+  nombresRoles(ids: string[]): string { return ids.map(id => this.nombreRol(id)).join(', ') || 'Sin rol'; }
 
-}
-editar(usuario: Usuario) {
+  private siguienteId(): string {
+    return String(Math.max(0, ...this.dataSource.data.map(usuario => Number(usuario.id) || 0)) + 1);
+  }
 
-  this.dialog.open(UsuariosDialog, {
-
-    width: '700px',
-
-    data: {
-      mode: 'edit',
-      usuario: usuario
-    }
-
-  }).afterClosed().subscribe(result => {
-
-    if (!result) return;
-
-    const index = this.dataSource.data.findIndex(
-      u => u.usuario === usuario.usuario
-    );
-
-    if (index !== -1) {
-
-      this.dataSource.data[index] = result;
-
-      this.dataSource.data = [
-        ...this.dataSource.data
-      ];
-
-    }
-
-  });
-
-}
-eliminar(usuario: Usuario) {
-
-  this.dialog.open(ConfirmDialog, {
-
-    width: '400px',
-
-    data: {
-
-      title: 'Eliminar usuario',
-
-      message: `¿Deseas eliminar al usuario "${usuario.nombre}"?`,
-
-      confirmText: 'Eliminar',
-
-      cancelText: 'Cancelar'
-
-    }
-
-  }).afterClosed().subscribe(confirmado => {
-
-    if (!confirmado) return;
-
-    this.dataSource.data = this.dataSource.data.filter(
-      u => u.usuario !== usuario.usuario
-    );
-
-  });
-
-}
+  private guardar(usuarios: UsuarioAdministracion[]): void {
+    this.datos.guardarUsuarios(usuarios);
+    this.applyFilter();
+  }
 }

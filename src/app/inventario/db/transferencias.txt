@@ -1,0 +1,2 @@
+id_transferencia|id_empresa|folio|id_almacen_origen|id_almacen_destino|fecha_solicitud|fecha_autorizacion|fecha_recepcion|id_estado_transferencia|observaciones|id_usuario_solicita|id_usuario_autoriza
+1|1|TR-0001|1|2|2024-07-20|2024-07-20|2024-07-21|4|Reposicion de inventario|1|1

@@ -1,94 +1,32 @@
-<h2 mat-dialog-title>
-  {{ data.mode === 'add' ? 'Agregar usuario' : 'Actualizar usuario' }}
-</h2>
-
+<h2 mat-dialog-title>{{ data.mode === 'add' ? 'Agregar usuario' : 'Actualizar usuario' }}</h2>
 <mat-dialog-content>
-
   <div class="formulario">
-
     <mat-form-field appearance="outline">
-      <mat-label>Nombre completo</mat-label>
-      <input matInput [(ngModel)]="usuario.nombre">
+      <mat-label>Empresa</mat-label><mat-select [(ngModel)]="usuario.empresaId" (selectionChange)="cambiarEmpresa()" required>@for (empresa of data.empresas; track empresa.id) { <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option> }</mat-select>
+      @if (!data.empresas.length) { <mat-hint>Primero registra una empresa</mat-hint> }
     </mat-form-field>
-
+    <mat-form-field appearance="outline"><mat-label>Nombres</mat-label><input matInput [(ngModel)]="usuario.nombres" required maxlength="100"></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Apellido paterno</mat-label><input matInput [(ngModel)]="usuario.apellidoPaterno" required maxlength="80"></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Apellido materno</mat-label><input matInput [(ngModel)]="usuario.apellidoMaterno" maxlength="80"></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Fecha de nacimiento</mat-label><input matInput type="date" [(ngModel)]="usuario.fechaNacimiento"></mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Usuario</mat-label>
-      <input matInput [(ngModel)]="usuario.usuario">
+      <mat-label>Correo electrónico</mat-label><input matInput type="email" [(ngModel)]="usuario.email" required maxlength="150">
+      @if (emailDuplicado) { <mat-error>Este correo ya está registrado</mat-error> }
     </mat-form-field>
-
+    <mat-form-field appearance="outline"><mat-label>Teléfono</mat-label><input matInput type="tel" [(ngModel)]="usuario.telefono" maxlength="30"></mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Correo electrónico</mat-label>
-      <input
-        matInput
-        type="email"
-        [(ngModel)]="usuario.correo">
+      <mat-label>{{ data.mode === 'add' ? 'Contraseña temporal' : 'Nueva contraseña (opcional)' }}</mat-label>
+      <input matInput type="password" [(ngModel)]="password" minlength="8" autocomplete="new-password">
+      <mat-hint>Mínimo 8 caracteres; no se muestra en la tabla</mat-hint>
     </mat-form-field>
-
     <mat-form-field appearance="outline">
-      <mat-label>Teléfono</mat-label>
-      <input matInput [(ngModel)]="usuario.telefono">
+      <mat-label>Roles</mat-label><mat-select [(ngModel)]="usuario.rolIds" multiple>@for (rol of rolesDisponibles; track rol.id) { <mat-option [value]="rol.id">{{ rol.nombre }}</mat-option> }</mat-select>
+      @if (!rolesDisponibles.length) { <mat-hint>No hay roles para la empresa seleccionada</mat-hint> }
     </mat-form-field>
-
     <mat-form-field appearance="outline">
-      <mat-label>Contraseña</mat-label>
-      <input
-        matInput
-        type="password"
-        [(ngModel)]="usuario.password">
+      <mat-label>Almacén predeterminado</mat-label><mat-select [(ngModel)]="usuario.almacenId"><mat-option value="">Sin almacén</mat-option>@for (almacen of almacenesDisponibles; track almacen.id) { <mat-option [value]="almacen.id">{{ almacen.nombre }}</mat-option> }</mat-select>
     </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Rol</mat-label>
-
-      <mat-select [(ngModel)]="usuario.rol">
-
-        <mat-option value="Administrador">Administrador</mat-option>
-        <mat-option value="Gerente">Gerente</mat-option>
-        <mat-option value="Cajero">Cajero</mat-option>
-        <mat-option value="Almacenista">Almacenista</mat-option>
-
-      </mat-select>
-
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Almacén</mat-label>
-
-      <mat-select [(ngModel)]="usuario.almacen">
-
-        <mat-option value="Principal">Principal</mat-option>
-        <mat-option value="Norte">Norte</mat-option>
-        <mat-option value="Sur">Sur</mat-option>
-
-      </mat-select>
-
-    </mat-form-field>
-
-    <div class="checks">
-
-      <mat-checkbox [(ngModel)]="usuario.estado">
-        Activo
-      </mat-checkbox>
-
-    </div>
-
+    <div class="checks"><mat-checkbox [(ngModel)]="usuario.estado">Activo</mat-checkbox></div>
   </div>
-
 </mat-dialog-content>
-
-<mat-dialog-actions>
-
-  <button mat-button mat-dialog-close>
-    Cancelar
-  </button>
-
-  <button
-    mat-flat-button
-    color="primary"
-    (click)="guardar()">
-
-    {{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}
-
-  </button>
-
-</mat-dialog-actions>
+<mat-dialog-actions align="end"><button mat-button mat-dialog-close>Cancelar</button><button mat-flat-button color="primary" [disabled]="!puedeGuardar" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button></mat-dialog-actions>

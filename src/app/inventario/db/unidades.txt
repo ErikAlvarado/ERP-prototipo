@@ -2,3 +2,5 @@ id_unidad|id_empresa|nombre|abreviatura|permitir_decimales
 1|1|Pieza|pza|0
 2|1|Kilogramo|kg|1
 3|1|Caja|cja|0
+4|1|Metro|m|1
+5|1|Litro|l|1

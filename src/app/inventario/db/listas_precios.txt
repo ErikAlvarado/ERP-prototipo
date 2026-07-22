@@ -1,0 +1,3 @@
+id_lista_precio|id_empresa|nombre|es_predeterminado|activo
+1|1|Público General|1|1
+2|1|Mayoreo|0|1

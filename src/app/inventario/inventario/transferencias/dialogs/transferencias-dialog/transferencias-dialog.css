@@ -1,0 +1,12 @@
+.blue-header { color: white; background: #0d4794; }
+.blue-header h2 { color: white; margin-top: 3px; }.blue-header span { font-size: 12px; opacity: .82; }.blue-header button { color: white; }
+.textarea { height: auto; min-height: 82px; padding: 10px 12px; resize: vertical; }
+.transfer-summary { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+.transfer-summary div { padding: 14px; border: 1px solid #dbeafe; border-radius: 8px; background: white; }
+.transfer-summary small, .transfer-summary span { display: block; color: #667085; font-size: 12px; }
+.transfer-summary strong { display: block; margin: 5px 0; }.blue-text { color: #0d4794; }
+.form-error, .form-warning { display: flex; align-items: center; gap: 8px; padding: 12px; border-radius: 7px; font-size: 13px; }
+.form-error { color: #b42318; background: #fef3f2; }.form-warning { color: #175cd3; background: #eff8ff; }
+.form-error mat-icon, .form-warning mat-icon { font-size: 18px; width: 18px; height: 18px; }
+mat-dialog-actions.dialog-footer { display: block; }
+@media (max-width: 600px) { .transfer-summary { grid-template-columns: 1fr; } }

@@ -1,99 +1,34 @@
 <div class="content-header">
-    <h1>Lista de Medidas</h1>
-
-    <button
-        mat-raised-button
-        color="primary"
-        (click)="abrirAgregar()">
-
-        Agregar medida
-
-    </button>
+  <h1>Lista de Medidas</h1>
+  <button mat-raised-button color="primary" (click)="abrirAgregar()"><mat-icon>add</mat-icon>Agregar medida</button>
 </div>
 
 <div class="content-search">
-
-    <mat-form-field class="search-field" appearance="outline">
-        <mat-icon matPrefix>search</mat-icon>
-
-        <input
-            [(ngModel)]="currentSearch"
-            (keyup)="applyFilter()"
-            matInput
-            placeholder="Buscar medida">
-    </mat-form-field>
-
-    <mat-form-field class="select-field" appearance="outline">
-        <mat-label>Unidad</mat-label>
-
-        <mat-select
-            [(ngModel)]="currentUnit"
-            (selectionChange)="applyFilter()">
-
-            <mat-option value="">Todas</mat-option>
-            <mat-option value="Pieza">Pieza</mat-option>
-            <mat-option value="Metro">Metro</mat-option>
-            <mat-option value="Kilogramo">Kilogramo</mat-option>
-            <mat-option value="Litro">Litro</mat-option>
-
-        </mat-select>
-    </mat-form-field>
-
+  <div class="custom-search"><mat-icon>search</mat-icon><input [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar por ID, valor, unidad o abreviatura"></div>
+  <div class="custom-filters">
+    <button mat-stroked-button class="filter-btn" (click)="abrirFiltros()"><mat-icon>tune</mat-icon>Filtrar@if (conteoFiltros) { <span class="filter-count">{{ conteoFiltros }}</span> }</button>
+  </div>
 </div>
 
-<div class="table-responsive">
-
-    <table mat-table [dataSource]="dataSource" class="mat-shadow-2">
-
-        <ng-container matColumnDef="valor">
-            <th mat-header-cell *matHeaderCellDef>Valor</th>
-
-            <td mat-cell *matCellDef="let element">
-                {{element.valor}}
-            </td>
-        </ng-container>
-
-        <ng-container matColumnDef="unidad">
-            <th mat-header-cell *matHeaderCellDef>Unidad</th>
-
-            <td mat-cell *matCellDef="let element">
-                {{element.unidad}}
-            </td>
-        </ng-container>
-
-        <ng-container matColumnDef="acciones">
-
-            <th mat-header-cell *matHeaderCellDef></th>
-
-            <td mat-cell *matCellDef="let element">
-
-                <button
-            mat-icon-button
-            color="primary"
-            (click)="editar(element)">
-
-            <mat-icon>edit</mat-icon>
-
-            </button>
-
-
-            <button
-            mat-icon-button
-            color="warn"
-            (click)="eliminar(element)">
-
-            <mat-icon>delete</mat-icon>
-
-            </button>
-
-            </td>
-
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
+@if (dataSource.filteredData.length) {
+  <div class="desktop-view table-responsive">
+    <table mat-table [dataSource]="dataSource">
+      <ng-container matColumnDef="id"><th mat-header-cell *matHeaderCellDef>ID</th><td mat-cell *matCellDef="let e" class="number">{{ e.id }}</td></ng-container>
+      <ng-container matColumnDef="valor"><th mat-header-cell *matHeaderCellDef>Valor</th><td mat-cell *matCellDef="let e" class="number"><strong>{{ e.valor }}</strong></td></ng-container>
+      <ng-container matColumnDef="unidad"><th mat-header-cell *matHeaderCellDef>Unidad</th><td mat-cell *matCellDef="let e">{{ e.unidadAbreviatura }} <span class="muted">· {{ e.unidadNombre }}</span></td></ng-container>
+      <ng-container matColumnDef="fecha"><th mat-header-cell *matHeaderCellDef>Fecha de creación</th><td mat-cell *matCellDef="let e">{{ e.fechaCreacion ? (e.fechaCreacion | date:'dd/MM/yyyy') : '—' }}</td></ng-container>
+      <ng-container matColumnDef="estado"><th mat-header-cell *matHeaderCellDef>Estado</th><td mat-cell *matCellDef="let e"><app-status [active]="e.estado"></app-status></td></ng-container>
+      <ng-container matColumnDef="acciones"><th mat-header-cell *matHeaderCellDef class="actions-cell">Acciones</th><td mat-cell *matCellDef="let e" class="actions-cell"><button mat-icon-button color="primary" matTooltip="Editar" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" matTooltip="Eliminar" (click)="eliminar(e)"><mat-icon>delete</mat-icon></button></td></ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr><tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     </table>
+  </div>
+  <div class="cards-container">
+    @for (e of obs | async; track e.id) {
+      <article class="catalog-card"><div class="card-header"><div><h3>{{ e.valor }} {{ e.unidadAbreviatura }}</h3><span class="muted">{{ e.unidadNombre }}</span></div><app-status [active]="e.estado"></app-status></div><div class="card-body"><div><strong>ID</strong>{{ e.id }}</div><div><strong>Creada</strong>{{ e.fechaCreacion ? (e.fechaCreacion | date:'dd/MM/yyyy') : '—' }}</div></div><div class="card-actions"><button mat-icon-button color="primary" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" (click)="eliminar(e)"><mat-icon>delete</mat-icon></button></div></article>
+    }
+  </div>
+} @else {
+  <div class="empty-state"><mat-icon>square_foot</mat-icon>No hay medidas que coincidan con los filtros.</div>
+}
 
-</div>
+<div class="paginator-container"><mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 50]" showFirstLastButtons></mat-paginator></div>

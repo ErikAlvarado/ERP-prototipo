@@ -1,0 +1,4 @@
+id_componente_kit|id_producto_kit|id_producto_hijo|cantidad
+1|53|10|1
+2|53|11|1
+3|53|28|1

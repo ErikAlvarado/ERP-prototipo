@@ -1,41 +1,33 @@
-<h2 mat-dialog-title>
-  {{ data.mode === 'add' ? 'Agregar categoría' : 'Actualizar categoría' }}
-</h2>
-
+<h2 mat-dialog-title>{{ data.mode === 'add' ? 'Agregar categoría' : 'Actualizar categoría' }}</h2>
 <mat-dialog-content>
-
   <div class="formulario">
-
     <mat-form-field appearance="outline">
       <mat-label>Nombre</mat-label>
-      <input matInput [(ngModel)]="categoria.nombre">
+      <input matInput [(ngModel)]="categoria.nombre" maxlength="100" required>
     </mat-form-field>
-
-    <div class="checks">
-
-      <mat-checkbox [(ngModel)]="categoria.estado">
-        Activa
-      </mat-checkbox>
-
-    </div>
-
+    <mat-form-field appearance="outline">
+      <mat-label>Empresa</mat-label>
+      <mat-select [(ngModel)]="categoria.idEmpresa" (selectionChange)="cambiarEmpresa()" required>
+        @for (empresa of data.empresas; track empresa.id) {
+          <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Categoría padre</mat-label>
+      <mat-select [(ngModel)]="categoria.idPadre">
+        <mat-option value="">Sin categoría padre</mat-option>
+        @for (categoriaPadre of categoriasPadre; track categoriaPadre.id) {
+          <mat-option [value]="categoriaPadre.id">{{ categoriaPadre.nombre }}</mat-option>
+        }
+      </mat-select>
+      <mat-hint>Déjalo vacío para crear una categoría principal.</mat-hint>
+    </mat-form-field>
+    <div class="checks"><mat-checkbox [(ngModel)]="categoria.estado">Categoría activa</mat-checkbox></div>
+    @if (error) { <p class="error-text full-width">{{ error }}</p> }
   </div>
-
 </mat-dialog-content>
-
 <mat-dialog-actions>
-
-  <button mat-button mat-dialog-close>
-    Cancelar
-  </button>
-
-  <button
-    mat-flat-button
-    color="primary"
-    (click)="guardar()">
-
-    {{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}
-
-  </button>
-
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-flat-button color="primary" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button>
 </mat-dialog-actions>

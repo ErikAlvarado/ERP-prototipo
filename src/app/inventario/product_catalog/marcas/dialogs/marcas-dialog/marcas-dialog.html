@@ -1,42 +1,10 @@
-
-<h2 mat-dialog-title>
-  {{ data.mode === 'add' ? 'Agregar marca' : 'Actualizar marca' }}
-</h2>
-
+<h2 mat-dialog-title>{{ data.mode === 'add' ? 'Agregar marca' : 'Actualizar marca' }}</h2>
 <mat-dialog-content>
-
   <div class="formulario">
-
-    <mat-form-field appearance="outline">
-      <mat-label>Nombre</mat-label>
-      <input matInput [(ngModel)]="marca.nombre">
-    </mat-form-field>
-
-    <div class="checks">
-
-      <mat-checkbox [(ngModel)]="marca.estado">
-        Activa
-      </mat-checkbox>
-
-    </div>
-
+    <mat-form-field appearance="outline"><mat-label>Nombre</mat-label><input matInput [(ngModel)]="marca.nombre" maxlength="100" required></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Empresa</mat-label><mat-select [(ngModel)]="marca.idEmpresa" required>@for (empresa of data.empresas; track empresa.id) { <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option> }</mat-select></mat-form-field>
+    <div class="checks"><mat-checkbox [(ngModel)]="marca.estado">Marca activa</mat-checkbox></div>
+    @if (error) { <p class="error-text full-width">{{ error }}</p> }
   </div>
-
 </mat-dialog-content>
-
-<mat-dialog-actions>
-
-  <button mat-button mat-dialog-close>
-    Cancelar
-  </button>
-
-  <button
-    mat-flat-button
-    color="primary"
-    (click)="guardar()">
-
-    {{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}
-
-  </button>
-
-</mat-dialog-actions>
+<mat-dialog-actions><button mat-button mat-dialog-close>Cancelar</button><button mat-flat-button color="primary" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button></mat-dialog-actions>
