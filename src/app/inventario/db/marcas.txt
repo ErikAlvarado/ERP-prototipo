@@ -1,0 +1,5 @@
+id_marca|id_empresa|nombre|activo
+1|1|TechBrand|1
+2|1|HealthPlus|1
+3|1|ModaPlus|1
+4|1|HomeBrand|1

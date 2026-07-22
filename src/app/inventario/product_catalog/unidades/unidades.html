@@ -1,83 +1,36 @@
 <div class="content-header">
-    <h1>Lista de Unidades</h1>
-
-        <button
-            mat-raised-button
-            color="primary"
-            (click)="abrirAgregar()">
-
-            Agregar unidad
-
-        </button>
+  <h1>Lista de Unidades</h1>
+  <button mat-raised-button color="primary" (click)="abrirAgregar()"><mat-icon>add</mat-icon>Agregar unidad</button>
 </div>
 
 <div class="content-search">
-
-    <mat-form-field class="search-field" appearance="outline">
-        <mat-icon matPrefix>search</mat-icon>
-
-        <input
-            [(ngModel)]="currentSearch"
-            (keyup)="applyFilter()"
-            matInput
-            placeholder="Buscar unidad">
-    </mat-form-field>
-
+  <div class="custom-search"><mat-icon>search</mat-icon><input [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar por ID, nombre, abreviatura o empresa"></div>
+  <div class="custom-filters">
+    <button mat-stroked-button class="filter-btn" (click)="abrirFiltros()"><mat-icon>tune</mat-icon>Filtrar@if (conteoFiltros) { <span class="filter-count">{{ conteoFiltros }}</span> }</button>
+  </div>
 </div>
 
-<div class="table-responsive">
-
-    <table mat-table [dataSource]="dataSource" class="mat-shadow-2">
-
-        <ng-container matColumnDef="nombre">
-            <th mat-header-cell *matHeaderCellDef>Nombre</th>
-
-            <td mat-cell *matCellDef="let element">
-                {{element.nombre}}
-            </td>
-        </ng-container>
-
-        <ng-container matColumnDef="abreviatura">
-            <th mat-header-cell *matHeaderCellDef>Abreviatura</th>
-
-            <td mat-cell *matCellDef="let element">
-                {{element.abreviatura}}
-            </td>
-        </ng-container>
-
-        <ng-container matColumnDef="acciones">
-
-            <th mat-header-cell *matHeaderCellDef></th>
-
-            <td mat-cell *matCellDef="let element">
-
-            <button
-                mat-icon-button
-                color="primary"
-                (click)="editar(element)">
-
-                <mat-icon>edit</mat-icon>
-
-            </button>
-
-
-            <button
-                mat-icon-button
-                color="warn"
-                (click)="eliminar(element)">
-
-                <mat-icon>delete</mat-icon>
-
-            </button>
-
-            </td>
-
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
+@if (dataSource.filteredData.length) {
+  <div class="desktop-view table-responsive">
+    <table mat-table [dataSource]="dataSource">
+      <ng-container matColumnDef="id"><th mat-header-cell *matHeaderCellDef>ID</th><td mat-cell *matCellDef="let e" class="number">{{ e.id }}</td></ng-container>
+      <ng-container matColumnDef="nombre"><th mat-header-cell *matHeaderCellDef>Unidad</th><td mat-cell *matCellDef="let e"><strong>{{ e.nombre }}</strong></td></ng-container>
+      <ng-container matColumnDef="abreviatura"><th mat-header-cell *matHeaderCellDef>Abreviatura</th><td mat-cell *matCellDef="let e">{{ e.abreviatura }}</td></ng-container>
+      <ng-container matColumnDef="empresa"><th mat-header-cell *matHeaderCellDef>Empresa</th><td mat-cell *matCellDef="let e">{{ e.empresa }}</td></ng-container>
+      <ng-container matColumnDef="decimales"><th mat-header-cell *matHeaderCellDef>Permite decimales</th><td mat-cell *matCellDef="let e"><app-status [active]="e.permitirDecimales"></app-status></td></ng-container>
+      <ng-container matColumnDef="productos"><th mat-header-cell *matHeaderCellDef>Productos</th><td mat-cell *matCellDef="let e" class="number">{{ e.productos }}</td></ng-container>
+      <ng-container matColumnDef="medidas"><th mat-header-cell *matHeaderCellDef>Medidas</th><td mat-cell *matCellDef="let e" class="number">{{ e.medidas }}</td></ng-container>
+      <ng-container matColumnDef="acciones"><th mat-header-cell *matHeaderCellDef class="actions-cell">Acciones</th><td mat-cell *matCellDef="let e" class="actions-cell"><button mat-icon-button color="primary" matTooltip="Editar" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" matTooltip="Eliminar" (click)="eliminar(e)"><mat-icon>delete</mat-icon></button></td></ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr><tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     </table>
+  </div>
+  <div class="cards-container">
+    @for (e of obs | async; track e.id) {
+      <article class="catalog-card"><div class="card-header"><div><h3>{{ e.nombre }}</h3><span class="muted">{{ e.abreviatura }} · {{ e.empresa }}</span></div></div><div class="card-body"><div><strong>ID</strong>{{ e.id }}</div><div><strong>Decimales</strong>{{ e.permitirDecimales ? 'Permitidos' : 'No permitidos' }}</div><div><strong>Productos</strong>{{ e.productos }}</div><div><strong>Medidas</strong>{{ e.medidas }}</div></div><div class="card-actions"><button mat-icon-button color="primary" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" (click)="eliminar(e)"><mat-icon>delete</mat-icon></button></div></article>
+    }
+  </div>
+} @else {
+  <div class="empty-state"><mat-icon>straighten</mat-icon>No hay unidades que coincidan con los filtros.</div>
+}
 
-</div>
+<div class="paginator-container"><mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 50]" showFirstLastButtons></mat-paginator></div>

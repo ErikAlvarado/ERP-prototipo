@@ -1,205 +1,276 @@
-/* =========================================
-   ESTRUCTURA GENERAL
-========================================= */
 .content-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
   gap: 16px;
+  margin-bottom: 22px;
 }
 
-/* =========================================
-   NUEVO BUSCADOR Y FILTROS (Estilo Imagen)
-========================================= */
+.content-header h1 {
+  margin: 0;
+  color: #0f2742;
+  font-size: 26px;
+}
+
+.header-description {
+  margin: 5px 0 0;
+  color: #667085;
+  font-size: 14px;
+}
+
 .content-search {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 24px;
   align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
 .custom-search {
-  flex: 1; 
+  display: flex;
+  flex: 1;
+  align-items: center;
   min-width: 280px;
   height: 44px;
-  display: flex;
-  align-items: center;
-  background-color: #ffffff;
+  padding: 0 14px;
   border: 1px solid #d0d5dd;
   border-radius: 8px;
-  padding: 0 14px;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 5%);
 }
 
 .custom-search:focus-within {
-  border-color: #3f51b5;
-  box-shadow: 0 0 0 4px rgba(63, 81, 181, 0.1);
+  border-color: #1473b9;
+  box-shadow: 0 0 0 3px rgb(20 115 185 / 12%);
 }
 
 .custom-search mat-icon {
-  color: #667085;
-  margin-right: 10px;
-  font-size: 20px;
   width: 20px;
   height: 20px;
+  margin-right: 10px;
+  color: #667085;
+  font-size: 20px;
 }
 
 .custom-search input {
-  border: none;
-  outline: none;
   width: 100%;
   height: 100%;
-  font-size: 14px;
-  color: #101828;
+  border: 0;
+  outline: 0;
   background: transparent;
+  color: #101828;
+  font-size: 14px;
 }
 
 .custom-search input::placeholder {
-  color: #667085;
+  color: #98a2b3;
 }
 
 .custom-filters {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .filter-btn {
   height: 44px !important;
-  border-radius: 8px !important;
   border-color: #d0d5dd !important;
+  border-radius: 8px !important;
+  background: #fff !important;
   color: #344054 !important;
-  font-weight: 500 !important;
   font-size: 14px !important;
-  background: #ffffff !important;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05) !important;
+  font-weight: 500 !important;
 }
 
 .filter-btn mat-icon {
-  color: #667085;
   margin-right: 4px;
+  color: #667085;
 }
 
-.filter-btn .arrow-icon {
-  margin-right: -4px;
-  margin-left: 4px;
+.filter-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: #0b66b2;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
 }
 
-/* =========================================
-   CONTROL DE VISTAS (HÍBRIDO)
-========================================= */
-.desktop-view { display: block; }
+.table-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 4px;
+  color: #475467;
+  font-size: 13px;
+}
 
-/* =========================================
-   ESTILOS DE LA TABLA (ESCRITORIO)
-========================================= */
+.desktop-view {
+  display: block;
+}
+
 .table-responsive {
   width: 100%;
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: 1px solid #e4e7ec;
+  border-radius: 9px;
+  box-shadow: 0 2px 5px rgb(16 24 40 / 6%);
 }
 
 table {
   width: 100%;
-  min-width: 1000px; /* Evita que se aplasten las 11 columnas */
+  min-width: 940px;
   border-collapse: collapse;
+  background: #fff;
 }
 
 .mat-mdc-header-cell {
-  background-color: #f8f9fa;
-  font-weight: 600;
+  background: #f6f9fc;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mat-mdc-cell {
+  color: #344054;
+  font-size: 13px;
+}
+
+.mat-mdc-cell small {
+  display: block;
+  max-width: 220px;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #667085;
+  font-size: 11px;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .mat-mdc-row:hover {
-  background-color: #f2f3f5;
-  transition: background-color 0.2s;
+  background: #f7fbff;
 }
 
-.mat-column-precio {
-  font-family: monospace;
-  font-weight: bold;
+.product-link {
+  display: block;
+  max-width: 240px;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #064f91;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
-/* =========================================
-   ESTILOS DE TARJETAS (MÓVIL)
-========================================= */
+.product-link:hover {
+  text-decoration: underline;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #e5f6ed;
+  color: #067647;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.inactive {
+  background: #f2f4f7;
+  color: #667085;
+}
+
+.empty-row td {
+  padding: 32px !important;
+  color: #667085;
+  text-align: center;
+}
+
+.state-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 24px;
+  border: 1px solid #d9e2ec;
+  border-radius: 10px;
+  background: #fff;
+  color: #344054;
+}
+
+.state-panel mat-icon {
+  color: #0b66b2;
+}
+
+.state-panel p {
+  margin: 5px 0 12px;
+  color: #667085;
+}
+
+.error-panel {
+  border-color: #f3b8b8;
+  background: #fffafa;
+}
+
+.error-panel mat-icon {
+  color: #b42318;
+}
+
 .cards-container {
-  display: none; /* Oculto por defecto en monitor */
+  display: none;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .product-card {
-  background: white;
-  border-radius: 8px;
   padding: 16px;
   border: 1px solid #e4e7ec;
+  border-radius: 9px;
+  background: #fff;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border-bottom: 1px solid #eaecf0;
-  padding-bottom: 12px;
+  gap: 12px;
   margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eaecf0;
 }
 
 .card-header h3 {
-  margin: 0 0 4px 0;
-  font-size: 16px;
+  margin: 0 0 5px;
   color: #1f2937;
+  font-size: 16px;
 }
 
 .brand-badge {
-  font-size: 12px;
-  background: #f3f4f6;
   padding: 2px 8px;
   border-radius: 12px;
-  color: #4b5563;
-}
-
-.price {
-  font-weight: bold;
-  font-size: 18px;
-  color: #1e8e3e;
+  background: #edf5fc;
+  color: #175a8d;
+  font-size: 12px;
 }
 
 .card-body {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  font-size: 13px;
+  gap: 9px;
+  margin-bottom: 16px;
   color: #475467;
-  margin-bottom: 16px;
-}
-
-.card-status {
-  display: flex;
-  gap: 16px;
-  background: #f8f9fa;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 16px;
-}
-
-.status-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.status-item small {
-  font-size: 11px;
-  color: #6b7280;
-  text-transform: uppercase;
+  font-size: 13px;
 }
 
 .card-actions {
@@ -208,68 +279,48 @@ table {
   align-items: center;
 }
 
-/* =========================================
-   PAGINADOR
-========================================= */
 .paginator-container {
-  background: white;
-  border-radius: 8px;
-  margin-top: 16px;
+  margin-top: 14px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  background: #fff;
 }
 
-/* =========================================
-   TUS OTROS ESTILOS GLOBALES
-========================================= */
-mat-expansion-panel {
-  margin-bottom: 24px !important;
-  border-radius: 8px !important;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
-}
-
-mat-accordion { width: 100%; }
-
-.badge {
-  padding: 4px 12px;
-  border-radius: 16px;
-  font-size: 12px;
-  font-weight: 500;
-  background-color: #eee;
-}
-
-.badge.active {
-  background-color: #e6f4ea;
-  color: #1e8e3e;
-}
-
-/* =========================================
-   MEDIA QUERIES (El Switch Móvil/Escritorio)
-========================================= */
 @media (max-width: 992px) {
   .desktop-view {
     display: none;
   }
-  
+
   .cards-container {
     display: flex;
   }
 }
 
-@media (max-width: 600px) {
-  .content-header {
-    flex-direction: column;
+@media (max-width: 680px) {
+  .content-header,
+  .content-search {
     align-items: stretch;
-    text-align: center;
+    flex-direction: column;
   }
-  .content-header button {
-    width: 100%;
-  }
+
+  .content-header button,
   .custom-search {
     width: 100%;
-    flex: 1 1 100%;
   }
-  .filter-btn {
-    flex: 1;
+
+  .custom-search {
+    box-sizing: border-box;
+    flex: auto;
+    min-width: 0;
+  }
+
+  .custom-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .card-body {
+    grid-template-columns: 1fr;
   }
 }

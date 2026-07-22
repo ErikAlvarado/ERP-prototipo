@@ -17,11 +17,6 @@ export class Header {
   
   moduleTitle = signal<string>('Inventory');
 
-<<<<<<< HEAD
-  // Diccionario completo de equivalencias de rutas a títulos
-=======
-  // Relaciona la ruta principal con el contexto que se muestra en el encabezado.
->>>>>>> a499e175a86113468533dadfcdf49397412ddca8
   private routeTitleMap: Record<string, string> = {
     // Dashboard principal
     '/dashboard': 'Dashboard',
@@ -64,7 +59,6 @@ export class Header {
   }
 
   private updateTitle(url: string) {
-<<<<<<< HEAD
     // Limpia la URL removiendo query params (?) y fragmentos (#)
     const cleanUrl = url.split('?')[0].split('#')[0];
 
@@ -95,11 +89,10 @@ export class Header {
 
     // Título por defecto si no encuentra coincidencia
     this.moduleTitle.set('Inventory');
-=======
     const baseUrl = '/' + url.split('/')[1]; 
     const title = this.routeTitleMap[baseUrl] || 'Inventory';
     this.moduleTitle.set(title);
->>>>>>> a499e175a86113468533dadfcdf49397412ddca8
+
   }
 
   iniciales(nombre: string): string {

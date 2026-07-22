@@ -1,46 +1,11 @@
-<h2 mat-dialog-title>
-  {{ data.mode === 'add' ? 'Agregar unidad' : 'Actualizar unidad' }}
-</h2>
-
+<h2 mat-dialog-title>{{ data.mode === 'add' ? 'Agregar unidad' : 'Actualizar unidad' }}</h2>
 <mat-dialog-content>
-
   <div class="formulario">
-
-    <mat-form-field appearance="outline">
-      <mat-label>Nombre</mat-label>
-      <input matInput [(ngModel)]="unidad.nombre">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Abreviatura</mat-label>
-      <input matInput [(ngModel)]="unidad.abreviatura">
-    </mat-form-field>
-
-    <div class="checks">
-
-      <mat-checkbox [(ngModel)]="unidad.estado">
-        Activa
-      </mat-checkbox>
-
-    </div>
-
+    <mat-form-field appearance="outline"><mat-label>Nombre</mat-label><input matInput [(ngModel)]="unidad.nombre" maxlength="80" required></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Abreviatura</mat-label><input matInput [(ngModel)]="unidad.abreviatura" maxlength="12" required></mat-form-field>
+    <mat-form-field appearance="outline" class="full-width"><mat-label>Empresa</mat-label><mat-select [(ngModel)]="unidad.idEmpresa" required>@for (empresa of data.empresas; track empresa.id) { <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option> }</mat-select></mat-form-field>
+    <div class="checks"><mat-checkbox [(ngModel)]="unidad.permitirDecimales">Permitir cantidades decimales</mat-checkbox></div>
+    @if (error) { <p class="error-text full-width">{{ error }}</p> }
   </div>
-
 </mat-dialog-content>
-
-<mat-dialog-actions>
-
-  <button mat-button mat-dialog-close>
-    Cancelar
-  </button>
-
-  <button
-    mat-flat-button
-    color="primary"
-    (click)="guardar()">
-
-    {{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}
-
-  </button>
-
-</mat-dialog-actions>
+<mat-dialog-actions><button mat-button mat-dialog-close>Cancelar</button><button mat-flat-button color="primary" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button></mat-dialog-actions>

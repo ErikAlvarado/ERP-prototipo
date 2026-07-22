@@ -1,0 +1,54 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <div>
+      <span>Inventario</span>
+      <h2>{{ data.title }}</h2>
+    </div>
+    <button mat-icon-button (click)="close()" aria-label="Cerrar filtros">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="dialog-content">
+    <div class="filters-grid">
+      @for (field of data.fields; track field.key) {
+        <div class="filter-field">
+          <label [for]="field.key">
+            <mat-icon>{{ field.icon }}</mat-icon>
+            {{ field.label }}
+          </label>
+
+          @if (field.type === 'select') {
+            <select
+              class="custom-select"
+              [id]="field.key"
+              [(ngModel)]="filters[field.key]">
+              <option [ngValue]="emptyValue(field)">{{ field.emptyLabel || 'Todos' }}</option>
+              @for (option of field.options ?? []; track option.value) {
+                <option [ngValue]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          } @else {
+            <input
+              class="custom-input"
+              [id]="field.key"
+              [type]="field.type"
+              [min]="field.min ?? null"
+              [step]="field.step ?? null"
+              [placeholder]="field.placeholder || ''"
+              [(ngModel)]="filters[field.key]">
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="dialog-footer">
+    <button mat-stroked-button class="clear-button" (click)="clear()">
+      Limpiar ({{ activeCount }})
+    </button>
+    <button mat-flat-button class="apply-button" (click)="apply()">
+      Aplicar filtros
+    </button>
+  </div>
+</div>

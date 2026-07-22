@@ -1,62 +1,90 @@
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SHARED_IMPORTS } from '../../../../../shared/imports/shared-imports';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { FormsModule } from '@angular/forms'; // Permite el ngModel en los selects
+
+export interface FiltrosProducto {
+  empresa: string;
+  categoria: string;
+  marca: string;
+  unidad: string;
+  tipo: string;
+  ubicacion: string;
+  claveSat: string;
+  conCodigo: boolean | null;
+  pos: boolean | null;
+  visible: boolean | null;
+  estado: boolean | null;
+  requiereReceta: boolean | null;
+  usarExistencias: boolean | null;
+  usarLotes: boolean | null;
+}
+
+export interface DatosFiltroProducto {
+  filtros: FiltrosProducto;
+  empresas: string[];
+  categorias: string[];
+  marcas: string[];
+  unidades: string[];
+  tipos: string[];
+}
+
+const FILTROS_VACIOS: FiltrosProducto = {
+  empresa: '',
+  categoria: '',
+  marca: '',
+  unidad: '',
+  tipo: '',
+  ubicacion: '',
+  claveSat: '',
+  conCodigo: null,
+  pos: null,
+  visible: null,
+  estado: null,
+  requiereReceta: null,
+  usarExistencias: null,
+  usarLotes: null,
+};
 
 @Component({
   selector: 'app-filtro',
-  imports: [SHARED_IMPORTS, MatIconModule, MatButtonModule, FormsModule],
+  imports: [SHARED_IMPORTS],
   templateUrl: './filtro.html',
-  styleUrl: './filtro.css'
+  styleUrl: './filtro.css',
 })
 export class Filtro {
-  
-  // Objeto reactivo para rastrear qué presiona el usuario
-  filtros = {
-    categoria: '',
-    marca: '',
-    tipo: '',
-    conCodigo: null as boolean | null,
-    visible: null as boolean | null
-  };
+  filtros: FiltrosProducto = { ...FILTROS_VACIOS };
 
   constructor(
     public dialogRef: MatDialogRef<Filtro>,
-    @Inject(MAT_DIALOG_DATA) public data: any
+    @Inject(MAT_DIALOG_DATA) public data: DatosFiltroProducto,
   ) {
-    // Si ya había filtros aplicados, los cargamos para que se mantengan visualmente
-    if (data && data.filtros) {
-      this.filtros = { ...data.filtros };
-    }
+    if (data?.filtros) this.filtros = { ...FILTROS_VACIOS, ...data.filtros };
   }
 
-  // Funciones Toggle para los Chips
-  setTipo(tipo: string) { this.filtros.tipo = this.filtros.tipo === tipo ? '' : tipo; }
-  setCodigo(tiene: boolean) { this.filtros.conCodigo = this.filtros.conCodigo === tiene ? null : tiene; }
-  setVisible(visible: boolean) { this.filtros.visible = this.filtros.visible === visible ? null : visible; }
+  seleccionar(
+    campo: 'conCodigo' | 'pos' | 'visible' | 'estado' | 'requiereReceta' | 'usarExistencias' | 'usarLotes',
+    valor: boolean,
+  ): void {
+    this.filtros = { ...this.filtros, [campo]: this.filtros[campo] === valor ? null : valor };
+  }
 
-  // Cuenta dinámica para el botón "(X) Limpiar"
   get conteoFiltros(): number {
-    let count = 0;
-    if (this.filtros.categoria) count++;
-    if (this.filtros.marca) count++;
-    if (this.filtros.tipo) count++;
-    if (this.filtros.conCodigo !== null) count++;
-    if (this.filtros.visible !== null) count++;
-    return count;
+    return Object.values(this.filtros).filter(valor => valor !== '' && valor !== null).length;
   }
 
-  limpiar() {
-    this.filtros = { categoria: '', marca: '', tipo: '', conCodigo: null, visible: null };
+  limpiar(): void {
+    this.filtros = { ...FILTROS_VACIOS };
   }
 
-  aplicar() {
-    this.dialogRef.close(this.filtros); // Enviamos los datos de regreso a products.ts
+  aplicar(): void {
+    this.dialogRef.close({
+      ...this.filtros,
+      ubicacion: this.filtros.ubicacion.trim(),
+      claveSat: this.filtros.claveSat.trim(),
+    });
   }
 
-  cerrar() {
-    this.dialogRef.close(); // Cerramos sin aplicar cambios
+  cerrar(): void {
+    this.dialogRef.close();
   }
 }

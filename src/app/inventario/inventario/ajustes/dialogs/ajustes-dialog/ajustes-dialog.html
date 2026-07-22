@@ -1,84 +1,83 @@
-<h2 mat-dialog-title>
-  {{ data.mode === 'add' ? 'Agregar ajuste' : 'Actualizar ajuste' }}
-</h2>
-
-<mat-dialog-content>
-
-  <div class="formulario">
-
-    <mat-form-field appearance="outline">
-      <mat-label>Fecha</mat-label>
-      <input matInput type="date" [(ngModel)]="ajuste.fecha">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Producto</mat-label>
-
-      <mat-select [(ngModel)]="ajuste.producto">
-
-        <mat-option value="Taladro Bosch">Taladro Bosch</mat-option>
-        <mat-option value="Cable eléctrico">Cable eléctrico</mat-option>
-        <mat-option value="Martillo">Martillo</mat-option>
-
-      </mat-select>
-
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Almacén</mat-label>
-
-      <mat-select [(ngModel)]="ajuste.almacen">
-
-        <mat-option value="Principal">Principal</mat-option>
-        <mat-option value="Norte">Norte</mat-option>
-        <mat-option value="Sur">Sur</mat-option>
-
-      </mat-select>
-
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Existencia anterior</mat-label>
-      <input matInput type="number" [(ngModel)]="ajuste.anterior">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Ajuste</mat-label>
-      <input matInput type="number" [(ngModel)]="ajuste.ajuste">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Nueva existencia</mat-label>
-      <input matInput type="number" [(ngModel)]="ajuste.nueva">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Motivo</mat-label>
-      <textarea matInput [(ngModel)]="ajuste.motivo"></textarea>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Usuario</mat-label>
-      <input matInput [(ngModel)]="ajuste.usuario">
-    </mat-form-field>
-
+<div class="dialog-container">
+  <div class="dialog-header">
+    <div>
+      <span>{{ soloLectura ? 'Movimiento registrado' : 'Movimiento manual' }}</span>
+      <h2>{{ titulo }}</h2>
+    </div>
+    <button mat-icon-button mat-dialog-close aria-label="Cerrar"><mat-icon>close</mat-icon></button>
   </div>
 
-</mat-dialog-content>
+  <mat-dialog-content class="dialog-content">
+    <section class="card-section">
+      <span class="section-label">Movimiento</span>
+      <div class="grid-layout">
+        <div class="input-group full-width">
+          <label>Producto *</label>
+          <select class="custom-select" [(ngModel)]="formulario.productoId" (ngModelChange)="actualizarExistencia()" [disabled]="soloLectura">
+            @for (producto of data.productos; track producto.id) {
+              <option [ngValue]="producto.id">{{ producto.sku }} · {{ producto.nombre }}</option>
+            }
+          </select>
+        </div>
 
-<mat-dialog-actions>
+        <div class="input-group">
+          <label>Almacén *</label>
+          <select class="custom-select" [(ngModel)]="formulario.almacenId" (ngModelChange)="actualizarExistencia()" [disabled]="soloLectura">
+            @for (almacen of data.almacenes; track almacen.id) {
+              <option [ngValue]="almacen.id">{{ almacen.nombre }}</option>
+            }
+          </select>
+        </div>
 
-  <button mat-button mat-dialog-close>
-    Cancelar
-  </button>
+        <div class="input-group">
+          <label>Fecha *</label>
+          <input class="custom-input" type="datetime-local" [(ngModel)]="formulario.fecha" [disabled]="soloLectura">
+        </div>
 
-  <button
-    mat-flat-button
-    color="primary"
-    (click)="guardar()">
+        <div class="input-group">
+          <label>Existencia anterior</label>
+          <input class="custom-input" type="number" [value]="existenciaAnterior" disabled>
+        </div>
 
-    {{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}
+        <div class="input-group">
+          <label>Ajuste *</label>
+          <input class="custom-input" type="number" [(ngModel)]="formulario.ajuste" placeholder="Ej. 5 o -3" [disabled]="soloLectura">
+          <span class="hint">Usa positivo para entrada y negativo para salida.</span>
+        </div>
 
-  </button>
+        <div class="input-group">
+          <label>Nueva existencia</label>
+          <input class="custom-input result-input" type="number" [value]="nuevaExistencia" disabled>
+        </div>
 
-</mat-dialog-actions>
+        <div class="input-group">
+          <label>Responsable</label>
+          <select class="custom-select" [(ngModel)]="formulario.usuarioId" [disabled]="soloLectura">
+            <option [ngValue]="null">Sin usuario</option>
+            @for (usuario of data.usuarios; track usuario.id) {
+              <option [ngValue]="usuario.id">{{ usuario.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="input-group full-width">
+          <label>Motivo *</label>
+          <textarea class="custom-input textarea" rows="3" [(ngModel)]="formulario.motivo" placeholder="Describe por qué cambia la existencia" [disabled]="soloLectura"></textarea>
+        </div>
+      </div>
+    </section>
+
+    @if (error) {
+      <div class="form-error"><mat-icon>error</mat-icon>{{ error }}</div>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-footer">
+    <div class="footer-actions">
+      <button mat-stroked-button mat-dialog-close>{{ soloLectura ? 'Cerrar' : 'Cancelar' }}</button>
+      @if (!soloLectura) {
+        <button mat-flat-button color="primary" (click)="guardar()">Revisar y aplicar</button>
+      }
+    </div>
+  </mat-dialog-actions>
+</div>

@@ -1,73 +1,83 @@
+import { CurrencyPipe } from '@angular/common';
 import { Component, Inject } from '@angular/core';
-import { SHARED_IMPORTS } from '../../../../../shared/imports/shared-imports';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { SHARED_IMPORTS } from '../../../../../shared/imports/shared-imports';
+import { Kit, KitElemento } from '../../kits';
+
+export interface ProductoKitOption {
+  idProducto: string;
+  sku: string;
+  nombre: string;
+  costo: number;
+  precio: number;
+}
 
 export interface KitDialogData {
   mode: 'add' | 'edit';
-  kit?: any;
+  kit?: Kit;
+  productos: ProductoKitOption[];
+  nombres: string[];
 }
 
 @Component({
   selector: 'app-kits-dialog',
-  imports: [SHARED_IMPORTS],
+  imports: [SHARED_IMPORTS, CurrencyPipe],
   templateUrl: './kits-dialog.html',
-  styleUrl: './kits-dialog.css',
+  styleUrls: ['../../../catalog-dialog.css', './kits-dialog.css'],
 })
 export class KitsDialog {
-  kit: any;
-  nuevoProductoSeleccionado: any = null;
-
-  misProductos = [
-    { id_producto: 1, nombre_producto: 'Producto A' },
-    { id_producto: 2, nombre_producto: 'Producto B' },
-    { id_producto: 3, nombre_producto: 'Producto C' },
-    { id_producto: 4, nombre_producto: 'Hardware X' }
-  ];
+  kit: Pick<Kit, 'nombre' | 'descripcion' | 'precio' | 'costo' | 'margen' | 'elementos' | 'estado'>;
+  nuevoProductoId = '';
+  cantidadNueva = 1;
+  error = '';
 
   constructor(
     private dialogRef: MatDialogRef<KitsDialog>,
-    @Inject(MAT_DIALOG_DATA) public data: KitDialogData
+    @Inject(MAT_DIALOG_DATA) public data: KitDialogData,
   ) {
     this.kit = data.kit
-      ? { ...data.kit, elementos: [...data.kit.elementos] }
-      : {
-          nombre: '',
-          descripcion: '',
-          precio: 0,
-          costo: 0,
-          margen: 0,
-          elementos: [],
-          fecha: new Date().toISOString().split('T')[0],
-          estado: true
-        };
+      ? { nombre: data.kit.nombre, descripcion: data.kit.descripcion, precio: data.kit.precio, costo: data.kit.costo, margen: data.kit.margen, elementos: data.kit.elementos.map(elemento => ({ ...elemento })), estado: data.kit.estado }
+      : { nombre: '', descripcion: '', precio: 0, costo: 0, margen: 0, elementos: [], estado: true };
+    this.calcularTotales();
   }
 
-  calcularMargen() {
-    if (this.kit.precio > 0) {
-      const ganancia = this.kit.precio - this.kit.costo;
-      this.kit.margen = Math.round((ganancia / this.kit.precio) * 100);
-    } else {
-      this.kit.margen = 0;
-    }
+  agregarElemento(): void {
+    const producto = this.data.productos.find(actual => actual.idProducto === this.nuevoProductoId);
+    const cantidad = Math.max(1, Math.floor(Number(this.cantidadNueva) || 1));
+    if (!producto) { this.error = 'Selecciona un producto para agregar.'; return; }
+    const existente = this.kit.elementos.find(elemento => elemento.idProducto === producto.idProducto);
+    if (existente) existente.cantidad += cantidad;
+    else this.kit.elementos.push({ ...producto, cantidad });
+    this.nuevoProductoId = '';
+    this.cantidadNueva = 1;
+    this.error = '';
+    this.calcularTotales();
   }
 
-  agregarElemento() {
-    const prod = this.nuevoProductoSeleccionado;
-    
-    if (prod && !this.kit.elementos.some((item: any) => item.id_producto === prod.id_producto)) {
-      this.kit.elementos.push({
-        id_producto: prod.id_producto,
-        nombre_producto: prod.nombre_producto
-      });
-      this.nuevoProductoSeleccionado = null;
-    }
+  actualizarCantidad(elemento: KitElemento): void {
+    elemento.cantidad = Math.max(1, Math.floor(Number(elemento.cantidad) || 1));
+    this.calcularTotales();
   }
 
-  removerElemento(index: number) {
+  removerElemento(index: number): void {
     this.kit.elementos.splice(index, 1);
+    this.calcularTotales();
   }
 
-  guardar() {
-    this.dialogRef.close(this.kit);
+  calcularTotales(): void {
+    this.kit.costo = this.kit.elementos.reduce((total, elemento) => total + elemento.costo * elemento.cantidad, 0);
+    const precio = Number(this.kit.precio) || 0;
+    this.kit.margen = precio > 0 ? Math.round(((precio - this.kit.costo) / precio) * 10000) / 100 : 0;
+  }
+
+  guardar(): void {
+    const nombre = this.kit.nombre.trim();
+    const precio = Number(this.kit.precio);
+    this.calcularTotales();
+    if (!nombre) { this.error = 'El nombre del kit es obligatorio.'; return; }
+    if (this.data.nombres.some(actual => actual.trim().toLowerCase() === nombre.toLowerCase())) { this.error = 'Ya existe un kit con ese nombre.'; return; }
+    if (!this.kit.elementos.length) { this.error = 'Agrega al menos un producto al kit.'; return; }
+    if (!Number.isFinite(precio) || precio < 0) { this.error = 'El precio no puede ser negativo.'; return; }
+    this.dialogRef.close({ ...this.kit, nombre, descripcion: this.kit.descripcion.trim(), precio });
   }
 }

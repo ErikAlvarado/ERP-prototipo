@@ -1,0 +1,2 @@
+id_usuario|id_empresa|nombres|apellido_paterno|apellido_materno|fecha_nacimiento|email|telefono|password_hash|activo|ultimo_acceso|intentos_fallidos|fecha_bloqueo|id_almacen_defecto|fecha_creacion|fecha_actualizacion|creado_por_usuario|actualizado_por_usuario
+1|1|Juan|Pérez|Gómez|1990-05-15|juan@supermart.com|555-0001|hashed_pwd_123|1|2024-07-21|0||1|2024-01-01|2024-01-01|1|1

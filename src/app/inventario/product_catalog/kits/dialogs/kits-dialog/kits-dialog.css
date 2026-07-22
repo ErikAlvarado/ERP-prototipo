@@ -1,0 +1,19 @@
+.elementos-section { margin-top: 4px; padding: 16px; border: 1px solid #dbe5f0; border-radius: 9px; background: #f8fbff; }
+.elementos-section h3 { margin: 0 0 14px; color: #163a63; font-size: 15px; }
+.product-picker { display: grid; grid-template-columns: minmax(0, 1fr) 110px auto; align-items: start; gap: 10px; }
+.product-picker button { height: 48px; }
+.elements-list { display: grid; gap: 8px; margin-top: 8px; }
+.element-row { display: grid; grid-template-columns: minmax(0, 1fr) 100px 110px 40px; align-items: center; gap: 10px; padding: 9px 10px; background: #fff; border: 1px solid #e4e7ec; border-radius: 7px; }
+.element-name { display: flex; min-width: 0; flex-direction: column; }
+.element-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #101828; }
+.element-name span { color: #667085; font-size: 12px; }
+.element-quantity { width: 100px; }
+.element-quantity ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
+.subtotal { color: #155eef; font-weight: 600; text-align: right; }
+.no-products { margin: 4px 0 0; color: #667085; font-size: 13px; text-align: center; }
+.totals { display: flex; justify-content: flex-end; gap: 34px; padding: 12px 4px; }
+.totals div { display: flex; flex-direction: column; }
+.totals span { color: #667085; font-size: 12px; }
+.totals strong { color: #155eef; font-size: 17px; }
+.totals .negative { color: #b42318; }
+@media (max-width: 650px) { .product-picker { grid-template-columns: 1fr 100px; } .product-picker button { grid-column: 1 / -1; } .element-row { grid-template-columns: 1fr 76px 40px; } .subtotal { grid-column: 1; text-align: left; } }

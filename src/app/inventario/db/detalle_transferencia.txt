@@ -1,0 +1,2 @@
+id_transferencia|id_producto|cantidad_solicitada|cantidad_enviada|cantidad_recibida
+1|1|5.00|5.00|5.00

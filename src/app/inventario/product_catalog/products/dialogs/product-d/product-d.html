@@ -1,127 +1,157 @@
 <div class="dialog-container">
-  
-
   <div class="dialog-header">
-    <h2>{{ data.mode === 'add' ? 'Crear Producto' : 'Actualizar Producto' }}</h2>
-    <button mat-icon-button (click)="cerrar()">
-      <mat-icon>close</mat-icon>
-    </button>
+    <div>
+      <h2>{{ data.mode === 'add' ? 'Agregar producto' : 'Editar producto' }}</h2>
+      <p>Los campos corresponden a productos.txt; precio y costo provienen de la relación de precios.</p>
+    </div>
+    <button mat-icon-button (click)="cerrar()" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
   </div>
 
-
   <div class="dialog-content">
-    
-
-    <div class="card-section">
-      <label class="section-label">Tipo</label>
-      <div class="chips-group">
-        <button class="chip" [class.active]="producto.tipo === 'Producto'" (click)="producto.tipo = 'Producto'">Producto</button>
-        <button class="chip" [class.active]="producto.tipo === 'Servicio'" (click)="producto.tipo = 'Servicio'">Servicio</button>
-      </div>
-    </div>
-
-
-    <div class="card-section grid-layout">
-      
-      <div class="input-group full-width">
-        <label>Nombre*</label>
-        <input class="custom-input" [(ngModel)]="producto.producto" placeholder="Ej: Jabón de mano">
-      </div>
-
-      <div class="input-group">
-        <label>SKU</label>
-        <input class="custom-input" [(ngModel)]="producto.sku" placeholder="Ej: PROD-001">
-      </div>
-
-      <div class="input-group">
-        <label>Código de barras</label>
-        <input class="custom-input" [(ngModel)]="producto.codigo" placeholder="Opcional">
-      </div>
-
-      <div class="input-group">
-        <label>Marca</label>
-        <select class="custom-select" [(ngModel)]="producto.marca">
-          <option value="" disabled selected>Selecciona una marca</option>
-          <option value="Marca A">Marca A</option>
-          <option value="Marca B">Marca B</option>
-          <option value="Marca C">Marca C</option>
-          <option value="Truper">Truper</option>
-          <option value="WD-40">WD-40</option>
-        </select>
-      </div>
-
-      <div class="input-group">
-        <label>Categoría</label>
-        <select class="custom-select" [(ngModel)]="producto.categoria">
-          <option value="" disabled selected>Buscar o crear categoría</option>
-          <option value="Cableado">Cableado</option>
-          <option value="Hardware">Hardware</option>
-          <option value="Herramientas">Herramientas</option>
-          <option value="Iluminación">Iluminación</option>
-        </select>
-      </div>
-
-    </div>
-
-    <div class="card-section grid-layout">
-      
-      <div class="input-group">
-        <label>Precio de venta</label>
-        <div class="input-with-prefix">
-          <span class="prefix">$</span>
-          <input class="custom-input pl-prefix" type="number" [(ngModel)]="producto.precio" placeholder="0.00">
-          <span class="suffix">por {{ producto.medida || 'Unidad' }}</span>
-        </div>
-        <span class="hint">Incluyendo impuestos</span>
-      </div>
-
-      <div class="input-group">
-        <label>Unidad de medida</label>
-        <select class="custom-select" [(ngModel)]="producto.medida">
-          <option value="Pieza">Pieza</option>
-          <option value="Caja">Caja</option>
-          <option value="Paquete">Paquete</option>
-          <option value="Kit">Kit</option>
-        </select>
-      </div>
-
-    </div>
-
-    <div class="card-section">
-      <label class="section-label" style="margin-bottom: 12px;">Configuraciones de visibilidad</label>
-      <div class="checkbox-group">
-        
-        <label class="custom-checkbox">
-          <input type="checkbox" [(ngModel)]="producto.pos">
-          <span class="checkmark"></span> Punto de venta
+    <section class="form-section">
+      <h3>Información general</h3>
+      <div class="form-grid">
+        <label class="field full-width">
+          <span>Nombre del producto *</span>
+          <input class="custom-input" [(ngModel)]="producto.producto" placeholder="Nombre del producto" maxlength="160">
         </label>
 
-        <label class="custom-checkbox">
-          <input type="checkbox" [(ngModel)]="producto.linea">
-          <span class="checkmark"></span> Tienda en línea
+        <label class="field">
+          <span>SKU *</span>
+          <input class="custom-input" [(ngModel)]="producto.sku" placeholder="Ej. SKU001" maxlength="60">
         </label>
 
-        <label class="custom-checkbox">
-          <input type="checkbox" [(ngModel)]="producto.estado">
-          <span class="checkmark"></span> Activo
+        <label class="field">
+          <span>Código de barras</span>
+          <input class="custom-input" [(ngModel)]="producto.codigo" placeholder="Ej. 750123456789" maxlength="80">
         </label>
 
+        <label class="field">
+          <span>Empresa *</span>
+          <select class="custom-select" [(ngModel)]="producto.idEmpresa" (ngModelChange)="cambiarEmpresa($event)">
+            @for (opcion of data.opciones.empresas; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Tipo *</span>
+          <select class="custom-select" [(ngModel)]="producto.tipo">
+            @for (tipo of tiposDisponibles; track tipo) { <option [value]="tipo">{{ tipo }}</option> }
+          </select>
+        </label>
+
+        <label class="field full-width">
+          <span>Descripción</span>
+          <textarea class="custom-input textarea" [(ngModel)]="producto.descripcion" rows="3" placeholder="Descripción del producto"></textarea>
+        </label>
       </div>
-    </div>
+    </section>
 
+    <section class="form-section">
+      <h3>Clasificación</h3>
+      <div class="form-grid three-columns">
+        <label class="field">
+          <span>Marca *</span>
+          <select class="custom-select" [(ngModel)]="producto.idMarca" (ngModelChange)="cambiarMarca($event)">
+            @for (opcion of data.opciones.marcas; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Categoría *</span>
+          <select class="custom-select" [(ngModel)]="producto.idCategoria" (ngModelChange)="cambiarCategoria($event)">
+            @for (opcion of data.opciones.categorias; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Unidad *</span>
+          <select class="custom-select" [(ngModel)]="producto.idUnidad" (ngModelChange)="cambiarUnidad($event)">
+            @for (opcion of data.opciones.unidades; track opcion.id) {
+              <option [ngValue]="opcion.id">{{ opcion.nombre }}</option>
+            }
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <h3>Ubicación, estatus y datos fiscales</h3>
+      <div class="form-grid three-columns">
+        <label class="field">
+          <span>Estatus *</span>
+          <select class="custom-select" [(ngModel)]="producto.estatus" (ngModelChange)="cambiarEstatus($event)">
+            @for (estatus of estatusDisponibles; track estatus) { <option [value]="estatus">{{ estatus }}</option> }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Ubicación predeterminada</span>
+          <input class="custom-input" [(ngModel)]="producto.ubicacionDefault" placeholder="Ej. Pasillo 3" maxlength="120">
+        </label>
+
+        <label class="field">
+          <span>Clave SAT</span>
+          <input class="custom-input" [(ngModel)]="producto.claveSat" placeholder="Ej. 43191501" maxlength="30">
+        </label>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <h3>Configuración</h3>
+      <div class="checkbox-grid">
+        <label class="check-control"><input type="checkbox" [(ngModel)]="producto.pos"><span>Punto de venta</span></label>
+        <label class="check-control"><input type="checkbox" [(ngModel)]="producto.linea"><span>Catálogo en línea</span></label>
+        <label class="check-control"><input type="checkbox" [(ngModel)]="producto.requiereReceta"><span>Requiere receta</span></label>
+        <label class="check-control"><input type="checkbox" [(ngModel)]="producto.usarExistencias"><span>Controlar existencias</span></label>
+        <label class="check-control"><input type="checkbox" [(ngModel)]="producto.usarLotes"><span>Usar lotes y caducidades</span></label>
+      </div>
+    </section>
+
+    <section class="form-section related-section">
+      <div class="section-title-row">
+        <h3>Precio relacionado</h3>
+        <small>productos_precios.txt</small>
+      </div>
+      <div class="form-grid three-columns">
+        <label class="field">
+          <span>Precio de venta</span>
+          <input class="custom-input" type="number" min="0" step="0.01" [(ngModel)]="producto.precio">
+        </label>
+        <label class="field">
+          <span>Costo</span>
+          <input class="custom-input" type="number" min="0" step="0.01" [(ngModel)]="producto.costo">
+        </label>
+        <label class="field">
+          <span>Margen actual</span>
+          <input class="custom-input readonly" [value]="producto.margen + '%'" readonly>
+        </label>
+      </div>
+    </section>
+
+    @if (data.mode === 'edit') {
+      <div class="audit-row">
+        <span>ID: {{ producto.id }}</span>
+        <span>Creado: {{ producto.fechaCreacion || 'Sin fecha' }}</span>
+        <span>Actualizado: {{ producto.fechaActualizacion || 'Sin fecha' }}</span>
+      </div>
+    }
+
+    @if (error) {
+      <p class="form-error" role="alert"><mat-icon>error_outline</mat-icon>{{ error }}</p>
+    }
   </div>
 
   <div class="dialog-footer">
-
-    <div class="footer-actions">
-      <button mat-stroked-button class="btn-cancelar" (click)="cerrar()">
-        Cancelar
-      </button>
-      <button mat-flat-button class="btn-guardar" (click)="guardar()">
-        {{ data.mode === 'add' ? 'Crear Producto' : 'Actualizar' }}
-      </button>
-    </div>
-
+    <button mat-stroked-button (click)="cerrar()">Cancelar</button>
+    <button mat-flat-button class="save-button" (click)="guardar()">
+      {{ data.mode === 'add' ? 'Agregar producto' : 'Guardar cambios' }}
+    </button>
   </div>
-
 </div>

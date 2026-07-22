@@ -1,106 +1,100 @@
-<h2 mat-dialog-title>
-  Nueva transferencia
-</h2>
-
-<mat-dialog-content>
-
-  <div class="formulario">
-
-    <mat-form-field appearance="outline">
-      <mat-label>Folio</mat-label>
-      <input matInput [(ngModel)]="transferencia.folio">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Sucursal origen</mat-label>
-
-      <mat-select [(ngModel)]="transferencia.origen">
-
-        <mat-option value="Principal">Principal</mat-option>
-        <mat-option value="Norte">Norte</mat-option>
-        <mat-option value="Sur">Sur</mat-option>
-
-      </mat-select>
-
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Sucursal destino</mat-label>
-
-      <mat-select [(ngModel)]="transferencia.destino">
-
-        <mat-option value="Principal">Principal</mat-option>
-        <mat-option value="Norte">Norte</mat-option>
-        <mat-option value="Sur">Sur</mat-option>
-
-      </mat-select>
-
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Producto</mat-label>
-
-      <mat-select [(ngModel)]="transferencia.producto">
-
-        <mat-option value="Taladro Bosch">Taladro Bosch</mat-option>
-        <mat-option value="Cable eléctrico">Cable eléctrico</mat-option>
-        <mat-option value="Martillo">Martillo</mat-option>
-
-      </mat-select>
-
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Cantidad</mat-label>
-      <input
-        matInput
-        type="number"
-        [(ngModel)]="transferencia.cantidad">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Fecha</mat-label>
-      <input
-        matInput
-        type="date"
-        [(ngModel)]="transferencia.fecha">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Usuario</mat-label>
-      <input matInput [(ngModel)]="transferencia.usuario">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Observaciones</mat-label>
-      <textarea
-        matInput
-        rows="3"
-        [(ngModel)]="transferencia.observaciones">
-      </textarea>
-    </mat-form-field>
-
+<div class="dialog-container">
+  <div class="dialog-header blue-header">
+    <div>
+      <span>{{ data.mode === 'view' ? 'Detalle' : 'Movimiento entre almacenes' }}</span>
+      <h2>{{ titulo }}</h2>
+    </div>
+    <button mat-icon-button mat-dialog-close aria-label="Cerrar"><mat-icon>close</mat-icon></button>
   </div>
 
-</mat-dialog-content>
+  <mat-dialog-content class="dialog-content">
+    @if (data.mode === 'view' && data.transferencia) {
+      <section class="transfer-summary">
+        <div><small>Producto</small><strong>{{ data.transferencia.producto }}</strong><span>{{ data.transferencia.sku }}</span></div>
+        <div><small>Cantidad</small><strong>{{ data.transferencia.cantidad }}</strong></div>
+        <div><small>Estado</small><strong class="blue-text">{{ data.transferencia.estado }}</strong></div>
+      </section>
+    }
 
-<mat-dialog-actions>
+    <section class="card-section">
+      <span class="section-label">Datos de la transferencia</span>
+      <div class="grid-layout">
+        <div class="input-group full-width">
+          <label>Producto *</label>
+          <select class="custom-select" [(ngModel)]="formulario.productoId" [disabled]="soloLectura">
+            @for (producto of data.productos; track producto.id) {
+              <option [ngValue]="producto.id">{{ producto.sku }} · {{ producto.nombre }}</option>
+            }
+          </select>
+        </div>
 
-  <button
-    mat-button
-    mat-dialog-close>
+        <div class="input-group">
+          <label>Almacén origen *</label>
+          <select class="custom-select" [(ngModel)]="formulario.origenId" [disabled]="soloLectura">
+            @for (almacen of data.almacenes; track almacen.id) {
+              <option [ngValue]="almacen.id">{{ almacen.nombre }}</option>
+            }
+          </select>
+        </div>
 
-    Cancelar
+        <div class="input-group">
+          <label>Almacén destino *</label>
+          <select class="custom-select" [(ngModel)]="formulario.destinoId" [disabled]="soloLectura">
+            @for (almacen of data.almacenes; track almacen.id) {
+              <option [ngValue]="almacen.id">{{ almacen.nombre }}</option>
+            }
+          </select>
+        </div>
 
-  </button>
+        <div class="input-group">
+          <label>Cantidad *</label>
+          <input class="custom-input" type="number" min="0.01" [(ngModel)]="formulario.cantidad" [disabled]="soloLectura">
+          <span class="hint">Disponible en origen: {{ stockOrigen }} {{ unidadProducto }}</span>
+        </div>
 
-  <button
-    mat-flat-button
-    color="primary"
-    (click)="guardar()">
+        <div class="input-group">
+          <label>Fecha *</label>
+          <input class="custom-input" type="datetime-local" [(ngModel)]="formulario.fecha" [disabled]="soloLectura">
+        </div>
 
-    Guardar
+        <div class="input-group">
+          <label>Responsable</label>
+          <select class="custom-select" [(ngModel)]="formulario.usuarioId" [disabled]="soloLectura">
+            <option [ngValue]="null">Sin usuario</option>
+            @for (usuario of data.usuarios; track usuario.id) {
+              <option [ngValue]="usuario.id">{{ usuario.nombre }}</option>
+            }
+          </select>
+        </div>
 
-  </button>
+        <div class="input-group">
+          <label>Estado</label>
+          <input class="custom-input" [value]="formulario.estado" disabled>
+        </div>
 
-</mat-dialog-actions>
+        <div class="input-group full-width">
+          <label>Observaciones</label>
+          <textarea class="custom-input textarea" rows="3" [(ngModel)]="formulario.observaciones" [disabled]="soloLectura" placeholder="Indicaciones para la recepción"></textarea>
+        </div>
+      </div>
+    </section>
+
+    @if (data.almacenes.length < 2 && data.mode !== 'view') {
+      <div class="form-warning"><mat-icon>info</mat-icon>Registra al menos dos almacenes activos para crear una transferencia.</div>
+    }
+    @if (error) {
+      <div class="form-error"><mat-icon>error</mat-icon>{{ error }}</div>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-footer">
+    <div class="footer-actions">
+      <button mat-stroked-button mat-dialog-close>{{ soloLectura ? 'Cerrar' : 'Cancelar' }}</button>
+      @if (!soloLectura) {
+        <button mat-flat-button color="primary" (click)="guardar()" [disabled]="data.almacenes.length < 2">
+          {{ data.mode === 'edit' ? 'Guardar cambios' : 'Crear transferencia' }}
+        </button>
+      }
+    </div>
+  </mat-dialog-actions>
+</div>

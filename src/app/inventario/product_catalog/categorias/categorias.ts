@@ -1,246 +1,238 @@
-import { Component } from '@angular/core';
-import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
-import { MatTableDataSource } from '@angular/material/table';
-import { CategoriasDialog } from './dialogs/categorias-dialog/categorias-dialog';
-import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { AsyncPipe } from '@angular/common';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatTableDataSource } from '@angular/material/table';
+import { Observable, forkJoin } from 'rxjs';
+import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
+import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { DatosDb } from '../../../shared/services/datos-db';
+import { CatalogosPersistencia } from '../catalogos-persistencia';
+import { CatalogFilterDialog, ValorFiltroCatalogo } from '../dialogs/catalog-filter-dialog/catalog-filter-dialog';
+import { CategoriasDialog } from './dialogs/categorias-dialog/categorias-dialog';
 
-
-export interface PeriodicElement {
-  nombre: string;
-  estado: boolean;
-  acciones?: string;
+interface CategoriaDb {
+  id_categoria: string;
+  id_empresa: string;
+  id_categoria_padre: string;
+  nombre_categoria: string;
+  activo: string;
 }
 
+interface EmpresaDb {
+  id_empresa: string;
+  nombre_empresa: string;
+}
 
-const ELEMENT_DATA: PeriodicElement[] = [
-  { nombre: 'Cableado', estado: true },
-  { nombre: 'Hardware', estado: true },
-  { nombre: 'Herramientas', estado: false },
-  { nombre: 'Consumibles', estado: true },
-  { nombre: 'Accesorios', estado: true },
-  { nombre: 'Seguridad', estado: false },
-  { nombre: 'Redes', estado: true },
-  { nombre: 'Iluminación', estado: true },
-  { nombre: 'Automatización', estado: true },
-  { nombre: 'Electricidad', estado: false },
-];
+export interface EmpresaCategoriaOption {
+  id: string;
+  nombre: string;
+}
 
+export interface Categoria {
+  id: string;
+  idEmpresa: string;
+  empresa: string;
+  idPadre: string;
+  categoriaPadre: string;
+  nombre: string;
+  productos: number;
+  estado: boolean;
+}
 
 @Component({
   selector: 'app-categorias',
-  imports: [SHARED_IMPORTS],
+  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule],
   templateUrl: './categorias.html',
-  styleUrl: './categorias.css',
+  styleUrls: ['../catalog-list.css', './categorias.css'],
 })
-export class Categorias {
-
+export class Categorias implements OnInit, AfterViewInit {
+  private readonly clave = 'catalogo-categorias-v2';
+  private eliminados: string[] = [];
+  private empresasCatalogo: EmpresaCategoriaOption[] = [];
+  displayedColumns = ['id', 'nombre', 'empresa', 'padre', 'productos', 'estado', 'acciones'];
+  dataSource = new MatTableDataSource<Categoria>([]);
+  obs!: Observable<Categoria[]>;
+  currentSearch = '';
+  filtros: Record<string, ValorFiltroCatalogo> = { empresa: '', padre: '', tipo: '', estado: '' };
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   constructor(
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private db: DatosDb,
+    private persistencia: CatalogosPersistencia,
   ) {}
 
-
-  displayedColumns: string[] = [
-    'nombre',
-    'estado',
-    'acciones'
-  ];
-
-
-  dataSource = new MatTableDataSource(ELEMENT_DATA);
-
-
-  currentSearch = '';
-  currentStatus = '';
-
-
-  ngOnInit() {
-
-    this.dataSource.filterPredicate = (
-      data: PeriodicElement,
-      filter: string
-    ) => {
-
-      const search = JSON.parse(filter);
-
-
-      const matchSearch =
-        data.nombre
-        .toLowerCase()
-        .includes(search.search);
-
-
-      const matchStatus =
-        search.status === '' ||
-        data.estado.toString() === search.status;
-
-
-      return matchSearch && matchStatus;
-
+  ngOnInit(): void {
+    this.dataSource.filterPredicate = (categoria, filtro) => {
+      const f = JSON.parse(filtro);
+      const texto = `${categoria.id} ${categoria.nombre} ${categoria.categoriaPadre} ${categoria.empresa}`.toLowerCase();
+      return (!f.search || texto.includes(f.search)) &&
+        (!f.empresa || categoria.idEmpresa === f.empresa) &&
+        (!f.padre || categoria.idPadre === f.padre) &&
+        (!f.tipo || (f.tipo === 'principal' ? !categoria.idPadre : !!categoria.idPadre)) &&
+        (!f.estado || categoria.estado.toString() === f.estado);
     };
+    this.obs = this.dataSource.connect();
 
+    forkJoin({
+      categorias: this.db.leer<CategoriaDb>('categorias.txt'),
+      productos: this.db.leer<{ id_categoria: string }>('productos.txt'),
+      empresas: this.db.leer<EmpresaDb>('empresas.txt'),
+    }).subscribe(({ categorias, productos, empresas }) => {
+      this.empresasCatalogo = empresas.map(empresa => ({ id: empresa.id_empresa, nombre: empresa.nombre_empresa }));
+      const nombres = new Map(categorias.map(categoria => [categoria.id_categoria, categoria.nombre_categoria]));
+      const empresasPorId = new Map(this.empresasCatalogo.map(empresa => [empresa.id, empresa.nombre]));
+      const fuente = categorias.map(categoria => ({
+        id: categoria.id_categoria,
+        idEmpresa: categoria.id_empresa,
+        empresa: empresasPorId.get(categoria.id_empresa) || 'Empresa no disponible',
+        idPadre: categoria.id_categoria_padre || '',
+        categoriaPadre: nombres.get(categoria.id_categoria_padre) || 'Categoría principal',
+        nombre: categoria.nombre_categoria,
+        productos: productos.filter(producto => producto.id_categoria === categoria.id_categoria).length,
+        estado: categoria.activo === '1',
+      }));
+      const estado = this.persistencia.combinar(this.clave, fuente);
+      this.eliminados = estado.eliminados;
+      this.dataSource.data = this.actualizarRelaciones(estado.registros.map(categoria => ({
+        ...categoria,
+        productos: productos.filter(producto => producto.id_categoria === categoria.id).length,
+      })));
+      this.applyFilter();
+    });
   }
 
+  ngAfterViewInit(): void { this.dataSource.paginator = this.paginator; }
 
+  get conteoFiltros(): number {
+    return Object.values(this.filtros).filter(valor => valor !== '' && valor !== null).length;
+  }
 
-  applyFilter() {
-
+  applyFilter(): void {
     this.dataSource.filter = JSON.stringify({
-
       search: this.currentSearch.trim().toLowerCase(),
-
-      status: this.currentStatus
-
+      ...this.filtros,
     });
-
+    this.dataSource.paginator?.firstPage();
   }
 
+  abrirFiltros(): void {
+    const padres = this.dataSource.data
+      .filter(categoria => categoria.estado)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre))
+      .map(categoria => ({ valor: categoria.id, etiqueta: categoria.nombre }));
+    this.dialog.open(CatalogFilterDialog, {
+      width: '580px',
+      maxWidth: '96vw',
+      data: {
+        titulo: 'Filtrar categorías',
+        filtros: this.filtros,
+        campos: [
+          { clave: 'empresa', etiqueta: 'Empresa', icono: 'business', opciones: this.empresasCatalogo.map(empresa => ({ valor: empresa.id, etiqueta: empresa.nombre })) },
+          { clave: 'padre', etiqueta: 'Categoría padre', icono: 'account_tree', opciones: padres },
+          { clave: 'tipo', etiqueta: 'Tipo de categoría', icono: 'category', opciones: [{ valor: 'principal', etiqueta: 'Principal' }, { valor: 'subcategoria', etiqueta: 'Subcategoría' }] },
+          { clave: 'estado', etiqueta: 'Estado', icono: 'toggle_on', opciones: [{ valor: 'true', etiqueta: 'Activa' }, { valor: 'false', etiqueta: 'Inactiva' }] },
+        ],
+      },
+    }).afterClosed().subscribe(resultado => {
+      if (!resultado) return;
+      this.filtros = resultado;
+      this.applyFilter();
+    });
+  }
 
-
-  abrirAgregar() {
-
-
+  abrirAgregar(): void {
     this.dialog.open(CategoriasDialog, {
-
-      width:'600px',
-
-      data:{
-        mode:'add'
-      }
-
-    })
-    .afterClosed()
-    .subscribe(result=>{
-
-
-      if(!result) return;
-
-
-      this.dataSource.data = [
-
-        ...this.dataSource.data,
-
-        result
-
-      ];
-
-
+      width: '620px',
+      data: { mode: 'add', categorias: this.opcionesPadre(), empresas: this.empresasCatalogo, existentes: this.existentes() },
+    }).afterClosed().subscribe(resultado => {
+      if (!resultado) return;
+      this.guardar([...this.dataSource.data, {
+        ...resultado,
+        id: this.persistencia.nuevoId(),
+        idEmpresa: resultado.idEmpresa,
+        empresa: '',
+        categoriaPadre: '',
+        productos: 0,
+      }]);
     });
-
-
   }
 
-
-
-  editar(categoria: PeriodicElement) {
-
-
+  editar(categoria: Categoria): void {
     this.dialog.open(CategoriasDialog, {
-
-
-      width:'600px',
-
-
-      data:{
-
-        mode:'edit',
-
-        category: categoria
-
-      }
-
-
-    })
-    .afterClosed()
-    .subscribe(result=>{
-
-
-      if(!result) return;
-
-
-      const index =
-        this.dataSource.data.findIndex(
-
-          c => c.nombre === categoria.nombre
-
-        );
-
-
-      if(index !== -1){
-
-
-        this.dataSource.data[index] = result;
-
-
-        this.dataSource.data = [
-
-          ...this.dataSource.data
-
-        ];
-
-
-      }
-
-
+      width: '620px',
+      data: {
+        mode: 'edit',
+        category: categoria,
+        categorias: this.opcionesPadre(categoria.id),
+        empresas: this.empresasCatalogo,
+        existentes: this.existentes(categoria.id),
+      },
+    }).afterClosed().subscribe(resultado => {
+      if (!resultado) return;
+      this.guardar(this.dataSource.data.map(actual => actual.id === categoria.id
+        ? { ...actual, ...resultado }
+        : actual));
     });
-
-
   }
 
-
-
-
-  eliminar(categoria: PeriodicElement) {
-
-
+  eliminar(categoria: Categoria): void {
     this.dialog.open(ConfirmDialog, {
-
-
-      width:'400px',
-
-
-      data:{
-
-
-        title:'Eliminar categoría',
-
-
-        message:
-          `¿Deseas eliminar "${categoria.nombre}"?`,
-
-
-        confirmText:'Eliminar',
-
-
-        cancelText:'Cancelar'
-
-
-      }
-
-
-    })
-    .afterClosed()
-    .subscribe(confirmado=>{
-
-
-      if(!confirmado) return;
-
-
-      this.dataSource.data =
-        this.dataSource.data.filter(
-
-
-          c => c.nombre !== categoria.nombre
-
-
-        );
-
-
+      width: '400px',
+      data: {
+        title: 'Eliminar categoría',
+        message: `¿Deseas eliminar "${categoria.nombre}"?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+      },
+    }).afterClosed().subscribe(confirmado => {
+      if (!confirmado) return;
+      this.eliminados = [...new Set([...this.eliminados, categoria.id])];
+      this.guardar(this.dataSource.data
+        .filter(actual => actual.id !== categoria.id)
+        .map(actual => actual.idPadre === categoria.id ? { ...actual, idPadre: '' } : actual));
     });
-
-
   }
 
+  private opcionesPadre(excluir = ''): { id: string; nombre: string; idEmpresa: string }[] {
+    const excluidos = new Set([excluir, ...this.idsDescendientes(excluir)]);
+    return this.dataSource.data
+      .filter(categoria => !excluidos.has(categoria.id) && categoria.estado)
+      .map(categoria => ({ id: categoria.id, nombre: categoria.nombre, idEmpresa: categoria.idEmpresa }));
+  }
 
+  private existentes(excluir = ''): { nombre: string; idEmpresa: string }[] {
+    return this.dataSource.data
+      .filter(categoria => categoria.id !== excluir)
+      .map(categoria => ({ nombre: categoria.nombre, idEmpresa: categoria.idEmpresa }));
+  }
+
+  private idsDescendientes(id: string): string[] {
+    if (!id) return [];
+    const resultado: string[] = [];
+    const pendientes = [id];
+    while (pendientes.length) {
+      const padre = pendientes.shift()!;
+      const hijos = this.dataSource.data.filter(categoria => categoria.idPadre === padre).map(categoria => categoria.id);
+      for (const hijo of hijos) if (!resultado.includes(hijo)) { resultado.push(hijo); pendientes.push(hijo); }
+    }
+    return resultado;
+  }
+
+  private actualizarRelaciones(categorias: Categoria[]): Categoria[] {
+    const nombres = new Map(categorias.map(categoria => [categoria.id, categoria.nombre]));
+    const empresas = new Map(this.empresasCatalogo.map(empresa => [empresa.id, empresa.nombre]));
+    return categorias.map(categoria => ({
+      ...categoria,
+      empresa: empresas.get(categoria.idEmpresa) || 'Empresa no disponible',
+      categoriaPadre: categoria.idPadre ? (nombres.get(categoria.idPadre) || 'Categoría no disponible') : 'Categoría principal',
+    }));
+  }
+
+  private guardar(categorias: Categoria[]): void {
+    this.dataSource.data = this.actualizarRelaciones(categorias);
+    this.persistencia.guardar(this.clave, this.dataSource.data, this.eliminados);
+    this.applyFilter();
+  }
 }

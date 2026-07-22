@@ -1,184 +1,132 @@
-import { Component } from '@angular/core';
-import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
-import { MatTableDataSource } from '@angular/material/table';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
-import { AlmacenesDialog } from './dialogs/almacenes-dialog/almacenes-dialog';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatTableDataSource } from '@angular/material/table';
+import { Observable } from 'rxjs';
+import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
-
-export interface Almacen {
-  clave: string;
-  nombre: string;
-  responsable: string;
-  telefono: string;
-  direccion: string;
-  estado: boolean;
-}
-
-const ELEMENT_DATA: Almacen[] = [
-  {
-    clave: 'ALM001',
-    nombre: 'Almacén Principal',
-    responsable: 'Juan Pérez',
-    telefono: '5551234567',
-    direccion: 'Av. Principal #100',
-    estado: true
-  },
-  {
-    clave: 'ALM002',
-    nombre: 'Almacén Norte',
-    responsable: 'María López',
-    telefono: '5559876543',
-    direccion: 'Calle Norte #25',
-    estado: true
-  },
-  {
-    clave: 'ALM003',
-    nombre: 'Almacén Sur',
-    responsable: 'Carlos Ramírez',
-    telefono: '5556543210',
-    direccion: 'Blvd. Sur #58',
-    estado: false
-  },
-  {
-    clave: 'ALM004',
-    nombre: 'Almacén Temporal',
-    responsable: 'Ana Torres',
-    telefono: '5554567890',
-    direccion: 'Zona Industrial',
-    estado: true
-  }
-];
+import { AdministracionDatos, AlmacenAdministracion, EmpresaAdministracion } from '../administracion-datos';
+import { FiltrosAdministracionDialog, ValorFiltroAdministracion } from '../filtros-administracion-dialog/filtros-administracion-dialog';
+import { AlmacenesDialog } from './dialogs/almacenes-dialog/almacenes-dialog';
 
 @Component({
   selector: 'app-almacenes',
-  imports: [SHARED_IMPORTS],
+  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule],
   templateUrl: './almacenes.html',
-  styleUrl: './almacenes.css',
+  styleUrls: ['../administracion-listas.css'],
 })
-export class Almacenes {
-  constructor(private dialog: MatDialog) {}
+export class Almacenes implements OnInit, AfterViewInit {
+  displayedColumns = ['clave', 'nombre', 'empresa', 'direccion', 'principal', 'estado', 'acciones'];
+  dataSource = new MatTableDataSource<AlmacenAdministracion>([]);
+  obs!: Observable<AlmacenAdministracion[]>;
+  empresas: EmpresaAdministracion[] = [];
+  currentSearch = '';
+  currentEmpresa = '';
+  currentStatus: boolean | null = null;
+  currentPrincipal: boolean | null = null;
 
-    displayedColumns: string[] = [
-    'clave',
-    'nombre',
-    'responsable',
-    'telefono',
-    'direccion',
-    'estado',
-    'acciones'
-  ];
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  dataSource = new MatTableDataSource(ELEMENT_DATA);
+  constructor(private dialog: MatDialog, private datos: AdministracionDatos) {}
 
-  currentSearch: string = '';
-  currentStatus: string = '';
-
-  applyFilter() {
-    this.dataSource.filter = JSON.stringify({
-      search: this.currentSearch.trim().toLowerCase(),
-      status: this.currentStatus
+  ngOnInit(): void {
+    this.dataSource.filterPredicate = (almacen, filtro) => {
+      const filtros = JSON.parse(filtro) as { search: string; empresa: string; status: boolean | null; principal: boolean | null };
+      const texto = `${almacen.id} ${almacen.nombre} ${almacen.direccion} ${this.nombreEmpresa(almacen.empresaId)}`.toLowerCase();
+      return (!filtros.search || texto.includes(filtros.search)) &&
+        (!filtros.empresa || almacen.empresaId === filtros.empresa) &&
+        (filtros.status === null || almacen.estado === filtros.status) &&
+        (filtros.principal === null || almacen.principal === filtros.principal);
+    };
+    this.obs = this.dataSource.connect();
+    this.datos.cargar().subscribe(estado => {
+      this.empresas = estado.empresas;
+      this.dataSource.data = estado.almacenes;
+      this.applyFilter();
     });
   }
 
-  ngOnInit() {
-    this.dataSource.filterPredicate = (data: Almacen, filter: string) => {
+  ngAfterViewInit(): void { this.dataSource.paginator = this.paginator; }
 
-      const search = JSON.parse(filter);
-
-      const matchSearch =
-        data.nombre.toLowerCase().includes(search.search) ||
-        data.clave.toLowerCase().includes(search.search);
-
-      const matchStatus =
-        search.status === '' || data.estado === search.status;
-
-      return matchSearch && matchStatus;
-    };
+  applyFilter(): void {
+    this.dataSource.filter = JSON.stringify({
+      search: this.currentSearch.trim().toLowerCase(), empresa: this.currentEmpresa,
+      status: this.currentStatus, principal: this.currentPrincipal,
+    });
+    this.dataSource.paginator?.firstPage();
   }
 
-abrirDialogo() {
+  setEmpresa(id: string): void { this.currentEmpresa = id; this.applyFilter(); }
+  setStatus(estado: boolean | null): void { this.currentStatus = estado; this.applyFilter(); }
+  setPrincipal(principal: boolean | null): void { this.currentPrincipal = principal; this.applyFilter(); }
 
-  this.dialog.open(AlmacenesDialog, {
+  get filtrosActivos(): number {
+    return Number(!!this.currentEmpresa) + Number(this.currentStatus !== null) + Number(this.currentPrincipal !== null);
+  }
 
-    width: '650px',
+  abrirFiltros(): void {
+    this.dialog.open(FiltrosAdministracionDialog, {
+      width: '600px', panelClass: 'custom-dialog', data: {
+        titulo: 'Filtrar almacenes',
+        filtros: { empresa: this.currentEmpresa, principal: this.currentPrincipal, estado: this.currentStatus },
+        campos: [
+          { clave: 'empresa', etiqueta: 'Empresa', icono: 'business', valorVacio: '', opciones: this.empresas.map(empresa => ({ valor: empresa.id, etiqueta: empresa.nombre })) },
+          { clave: 'principal', etiqueta: 'Tipo de almacén', icono: 'star', valorVacio: null, opciones: [{ valor: true, etiqueta: 'Principal' }, { valor: false, etiqueta: 'Secundario' }] },
+          { clave: 'estado', etiqueta: 'Estado', icono: 'toggle_on', valorVacio: null, opciones: [{ valor: true, etiqueta: 'Activos' }, { valor: false, etiqueta: 'Inactivos' }] },
+        ],
+      },
+    }).afterClosed().subscribe((resultado?: Record<string, ValorFiltroAdministracion>) => {
+      if (!resultado) return;
+      this.currentEmpresa = String(resultado['empresa'] || '');
+      this.currentPrincipal = resultado['principal'] as boolean | null;
+      this.currentStatus = resultado['estado'] as boolean | null;
+      this.applyFilter();
+    });
+  }
 
-    data: {
-      mode: 'add'
-    }
+  abrirDialogo(): void {
+    this.dialog.open(AlmacenesDialog, {
+      width: '650px', panelClass: 'custom-dialog', data: { mode: 'add', empresas: this.empresas },
+    }).afterClosed().subscribe((resultado?: AlmacenAdministracion) => {
+      if (!resultado) return;
+      const fecha = new Date().toISOString().slice(0, 10);
+      this.guardar([{ ...resultado, id: this.siguienteId(), fechaCreacion: fecha, fechaActualizacion: fecha }, ...this.dataSource.data]);
+    });
+  }
 
-  }).afterClosed().subscribe(result => {
+  editar(almacen: AlmacenAdministracion): void {
+    this.dialog.open(AlmacenesDialog, {
+      width: '650px', panelClass: 'custom-dialog', data: { mode: 'edit', almacen, empresas: this.empresas },
+    }).afterClosed().subscribe((resultado?: AlmacenAdministracion) => {
+      if (!resultado) return;
+      const actualizado = { ...resultado, id: almacen.id, fechaCreacion: almacen.fechaCreacion, fechaActualizacion: new Date().toISOString().slice(0, 10) };
+      this.guardar(this.dataSource.data.map(actual => actual.id === almacen.id ? actualizado : actual));
+    });
+  }
 
-    if (!result) return;
+  eliminar(almacen: AlmacenAdministracion): void {
+    this.dialog.open(ConfirmDialog, {
+      width: '400px', data: {
+        title: 'Eliminar almacén',
+        message: `¿Deseas eliminar "${almacen.nombre}"? Los usuarios vinculados quedarán sin almacén predeterminado.`,
+        confirmText: 'Eliminar', cancelText: 'Cancelar',
+      },
+    }).afterClosed().subscribe(confirmado => {
+      if (confirmado) this.guardar(this.dataSource.data.filter(actual => actual.id !== almacen.id));
+    });
+  }
 
-    this.dataSource.data = [
-      ...this.dataSource.data,
-      result
-    ];
+  nombreEmpresa(id: string): string {
+    return this.empresas.find(empresa => empresa.id === id)?.nombre || 'Sin empresa';
+  }
 
-  });
+  private siguienteId(): string {
+    return String(Math.max(0, ...this.dataSource.data.map(almacen => Number(almacen.id) || 0)) + 1);
+  }
 
-}
-
-editar(almacen: Almacen) {
-
-  this.dialog.open(AlmacenesDialog, {
-
-    width: '650px',
-
-    data: {
-      mode: 'edit',
-      almacen: almacen
-    }
-
-  }).afterClosed().subscribe(result => {
-
-    if (!result) return;
-
-    const index = this.dataSource.data.findIndex(
-      a => a.clave === almacen.clave
-    );
-
-    if (index !== -1) {
-
-      this.dataSource.data[index] = result;
-
-      this.dataSource.data = [
-        ...this.dataSource.data
-      ];
-
-    }
-
-  });
-
-}
-eliminar(almacen: Almacen) {
-
-  this.dialog.open(ConfirmDialog, {
-
-    width: '400px',
-
-    data: {
-
-      title: 'Eliminar almacén',
-
-      message: `¿Deseas eliminar "${almacen.nombre}"?`,
-
-      confirmText: 'Eliminar',
-
-      cancelText: 'Cancelar'
-
-    }
-
-  }).afterClosed().subscribe(confirmado => {
-
-    if (!confirmado) return;
-
-    this.dataSource.data = this.dataSource.data.filter(
-      a => a.clave !== almacen.clave
-    );
-
-  });
-
-}
-
+  private guardar(almacenes: AlmacenAdministracion[]): void {
+    this.datos.guardarAlmacenes(almacenes);
+    this.applyFilter();
+  }
 }
