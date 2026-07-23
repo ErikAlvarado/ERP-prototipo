@@ -1,22 +1,36 @@
 import { Injectable } from '@angular/core';
-import { forkJoin, map, Observable } from 'rxjs';
+import { combineLatest, map, Observable } from 'rxjs';
 import { DatosDb } from '../../shared/services/datos-db';
 import { PersistenciaLocal } from '../../shared/services/persistencia-local';
+import {
+  CatalogoProductos,
+  OpcionesProducto,
+  ProductoCatalogo,
+} from '../../shared/services/catalogo-productos';
+import {
+  AdministracionDatos,
+  EstadoAdministracion,
+  UsuarioAdministracion,
+} from '../administracion/administracion-datos';
 
 export interface ProductoInventarioRef {
   id: number;
+  idEmpresa: number;
   sku: string;
   nombre: string;
   unidad: string;
+  permiteDecimales: boolean;
 }
 
 export interface AlmacenInventarioRef {
   id: number;
+  idEmpresa: number;
   nombre: string;
 }
 
 export interface UsuarioInventarioRef {
   id: number;
+  idEmpresa: number;
   nombre: string;
 }
 
@@ -28,14 +42,13 @@ export interface ExistenciaInventario {
   producto: string;
   unidad: string;
   almacen: string;
-  lote: string;
-  caducidad: string;
   stock: number;
   reorden: number;
   critico: number;
   maximo: number;
   anaquel: string;
   actualizacion: string;
+  inicializada: boolean;
 }
 
 export interface MovimientoInventario {
@@ -49,9 +62,7 @@ export interface MovimientoInventario {
   tipo: string;
   cantidad: number;
   existencia: number;
-  costoUnitario: number;
-  lote: string;
-  caducidad: string;
+  costoUnitario: number | null;
   referencia: string;
   observaciones: string;
   usuarioId: number | null;
@@ -82,7 +93,135 @@ export interface AjusteFormulario {
   usuarioId: number | null;
 }
 
+export interface PartidaTransferenciaInventario {
+  productoId: number;
+  sku: string;
+  producto: string;
+  unidad: string;
+  permiteDecimales: boolean;
+  cantidadSolicitada: number;
+  cantidadEnviada: number;
+  cantidadRecibida: number;
+  stockOrigenAnterior?: number;
+  stockDestinoAnterior?: number;
+}
+
+export interface PartidaTransferenciaFormulario {
+  productoId: number;
+  cantidadSolicitada: number;
+  cantidadEnviada: number;
+  cantidadRecibida: number;
+}
+
 export interface TransferenciaInventario {
+  id: number;
+  folio: string;
+  origenId: number;
+  origen: string;
+  destinoId: number;
+  destino: string;
+  fechaSolicitud: string;
+  fechaAutorizacion: string;
+  fechaRecepcion: string;
+  solicitanteId: number | null;
+  solicitante: string;
+  autorizadorId: number | null;
+  autorizador: string;
+  estado: string;
+  observaciones: string;
+  partidas: PartidaTransferenciaInventario[];
+}
+
+export interface TransferenciaFormulario {
+  origenId: number;
+  destinoId: number;
+  fechaSolicitud: string;
+  fechaAutorizacion: string;
+  fechaRecepcion: string;
+  solicitanteId: number | null;
+  autorizadorId: number | null;
+  estado: string;
+  observaciones: string;
+  partidas: PartidaTransferenciaFormulario[];
+}
+
+export interface ContextoInventario {
+  productos: ProductoInventarioRef[];
+  almacenes: AlmacenInventarioRef[];
+  usuarios: UsuarioInventarioRef[];
+  estadosTransferencia: string[];
+  existencias: ExistenciaInventario[];
+  movimientos: MovimientoInventario[];
+  ajustes: AjusteInventario[];
+  transferencias: TransferenciaInventario[];
+}
+
+interface UnidadDb {
+  id_unidad: string;
+  nombre: string;
+  abreviatura: string;
+  permitir_decimales: string;
+}
+
+interface InventarioDb {
+  id_inventario: string;
+  id_producto: string;
+  id_almacen: string;
+  stock: string;
+  stock_reorden: string;
+  stock_critico: string;
+  stock_maximo: string;
+  anaquel: string;
+  fecha_actualizacion: string;
+}
+
+interface KardexDb {
+  id_movimiento: string;
+  id_producto: string;
+  id_almacen: string;
+  id_tipo_movimiento: string;
+  existencia: string;
+  cantidad: string;
+  costo_unitario: string;
+  observaciones: string;
+  referencia: string;
+  fecha: string;
+  id_usuario: string;
+}
+
+interface TipoMovimientoDb {
+  id_tipo_movimiento: string;
+  nombre: string;
+}
+
+interface EstadoTransferenciaDb {
+  id_estado_transferencia: string;
+  nombre: string;
+}
+
+interface TransferenciaDb {
+  id_transferencia: string;
+  folio: string;
+  id_almacen_origen: string;
+  id_almacen_destino: string;
+  fecha_solicitud: string;
+  fecha_autorizacion: string;
+  fecha_recepcion: string;
+  id_estado_transferencia: string;
+  observaciones: string;
+  id_usuario_solicita: string;
+  id_usuario_autoriza: string;
+}
+
+interface DetalleTransferenciaDb {
+  id_transferencia: string;
+  id_producto: string;
+  cantidad_solicitada: string;
+  cantidad_enviada: string;
+  cantidad_recibida: string;
+}
+
+interface TransferenciaLegada {
   id: number;
   folio: string;
   fecha: string;
@@ -102,133 +241,30 @@ export interface TransferenciaInventario {
   stockDestinoAnterior?: number;
 }
 
-export interface TransferenciaFormulario {
-  fecha: string;
-  productoId: number;
-  origenId: number;
-  destinoId: number;
-  cantidad: number;
-  usuarioId: number | null;
-  estado: string;
-  observaciones: string;
-}
-
-export interface ContextoInventario {
-  productos: ProductoInventarioRef[];
-  almacenes: AlmacenInventarioRef[];
-  usuarios: UsuarioInventarioRef[];
-  estadosTransferencia: string[];
-  existencias: ExistenciaInventario[];
-  movimientos: MovimientoInventario[];
-  ajustes: AjusteInventario[];
-  transferencias: TransferenciaInventario[];
-}
-
-interface ProductoDb {
-  id_producto: string;
-  sku: string;
-  nombre_producto: string;
-  id_unidad: string;
-}
-
-interface UnidadDb {
-  id_unidad: string;
-  nombre: string;
-  abreviatura: string;
-}
-
-interface AlmacenDb {
-  id_almacen: string;
-  nombre_almacen: string;
-  activo: string;
-}
-
-interface UsuarioDb {
-  id_usuario: string;
-  nombres?: string;
-  apellido_paterno?: string;
-  apellido_materno?: string;
-  nombre?: string;
-  usuario?: string;
-  email?: string;
-  activo: string;
-}
-
-interface InventarioDb {
-  id_inventario: string;
-  id_producto: string;
-  id_almacen: string;
-  lote: string;
-  fecha_caducidad: string;
-  stock: string;
-  stock_reorden: string;
-  stock_critico: string;
-  stock_maximo: string;
-  anaquel: string;
-  fecha_actualizacion: string;
-}
-
-interface KardexDb {
-  id_movimiento: string;
-  id_producto: string;
-  id_almacen: string;
-  id_tipo_movimiento: string;
-  lote: string;
-  fecha_caducidad: string;
-  existencia: string;
-  cantidad: string;
-  costo_unitario: string;
-  observaciones: string;
-  referencia: string;
-  fecha: string;
-  id_usuario: string;
-}
-
-interface EstadoTransferenciaDb {
-  id_estado_transferencia: string;
-  nombre: string;
-}
-
-interface TransferenciaDb {
-  id_transferencia: string;
-  folio: string;
-  id_almacen_origen: string;
-  id_almacen_destino: string;
-  fecha_solicitud: string;
-  fecha_autorizacion: string;
-  fecha_recepcion: string;
-  id_estado_transferencia: string;
-  observaciones: string;
-  id_usuario_solicita: string;
-}
-
-interface DetalleTransferenciaDb {
-  id_transferencia: string;
-  id_producto: string;
-  cantidad_solicitada: string;
-  cantidad_enviada: string;
-  cantidad_recibida: string;
-}
-
 @Injectable({ providedIn: 'root' })
 export class GestionInventario {
   private readonly claveAjustes = 'inventario-ajustes-v1';
-  private readonly claveTransferencias = 'inventario-transferencias-v1';
+  private readonly claveTransferencias = 'inventario-transferencias-v2';
+  private readonly claveTransferenciasLegadas = 'inventario-transferencias-v1';
+  private readonly claveMigracionTransferencias = 'inventario-transferencias-migradas-v2';
   private readonly claveTransferenciasEliminadas = 'inventario-transferencias-eliminadas-v1';
 
   constructor(
     private db: DatosDb,
     private persistencia: PersistenciaLocal,
+    private catalogo: CatalogoProductos,
+    private administracion: AdministracionDatos,
   ) {}
 
   cargar(): Observable<ContextoInventario> {
-    return forkJoin({
-      productos: this.db.leer<ProductoDb>('productos.txt'),
+    return combineLatest({
+      productosCatalogo: this.catalogo.cargar(),
+      opcionesCatalogo: this.catalogo.cargarOpciones(),
+      administracion: this.administracion.cargar(),
       unidades: this.db.leer<UnidadDb>('unidades.txt'),
-      almacenes: this.db.leer<AlmacenDb>('almacenes.txt'),
-      usuarios: this.db.leer<UsuarioDb>('usuarios.txt'),
       inventario: this.db.leer<InventarioDb>('inventario.txt'),
       kardex: this.db.leer<KardexDb>('kardex_inventario.txt'),
+      tiposMovimiento: this.db.leer<TipoMovimientoDb>('tipos_movimiento.txt'),
       estados: this.db.leer<EstadoTransferenciaDb>('estados_transferencia.txt'),
       transferencias: this.db.leer<TransferenciaDb>('transferencias.txt'),
       detallesTransferencia: this.db.leer<DetalleTransferenciaDb>('detalle_transferencia.txt'),
@@ -240,23 +276,34 @@ export class GestionInventario {
     const almacen = contexto.almacenes.find((item) => item.id === Number(formulario.almacenId));
     const usuario = contexto.usuarios.find((item) => item.id === Number(formulario.usuarioId));
     const existencia = contexto.existencias.find(
-      (item) => item.productoId === Number(formulario.productoId) && item.almacenId === Number(formulario.almacenId),
+      (item) => item.productoId === Number(formulario.productoId)
+        && item.almacenId === Number(formulario.almacenId),
     );
     const anterior = existencia?.stock ?? 0;
-    const cantidad = Number(formulario.ajuste) || 0;
+    const cantidadCapturada = Number(formulario.ajuste);
     if (!producto || !almacen) throw new Error('El producto o el almacén seleccionado no existe.');
+    if (producto.idEmpresa !== almacen.idEmpresa) {
+      throw new Error('El producto y el almacén deben pertenecer a la misma empresa.');
+    }
+    if (usuario && usuario.idEmpresa !== producto.idEmpresa) {
+      throw new Error('El responsable debe pertenecer a la misma empresa del ajuste.');
+    }
+    if (!producto.permiteDecimales && !Number.isInteger(cantidadCapturada)) {
+      throw new Error(`La unidad ${producto.unidad} de "${producto.nombre}" sólo acepta cantidades enteras.`);
+    }
+    const cantidad = this.ajustarCantidad(cantidadCapturada, producto.permiteDecimales);
     if (!cantidad) throw new Error('La cantidad del ajuste debe ser diferente de cero.');
     if (anterior + cantidad < 0) {
       throw new Error(`El ajuste dejaría una existencia negativa. Stock actual: ${anterior}.`);
     }
     const ajuste: AjusteInventario = {
       id: `AJ-${Date.now()}`,
-      fecha: formulario.fecha,
-      productoId: Number(formulario.productoId),
-      almacenId: Number(formulario.almacenId),
-      sku: producto?.sku || '—',
-      producto: producto?.nombre || `Producto #${formulario.productoId}`,
-      almacen: almacen?.nombre || `Almacén #${formulario.almacenId}`,
+      fecha: this.soloFecha(formulario.fecha),
+      productoId: producto.id,
+      almacenId: almacen.id,
+      sku: producto.sku || '—',
+      producto: producto.nombre,
+      almacen: almacen.nombre,
       ajuste: cantidad,
       existencia: anterior + cantidad,
       motivo: formulario.motivo.trim(),
@@ -273,49 +320,118 @@ export class GestionInventario {
     contexto: ContextoInventario,
     transferencia?: TransferenciaInventario,
   ): TransferenciaInventario {
-    const producto = contexto.productos.find((item) => item.id === Number(formulario.productoId));
     const origen = contexto.almacenes.find((item) => item.id === Number(formulario.origenId));
     const destino = contexto.almacenes.find((item) => item.id === Number(formulario.destinoId));
-    const usuario = contexto.usuarios.find((item) => item.id === Number(formulario.usuarioId));
-    const cantidad = Number(formulario.cantidad) || 0;
-    if (!producto || !origen || !destino) throw new Error('El producto o alguno de los almacenes no existe.');
+    const solicitante = contexto.usuarios.find((item) => item.id === Number(formulario.solicitanteId));
+    const autorizador = contexto.usuarios.find((item) => item.id === Number(formulario.autorizadorId));
+    if (!origen || !destino) throw new Error('Alguno de los almacenes seleccionados no existe.');
     if (origen.id === destino.id) throw new Error('El almacén de origen y destino deben ser diferentes.');
-    if (cantidad <= 0) throw new Error('La cantidad a transferir debe ser mayor que cero.');
-    const disponible = this.stockDisponible(
-      contexto,
-      Number(formulario.productoId),
-      Number(formulario.origenId),
-      transferencia?.id,
-    );
-    if (cantidad > disponible) {
-      throw new Error(`Stock insuficiente en ${origen.nombre}. Disponible: ${disponible} ${producto.unidad}.`);
+    if (origen.idEmpresa !== destino.idEmpresa) {
+      throw new Error('Los almacenes de una transferencia deben pertenecer a la misma empresa.');
     }
-    const actuales = this.persistencia.leer<TransferenciaInventario[]>(this.claveTransferencias, []);
-    const id = transferencia?.id ?? Math.max(0, ...contexto.transferencias.map((item) => Number(item.id) || 0)) + 1;
+    if (formulario.solicitanteId == null || !solicitante) {
+      throw new Error('Selecciona un solicitante válido.');
+    }
+    if (solicitante.idEmpresa !== origen.idEmpresa) {
+      throw new Error('El solicitante debe pertenecer a la empresa de los almacenes.');
+    }
+    if (!formulario.partidas.length) throw new Error('Agrega al menos un producto a la transferencia.');
+    const fechaSolicitud = this.soloFecha(formulario.fechaSolicitud);
+    const fechaAutorizacion = this.soloFecha(formulario.fechaAutorizacion);
+    const fechaRecepcion = this.soloFecha(formulario.fechaRecepcion);
+    if (!fechaSolicitud) throw new Error('La fecha de solicitud es obligatoria.');
+    if ((fechaAutorizacion && formulario.autorizadorId == null)
+      || (!fechaAutorizacion && formulario.autorizadorId != null)) {
+      throw new Error('La fecha y el autorizador deben capturarse juntos.');
+    }
+    if (formulario.autorizadorId != null && !autorizador) {
+      throw new Error('Selecciona un autorizador válido.');
+    }
+    if (autorizador && autorizador.idEmpresa !== origen.idEmpresa) {
+      throw new Error('El autorizador debe pertenecer a la empresa de los almacenes.');
+    }
+    if (fechaAutorizacion && fechaAutorizacion < fechaSolicitud) {
+      throw new Error('La autorización no puede ser anterior a la solicitud.');
+    }
+    if (fechaRecepcion && fechaRecepcion < (fechaAutorizacion || fechaSolicitud)) {
+      throw new Error('La recepción no puede ser anterior a la solicitud o autorización.');
+    }
+
+    const idsProductos = new Set<number>();
+    const partidas = formulario.partidas.map((partida): PartidaTransferenciaInventario => {
+      const producto = contexto.productos.find((item) => item.id === Number(partida.productoId));
+      if (!producto) throw new Error(`El producto #${partida.productoId} no existe.`);
+      if (producto.idEmpresa !== origen.idEmpresa) {
+        throw new Error(`El producto "${producto.nombre}" no pertenece a la empresa de los almacenes.`);
+      }
+      if (idsProductos.has(producto.id)) throw new Error(`El producto "${producto.nombre}" está repetido.`);
+      idsProductos.add(producto.id);
+
+      const cantidadesCapturadas = [
+        Number(partida.cantidadSolicitada),
+        Number(partida.cantidadEnviada),
+        Number(partida.cantidadRecibida),
+      ];
+      if (!producto.permiteDecimales && cantidadesCapturadas.some((cantidad) => !Number.isInteger(cantidad))) {
+        throw new Error(`La unidad ${producto.unidad} de "${producto.nombre}" sólo acepta cantidades enteras.`);
+      }
+      const solicitada = this.ajustarCantidad(partida.cantidadSolicitada, producto.permiteDecimales);
+      const enviada = this.ajustarCantidad(partida.cantidadEnviada, producto.permiteDecimales);
+      const recibida = this.ajustarCantidad(partida.cantidadRecibida, producto.permiteDecimales);
+      if (solicitada <= 0) throw new Error(`La cantidad solicitada de "${producto.nombre}" debe ser mayor que cero.`);
+      if (enviada < 0 || enviada > solicitada) {
+        throw new Error(`La cantidad enviada de "${producto.nombre}" debe estar entre 0 y ${solicitada}.`);
+      }
+      if (recibida < 0 || recibida > enviada) {
+        throw new Error(`La cantidad recibida de "${producto.nombre}" no puede superar la enviada.`);
+      }
+
+      const disponible = this.stockDisponible(contexto, producto.id, origen.id, transferencia?.id);
+      const comprometida = enviada > 0 ? enviada : solicitada;
+      if (comprometida > disponible) {
+        throw new Error(`Stock insuficiente de "${producto.nombre}" en ${origen.nombre}. Disponible: ${disponible} ${producto.unidad}.`);
+      }
+      const anterior = transferencia?.partidas.find((item) => item.productoId === producto.id);
+      return {
+        productoId: producto.id,
+        sku: producto.sku || '—',
+        producto: producto.nombre,
+        unidad: producto.unidad,
+        permiteDecimales: producto.permiteDecimales,
+        cantidadSolicitada: solicitada,
+        cantidadEnviada: enviada,
+        cantidadRecibida: recibida,
+        stockOrigenAnterior: anterior?.stockOrigenAnterior,
+        stockDestinoAnterior: anterior?.stockDestinoAnterior,
+      };
+    });
+
+    const actuales = this.leerTransferenciasLocales();
+    const id = transferencia?.id ?? this.siguienteId(contexto.transferencias, actuales);
     const resultado: TransferenciaInventario = {
       id,
-      folio: transferencia?.folio || this.siguienteFolio(contexto.transferencias),
-      fecha: formulario.fecha,
-      productoId: Number(formulario.productoId),
-      sku: producto?.sku || '—',
-      producto: producto?.nombre || `Producto #${formulario.productoId}`,
-      origenId: Number(formulario.origenId),
-      origen: origen?.nombre || `Almacén #${formulario.origenId}`,
-      destinoId: Number(formulario.destinoId),
-      destino: destino?.nombre || `Almacén #${formulario.destinoId}`,
-      cantidad,
-      usuarioId: formulario.usuarioId == null ? null : Number(formulario.usuarioId),
-      usuario: usuario?.nombre || 'Sin usuario',
+      folio: transferencia?.folio || this.siguienteFolio([...contexto.transferencias, ...actuales]),
+      origenId: origen.id,
+      origen: origen.nombre,
+      destinoId: destino.id,
+      destino: destino.nombre,
+      fechaSolicitud,
+      fechaAutorizacion,
+      fechaRecepcion,
+      solicitanteId: formulario.solicitanteId == null ? null : Number(formulario.solicitanteId),
+      solicitante: solicitante?.nombre || 'Sin usuario',
+      autorizadorId: formulario.autorizadorId == null ? null : Number(formulario.autorizadorId),
+      autorizador: autorizador?.nombre || 'Sin autorizar',
       estado: transferencia?.estado || formulario.estado || 'Pendiente',
       observaciones: formulario.observaciones.trim(),
-      stockOrigenAnterior: transferencia?.stockOrigenAnterior,
-      stockDestinoAnterior: transferencia?.stockDestinoAnterior,
+      partidas,
     };
-    const existeLocal = transferencia && actuales.some((item) => item.id === transferencia.id);
-    const lista = transferencia && existeLocal
-      ? actuales.map((item) => item.id === transferencia.id ? resultado : item)
-      : [resultado, ...actuales];
-    this.persistencia.guardar(this.claveTransferencias, lista);
+    const existeLocal = actuales.some((item) => item.id === resultado.id);
+    this.guardarTransferenciasLocales(
+      existeLocal
+        ? actuales.map((item) => item.id === resultado.id ? resultado : item)
+        : [resultado, ...actuales],
+    );
     return resultado;
   }
 
@@ -324,36 +440,69 @@ export class GestionInventario {
     estado: string,
     contexto: ContextoInventario,
   ): void {
-    const actuales = this.persistencia.leer<TransferenciaInventario[]>(this.claveTransferencias, []);
-    const origen = contexto.existencias.find(
-      (item) => item.productoId === transferencia.productoId && item.almacenId === transferencia.origenId,
-    );
-    const destino = contexto.existencias.find(
-      (item) => item.productoId === transferencia.productoId && item.almacenId === transferencia.destinoId,
-    );
-    if (estado === 'Recibida') {
-      if (!origen || origen.stock < transferencia.cantidad) {
-        throw new Error(`Stock insuficiente en ${transferencia.origen}. Disponible: ${origen?.stock ?? 0}.`);
-      }
+    const normalizado = this.normalizar(estado);
+    let partidas = transferencia.partidas.map((item) => ({ ...item }));
+    let fechaAutorizacion = transferencia.fechaAutorizacion;
+    let fechaRecepcion = transferencia.fechaRecepcion;
+    let autorizadorId = transferencia.autorizadorId;
+    let autorizador = transferencia.autorizador;
+
+    if (normalizado === 'recibida') {
       if (transferencia.origenId === transferencia.destinoId) {
         throw new Error('El almacén de origen y destino deben ser diferentes.');
       }
+      partidas = partidas.map((partida) => {
+        const cantidad = partida.cantidadEnviada > 0 ? partida.cantidadEnviada : partida.cantidadSolicitada;
+        const origen = contexto.existencias.find(
+          (item) => item.productoId === partida.productoId && item.almacenId === transferencia.origenId,
+        );
+        const destino = contexto.existencias.find(
+          (item) => item.productoId === partida.productoId && item.almacenId === transferencia.destinoId,
+        );
+        if ((origen?.stock ?? 0) < cantidad) {
+          throw new Error(`Stock insuficiente de "${partida.producto}" en ${transferencia.origen}. Disponible: ${origen?.stock ?? 0} ${partida.unidad}.`);
+        }
+        return {
+          ...partida,
+          cantidadEnviada: cantidad,
+          cantidadRecibida: cantidad,
+          stockOrigenAnterior: origen?.stock ?? 0,
+          stockDestinoAnterior: destino?.stock ?? 0,
+        };
+      });
+      const hoy = this.fechaLocal();
+      if (transferencia.fechaSolicitud > hoy) {
+        throw new Error('No se puede recibir una transferencia antes de su fecha de solicitud.');
+      }
+      fechaAutorizacion = fechaAutorizacion || hoy;
+      fechaRecepcion = hoy;
+      autorizadorId ??= transferencia.solicitanteId;
+      autorizador = autorizadorId == null
+        ? 'Sin autorizar'
+        : contexto.usuarios.find((item) => item.id === autorizadorId)?.nombre || transferencia.solicitante;
     }
+
     const actualizada: TransferenciaInventario = {
       ...transferencia,
       estado,
-      stockOrigenAnterior: estado === 'Recibida' ? (origen?.stock ?? 0) : transferencia.stockOrigenAnterior,
-      stockDestinoAnterior: estado === 'Recibida' ? (destino?.stock ?? 0) : transferencia.stockDestinoAnterior,
+      fechaAutorizacion,
+      fechaRecepcion,
+      autorizadorId,
+      autorizador,
+      partidas,
     };
+    const actuales = this.leerTransferenciasLocales();
     const existeLocal = actuales.some((item) => item.id === transferencia.id);
-    this.persistencia.guardar(this.claveTransferencias, existeLocal
-      ? actuales.map((item) => item.id === transferencia.id ? actualizada : item)
-      : [actualizada, ...actuales]);
+    this.guardarTransferenciasLocales(
+      existeLocal
+        ? actuales.map((item) => item.id === transferencia.id ? actualizada : item)
+        : [actualizada, ...actuales],
+    );
   }
 
   eliminarTransferencia(id: number): void {
-    const actuales = this.persistencia.leer<TransferenciaInventario[]>(this.claveTransferencias, []);
-    this.persistencia.guardar(this.claveTransferencias, actuales.filter((item) => item.id !== id));
+    const actuales = this.leerTransferenciasLocales();
+    this.guardarTransferenciasLocales(actuales.filter((item) => item.id !== id));
     const eliminadas = this.persistencia.leer<number[]>(this.claveTransferenciasEliminadas, []);
     this.persistencia.guardar(this.claveTransferenciasEliminadas, [...new Set([...eliminadas, id])]);
   }
@@ -369,53 +518,127 @@ export class GestionInventario {
     )?.stock ?? 0;
     const reservado = contexto.transferencias
       .filter((item) => item.id !== transferenciaExcluirId
-        && item.productoId === productoId
         && item.origenId === almacenId
-        && !this.esEstadoFinalTransferencia(item.estado))
-      .reduce((total, item) => total + item.cantidad, 0);
+        && this.comprometeStockTransferencia(item.estado))
+      .flatMap((item) => item.partidas)
+      .filter((item) => item.productoId === productoId)
+      .reduce((total, item) => total + this.cantidadComprometida(item), 0);
     return Math.max(0, stock - reservado);
   }
 
+  cantidadComprometida(partida: PartidaTransferenciaInventario): number {
+    const comprometida = partida.cantidadEnviada > 0
+      ? partida.cantidadEnviada
+      : partida.cantidadSolicitada;
+    return Math.max(0, comprometida - partida.cantidadRecibida);
+  }
+
+  esEstadoFinalTransferencia(estado: string): boolean {
+    return ['recibida', 'cancelada', 'cerrada', 'devuelta'].includes(this.normalizar(estado));
+  }
+
+  comprometeStockTransferencia(estado: string): boolean {
+    return comprometeStockTransferencia(estado);
+  }
+
   private relacionar(datos: {
-    productos: ProductoDb[];
+    productosCatalogo: ProductoCatalogo[];
+    opcionesCatalogo: OpcionesProducto;
+    administracion: EstadoAdministracion;
     unidades: UnidadDb[];
-    almacenes: AlmacenDb[];
-    usuarios: UsuarioDb[];
     inventario: InventarioDb[];
     kardex: KardexDb[];
+    tiposMovimiento: TipoMovimientoDb[];
     estados: EstadoTransferenciaDb[];
     transferencias: TransferenciaDb[];
     detallesTransferencia: DetalleTransferenciaDb[];
   }): ContextoInventario {
-    const nombresUnidad = new Map(datos.unidades.map((item) => [item.id_unidad, item.abreviatura || item.nombre]));
-    const productos: ProductoInventarioRef[] = datos.productos.map((item) => ({
-      id: Number(item.id_producto),
-      sku: item.sku || '—',
-      nombre: item.nombre_producto || `Producto #${item.id_producto}`,
-      unidad: nombresUnidad.get(item.id_unidad) || 'unidad',
+    const unidadesDb = new Map(datos.unidades.map((item) => [Number(item.id_unidad), item]));
+    const unidadesCatalogo = new Map(
+      datos.opcionesCatalogo.unidades.map(unidad => [unidad.id, unidad]),
+    );
+    const empresasActivas = new Set(
+      datos.administracion.empresas
+        .filter(empresa => empresa.estado)
+        .map(empresa => Number(empresa.id)),
+    );
+    const productosTodos: ProductoInventarioRef[] = datos.productosCatalogo.map((item) => {
+      const unidadDb = unidadesDb.get(Number(item.idUnidad));
+      const unidadCatalogo = unidadesCatalogo.get(Number(item.idUnidad));
+      return {
+        id: Number(item.id),
+        idEmpresa: Number(item.idEmpresa),
+        sku: item.sku || '—',
+        nombre: item.producto || `Producto #${item.id}`,
+        unidad: unidadDb?.abreviatura || unidadCatalogo?.nombre || item.medida || 'unidad',
+        permiteDecimales: unidadCatalogo?.permiteDecimales
+          ?? (unidadDb?.permitir_decimales === '1'),
+      };
+    });
+    const productosActivos = new Set(
+      datos.productosCatalogo
+        .filter(item =>
+          item.estado && item.usarExistencias && empresasActivas.has(Number(item.idEmpresa)))
+        .map(item => Number(item.id)),
+    );
+    const productos = productosTodos.filter(producto => productosActivos.has(producto.id));
+    const almacenesTodos: AlmacenInventarioRef[] = datos.administracion.almacenes.map(almacen => ({
+      id: Number(almacen.id),
+      idEmpresa: Number(almacen.empresaId),
+      nombre: almacen.nombre || `Almacén #${almacen.id}`,
     }));
-    const almacenes: AlmacenInventarioRef[] = datos.almacenes
-      .filter((item) => item.activo !== '0')
-      .map((item) => ({ id: Number(item.id_almacen), nombre: item.nombre_almacen || `Almacén #${item.id_almacen}` }));
-    const usuarios: UsuarioInventarioRef[] = datos.usuarios
-      .filter((item) => item.activo !== '0')
-      .map((item) => ({ id: Number(item.id_usuario), nombre: this.nombreUsuario(item) }));
+    const almacenes: AlmacenInventarioRef[] = datos.administracion.almacenes
+      .filter(almacen =>
+        almacen.estado && empresasActivas.has(Number(almacen.empresaId)))
+      .map(almacen => ({
+        id: Number(almacen.id),
+        idEmpresa: Number(almacen.empresaId),
+        nombre: almacen.nombre || `Almacén #${almacen.id}`,
+      }));
+    const usuariosTodos: UsuarioInventarioRef[] = datos.administracion.usuarios.map(usuario => ({
+      id: Number(usuario.id),
+      idEmpresa: Number(usuario.empresaId),
+      nombre: this.nombreUsuario(usuario),
+    }));
+    const usuarios: UsuarioInventarioRef[] = datos.administracion.usuarios
+      .filter(usuario =>
+        usuario.estado && empresasActivas.has(Number(usuario.empresaId)))
+      .map(usuario => ({
+        id: Number(usuario.id),
+        idEmpresa: Number(usuario.empresaId),
+        nombre: this.nombreUsuario(usuario),
+      }));
     const porProducto = new Map(productos.map((item) => [item.id, item]));
     const porAlmacen = new Map(almacenes.map((item) => [item.id, item]));
-    const porUsuario = new Map(usuarios.map((item) => [item.id, item]));
+    const porProductoTodos = new Map(productosTodos.map((item) => [item.id, item]));
+    const porAlmacenTodos = new Map(almacenesTodos.map((item) => [item.id, item]));
+    const porUsuarioTodos = new Map(usuariosTodos.map((item) => [item.id, item]));
+    const tiposMovimiento = new Map(
+      datos.tiposMovimiento.map((item) => [item.id_tipo_movimiento, item.nombre]),
+    );
 
     const ajustesLocales = this.persistencia.leer<AjusteInventario[]>(this.claveAjustes, [])
-      .map((item) => this.actualizarRelacionAjuste(item, porProducto, porAlmacen, porUsuario));
-    const transferenciasLocales = this.persistencia.leer<TransferenciaInventario[]>(this.claveTransferencias, [])
-      .map((item) => this.actualizarRelacionTransferencia(item, porProducto, porAlmacen, porUsuario));
+      .map((item) => this.actualizarRelacionAjuste(
+        item,
+        porProductoTodos,
+        porAlmacenTodos,
+        porUsuarioTodos,
+      ));
+    const transferenciasLocales = this.leerTransferenciasLocales()
+      .map((item) => this.actualizarRelacionTransferencia(
+        item,
+        porProductoTodos,
+        porAlmacenTodos,
+        porUsuarioTodos,
+      ));
     const transferenciasEliminadas = new Set(this.persistencia.leer<number[]>(this.claveTransferenciasEliminadas, []));
     const estadosPorId = new Map(datos.estados.map((item) => [item.id_estado_transferencia, item.nombre]));
     const transferenciasBase = this.mapearTransferenciasDb(
       datos.transferencias,
       datos.detallesTransferencia,
-      porProducto,
-      porAlmacen,
-      porUsuario,
+      porProductoTodos,
+      porAlmacenTodos,
+      porUsuarioTodos,
       estadosPorId,
     );
     const localesPorId = new Map(transferenciasLocales.map((item) => [item.id, item]));
@@ -424,8 +647,22 @@ export class GestionInventario {
       ...transferenciasBase.filter((item) => !localesPorId.has(item.id) && !transferenciasEliminadas.has(item.id)),
     ];
 
-    const existencias = this.construirExistencias(datos.inventario, ajustesLocales, transferenciasLocales, porProducto, porAlmacen);
-    const movimientosBase = datos.kardex.map((item) => this.mapearMovimiento(item, porProducto, porAlmacen, porUsuario));
+    const inventarioCatalogo = this.inventarioDesdeCatalogo(datos.productosCatalogo);
+    const existencias = this.construirExistencias(
+      inventarioCatalogo,
+      ajustesLocales,
+      transferenciasLocales,
+      porProducto,
+      porAlmacen,
+    );
+    const movimientosBase = datos.kardex.map((item) =>
+      this.mapearMovimiento(
+        item,
+        porProductoTodos,
+        porAlmacenTodos,
+        porUsuarioTodos,
+        tiposMovimiento,
+      ));
     const ajustesBase = movimientosBase
       .filter((item) => item.tipo === 'Ajuste')
       .map((item): AjusteInventario => ({
@@ -443,8 +680,16 @@ export class GestionInventario {
         usuario: item.usuario,
       }));
     const movimientosLocales = [
+      ...this.movimientosInventarioInicialLocal(
+        inventarioCatalogo,
+        datos.inventario,
+        porProducto,
+        porAlmacen,
+      ),
       ...ajustesLocales.map((item) => this.movimientoDesdeAjuste(item)),
-      ...transferenciasLocales.filter((item) => item.estado === 'Recibida').flatMap((item) => this.movimientosDesdeTransferencia(item)),
+      ...transferenciasLocales
+        .filter((item) => this.normalizar(item.estado) === 'recibida')
+        .flatMap((item) => this.movimientosDesdeTransferencia(item)),
     ];
 
     return {
@@ -452,11 +697,70 @@ export class GestionInventario {
       almacenes,
       usuarios,
       estadosTransferencia: datos.estados.map((item) => item.nombre).filter(Boolean),
-      existencias: existencias.sort((a, b) => this.numeroId(a.id) - this.numeroId(b.id)),
-      movimientos: [...movimientosLocales, ...movimientosBase].sort((a, b) => this.numeroId(a.id) - this.numeroId(b.id)),
-      ajustes: [...ajustesLocales, ...ajustesBase].sort((a, b) => this.numeroId(a.id) - this.numeroId(b.id)),
-      transferencias: transferencias.sort((a, b) => a.id - b.id),
+      existencias: existencias.sort((a, b) =>
+        a.producto.localeCompare(b.producto) || a.almacen.localeCompare(b.almacen)),
+      movimientos: [...movimientosLocales, ...movimientosBase].sort((a, b) =>
+        this.fechaMs(a.fecha) - this.fechaMs(b.fecha) || this.numeroId(a.id) - this.numeroId(b.id)),
+      ajustes: [...ajustesLocales, ...ajustesBase].sort((a, b) =>
+        this.fechaMs(a.fecha) - this.fechaMs(b.fecha) || this.numeroId(a.id) - this.numeroId(b.id)),
+      transferencias: transferencias.sort((a, b) =>
+        this.fechaMs(a.fechaSolicitud) - this.fechaMs(b.fechaSolicitud) || a.id - b.id),
     };
+  }
+
+  private inventarioDesdeCatalogo(productos: ProductoCatalogo[]): InventarioDb[] {
+    return productos.flatMap(producto => producto.inventarios.map(inventario => ({
+      id_inventario: String(inventario.id),
+      id_producto: String(producto.id),
+      id_almacen: String(inventario.idAlmacen),
+      stock: String(inventario.stock),
+      stock_reorden: String(inventario.stockReorden),
+      stock_critico: String(inventario.stockCritico),
+      stock_maximo: String(inventario.stockMaximo),
+      anaquel: inventario.anaquel,
+      fecha_actualizacion: inventario.fechaActualizacion,
+    })));
+  }
+
+  private movimientosInventarioInicialLocal(
+    inventarioCatalogo: InventarioDb[],
+    inventarioBase: InventarioDb[],
+    productos: Map<number, ProductoInventarioRef>,
+    almacenes: Map<number, AlmacenInventarioRef>,
+  ): MovimientoInventario[] {
+    const clavesBase = new Set(inventarioBase.map(item =>
+      this.claveExistencia(Number(item.id_producto), Number(item.id_almacen))));
+    return inventarioCatalogo
+      .filter(item =>
+        !clavesBase.has(this.claveExistencia(
+          Number(item.id_producto),
+          Number(item.id_almacen),
+        )))
+      .flatMap((item): MovimientoInventario[] => {
+        const productoId = Number(item.id_producto);
+        const almacenId = Number(item.id_almacen);
+        const producto = productos.get(productoId);
+        const almacen = almacenes.get(almacenId);
+        const stock = this.numero(item.stock);
+        if (!producto || !almacen || stock <= 0) return [];
+        return [{
+          id: `INI-LOCAL-${productoId}-${almacenId}`,
+          fecha: this.soloFecha(item.fecha_actualizacion) || this.fechaLocal(),
+          productoId,
+          almacenId,
+          sku: producto.sku,
+          producto: producto.nombre,
+          almacen: almacen.nombre,
+          tipo: 'Inventario inicial',
+          cantidad: stock,
+          existencia: stock,
+          costoUnitario: null,
+          referencia: `ALTA-${producto.sku}`,
+          observaciones: 'Inventario inicial capturado al crear el producto',
+          usuarioId: null,
+          usuario: '—',
+        }];
+      });
   }
 
   private construirExistencias(
@@ -471,64 +775,120 @@ export class GestionInventario {
       const productoId = Number(item.id_producto);
       const almacenId = Number(item.id_almacen);
       const producto = productos.get(productoId);
-      registros.set(this.claveExistencia(productoId, almacenId), {
-        id: item.id_inventario || `${productoId}-${almacenId}`,
+      const almacen = almacenes.get(almacenId);
+      if (!producto || !almacen || producto.idEmpresa !== almacen.idEmpresa) continue;
+      const clave = this.claveExistencia(productoId, almacenId);
+      const existente = registros.get(clave);
+      if (existente) {
+        existente.stock += this.numero(item.stock);
+        existente.reorden = Math.max(existente.reorden, this.numero(item.stock_reorden));
+        existente.critico = Math.max(existente.critico, this.numero(item.stock_critico));
+        existente.maximo = Math.max(existente.maximo, this.numero(item.stock_maximo));
+        existente.anaquel = this.combinarTexto(existente.anaquel, item.anaquel);
+        existente.actualizacion = this.fechaMasReciente(existente.actualizacion, item.fecha_actualizacion);
+        continue;
+      }
+      registros.set(clave, {
+        id: item.id_inventario || clave,
         productoId,
         almacenId,
         sku: producto?.sku || '—',
-        producto: producto?.nombre || `Producto #${productoId} (no registrado)`,
-        unidad: producto?.unidad || 'unidad',
-        almacen: almacenes.get(almacenId)?.nombre || `Almacén #${almacenId} (no registrado)`,
-        lote: item.lote || '—',
-        caducidad: item.fecha_caducidad || '—',
+        producto: producto.nombre,
+        unidad: producto.unidad,
+        almacen: almacen.nombre,
         stock: this.numero(item.stock),
         reorden: this.numero(item.stock_reorden),
         critico: this.numero(item.stock_critico),
         maximo: this.numero(item.stock_maximo),
         anaquel: item.anaquel || '—',
-        actualizacion: item.fecha_actualizacion || '—',
+        actualizacion: this.soloFecha(item.fecha_actualizacion) || '—',
+        inicializada: true,
       });
     }
-    const obtener = (productoId: number, almacenId: number) => {
-      const clave = this.claveExistencia(productoId, almacenId);
-      let registro = registros.get(clave);
-      if (!registro) {
-        const producto = productos.get(productoId);
-        registro = {
-          id: clave,
-          productoId,
-          almacenId,
-          sku: producto?.sku || '—',
-          producto: producto?.nombre || `Producto #${productoId} (no registrado)`,
-          unidad: producto?.unidad || 'unidad',
-          almacen: almacenes.get(almacenId)?.nombre || `Almacén #${almacenId} (no registrado)`,
-          lote: '—',
-          caducidad: '—',
-          stock: 0,
-          reorden: 0,
-          critico: 0,
-          maximo: 0,
-          anaquel: '—',
-          actualizacion: '—',
-        };
-        registros.set(clave, registro);
+
+    const almacenPredeterminado = [...almacenes.values()][0];
+    if (almacenPredeterminado) {
+      for (const producto of productos.values()) {
+        const tieneExistencia = [...registros.values()].some((item) => item.productoId === producto.id);
+        if (!tieneExistencia) {
+          const clave = this.claveExistencia(producto.id, almacenPredeterminado.id);
+          registros.set(clave, this.nuevaExistencia(producto.id, almacenPredeterminado.id, productos, almacenes, false));
+        }
       }
-      return registro;
+    }
+
+    const obtener = (
+      productoId: number,
+      almacenId: number,
+    ): ExistenciaInventario | undefined => {
+      const producto = productos.get(productoId);
+      const almacen = almacenes.get(almacenId);
+      if (!producto || !almacen || producto.idEmpresa !== almacen.idEmpresa) return undefined;
+      const clave = this.claveExistencia(productoId, almacenId);
+      const actual = registros.get(clave);
+      if (actual) return actual;
+      const nuevo = this.nuevaExistencia(productoId, almacenId, productos, almacenes, false);
+      registros.set(clave, nuevo);
+      return nuevo;
     };
+
     for (const ajuste of ajustes) {
       const registro = obtener(ajuste.productoId, ajuste.almacenId);
+      if (!registro) continue;
       registro.stock += ajuste.ajuste;
-      registro.actualizacion = ajuste.fecha;
+      registro.actualizacion = this.fechaMasReciente(registro.actualizacion, ajuste.fecha);
+      registro.inicializada = true;
     }
-    for (const transferencia of transferencias.filter((item) => item.estado === 'Recibida')) {
-      const origen = obtener(transferencia.productoId, transferencia.origenId);
-      const destino = obtener(transferencia.productoId, transferencia.destinoId);
-      origen.stock -= transferencia.cantidad;
-      destino.stock += transferencia.cantidad;
-      origen.actualizacion = transferencia.fecha;
-      destino.actualizacion = transferencia.fecha;
+    for (const transferencia of transferencias.filter((item) => this.normalizar(item.estado) === 'recibida')) {
+      for (const partida of transferencia.partidas) {
+        const cantidad = partida.cantidadRecibida;
+        if (cantidad <= 0) continue;
+        const origen = obtener(partida.productoId, transferencia.origenId);
+        const destino = obtener(partida.productoId, transferencia.destinoId);
+        if (origen) {
+          origen.stock -= cantidad;
+          origen.actualizacion = this.fechaMasReciente(
+            origen.actualizacion,
+            transferencia.fechaRecepcion,
+          );
+        }
+        if (destino) {
+          destino.stock += cantidad;
+          destino.actualizacion = this.fechaMasReciente(
+            destino.actualizacion,
+            transferencia.fechaRecepcion,
+          );
+          destino.inicializada = true;
+        }
+      }
     }
     return [...registros.values()];
+  }
+
+  private nuevaExistencia(
+    productoId: number,
+    almacenId: number,
+    productos: Map<number, ProductoInventarioRef>,
+    almacenes: Map<number, AlmacenInventarioRef>,
+    inicializada: boolean,
+  ): ExistenciaInventario {
+    const producto = productos.get(productoId);
+    return {
+      id: `AUTO-${productoId}-${almacenId}`,
+      productoId,
+      almacenId,
+      sku: producto?.sku || '—',
+      producto: producto?.nombre || `Producto #${productoId} (no registrado)`,
+      unidad: producto?.unidad || 'unidad',
+      almacen: almacenes.get(almacenId)?.nombre || `Almacén #${almacenId} (no registrado)`,
+      stock: 0,
+      reorden: 0,
+      critico: 0,
+      maximo: 0,
+      anaquel: '—',
+      actualizacion: '—',
+      inicializada,
+    };
   }
 
   private mapearMovimiento(
@@ -536,6 +896,7 @@ export class GestionInventario {
     productos: Map<number, ProductoInventarioRef>,
     almacenes: Map<number, AlmacenInventarioRef>,
     usuarios: Map<number, UsuarioInventarioRef>,
+    tipos: Map<string, string>,
   ): MovimientoInventario {
     const productoId = Number(item.id_producto);
     const almacenId = Number(item.id_almacen);
@@ -544,18 +905,16 @@ export class GestionInventario {
     const cantidad = this.numero(item.cantidad);
     return {
       id: item.id_movimiento,
-      fecha: item.fecha || '—',
+      fecha: this.soloFecha(item.fecha) || '—',
       productoId,
       almacenId,
       sku: producto?.sku || '—',
       producto: producto?.nombre || `Producto #${productoId} (no registrado)`,
       almacen: almacenes.get(almacenId)?.nombre || `Almacén #${almacenId} (no registrado)`,
-      tipo: this.tipoMovimiento(item.id_tipo_movimiento, cantidad),
+      tipo: tipos.get(item.id_tipo_movimiento) || (cantidad < 0 ? 'Salida' : 'Entrada'),
       cantidad,
       existencia: this.numero(item.existencia),
-      costoUnitario: this.numero(item.costo_unitario),
-      lote: item.lote || '—',
-      caducidad: item.fecha_caducidad || '—',
+      costoUnitario: this.numeroOpcional(item.costo_unitario),
       referencia: item.referencia || '—',
       observaciones: item.observaciones || '—',
       usuarioId,
@@ -566,7 +925,7 @@ export class GestionInventario {
   private movimientoDesdeAjuste(item: AjusteInventario): MovimientoInventario {
     return {
       id: item.id,
-      fecha: item.fecha,
+      fecha: this.soloFecha(item.fecha),
       productoId: item.productoId,
       almacenId: item.almacenId,
       sku: item.sku,
@@ -575,9 +934,7 @@ export class GestionInventario {
       tipo: 'Ajuste',
       cantidad: item.ajuste,
       existencia: item.existencia,
-      costoUnitario: 0,
-      lote: '—',
-      caducidad: '—',
+      costoUnitario: null,
       referencia: item.id,
       observaciones: item.motivo,
       usuarioId: item.usuarioId,
@@ -586,40 +943,42 @@ export class GestionInventario {
   }
 
   private movimientosDesdeTransferencia(item: TransferenciaInventario): MovimientoInventario[] {
-    const anteriorOrigen = item.stockOrigenAnterior ?? 0;
-    const anteriorDestino = item.stockDestinoAnterior ?? 0;
-    const comun = {
-      fecha: item.fecha,
-      productoId: item.productoId,
-      sku: item.sku,
-      producto: item.producto,
-      tipo: 'Transferencia',
-      costoUnitario: 0,
-      lote: '—',
-      caducidad: '—',
-      referencia: item.folio,
-      observaciones: item.observaciones || 'Transferencia entre almacenes',
-      usuarioId: item.usuarioId,
-      usuario: item.usuario,
-    };
-    return [
-      {
-        ...comun,
-        id: `${item.folio}-S`,
-        almacenId: item.origenId,
-        almacen: item.origen,
-        cantidad: -item.cantidad,
-        existencia: anteriorOrigen - item.cantidad,
-      },
-      {
-        ...comun,
-        id: `${item.folio}-E`,
-        almacenId: item.destinoId,
-        almacen: item.destino,
-        cantidad: item.cantidad,
-        existencia: anteriorDestino + item.cantidad,
-      },
-    ];
+    return item.partidas.flatMap((partida, indice) => {
+      const cantidad = partida.cantidadRecibida;
+      if (cantidad <= 0) return [];
+      const anteriorOrigen = partida.stockOrigenAnterior ?? 0;
+      const anteriorDestino = partida.stockDestinoAnterior ?? 0;
+      const comun = {
+        fecha: this.soloFecha(item.fechaRecepcion || item.fechaSolicitud),
+        productoId: partida.productoId,
+        sku: partida.sku,
+        producto: partida.producto,
+        tipo: 'Transferencia',
+        costoUnitario: null,
+        referencia: item.folio,
+        observaciones: item.observaciones || 'Transferencia entre almacenes',
+        usuarioId: item.solicitanteId,
+        usuario: item.solicitante,
+      };
+      return [
+        {
+          ...comun,
+          id: `${item.folio}-P${indice + 1}-S`,
+          almacenId: item.origenId,
+          almacen: item.origen,
+          cantidad: -cantidad,
+          existencia: anteriorOrigen - cantidad,
+        },
+        {
+          ...comun,
+          id: `${item.folio}-P${indice + 1}-E`,
+          almacenId: item.destinoId,
+          almacen: item.destino,
+          cantidad,
+          existencia: anteriorDestino + cantidad,
+        },
+      ];
+    });
   }
 
   private actualizarRelacionAjuste(
@@ -631,6 +990,7 @@ export class GestionInventario {
     const legado = item as AjusteInventario & { nueva?: number };
     return {
       ...item,
+      fecha: this.soloFecha(item.fecha),
       productoId: Number(item.productoId),
       almacenId: Number(item.almacenId),
       usuarioId: item.usuarioId == null ? null : Number(item.usuarioId),
@@ -638,7 +998,9 @@ export class GestionInventario {
       sku: productos.get(Number(item.productoId))?.sku || item.sku || '—',
       producto: productos.get(Number(item.productoId))?.nombre || item.producto || `Producto #${item.productoId}`,
       almacen: almacenes.get(Number(item.almacenId))?.nombre || item.almacen || `Almacén #${item.almacenId}`,
-      usuario: item.usuarioId == null ? 'Sin usuario' : usuarios.get(Number(item.usuarioId))?.nombre || item.usuario || `Usuario #${item.usuarioId}`,
+      usuario: item.usuarioId == null
+        ? 'Sin usuario'
+        : usuarios.get(Number(item.usuarioId))?.nombre || item.usuario || `Usuario #${item.usuarioId}`,
     };
   }
 
@@ -648,19 +1010,40 @@ export class GestionInventario {
     almacenes: Map<number, AlmacenInventarioRef>,
     usuarios: Map<number, UsuarioInventarioRef>,
   ): TransferenciaInventario {
+    const solicitanteId = item.solicitanteId == null ? null : Number(item.solicitanteId);
+    const autorizadorId = item.autorizadorId == null ? null : Number(item.autorizadorId);
     return {
       ...item,
       id: Number(item.id),
-      productoId: Number(item.productoId),
       origenId: Number(item.origenId),
       destinoId: Number(item.destinoId),
-      usuarioId: item.usuarioId == null ? null : Number(item.usuarioId),
-      cantidad: this.numero(item.cantidad),
-      sku: productos.get(Number(item.productoId))?.sku || item.sku || '—',
-      producto: productos.get(Number(item.productoId))?.nombre || item.producto || `Producto #${item.productoId}`,
+      fechaSolicitud: this.soloFecha(item.fechaSolicitud),
+      fechaAutorizacion: this.soloFecha(item.fechaAutorizacion),
+      fechaRecepcion: this.soloFecha(item.fechaRecepcion),
+      solicitanteId,
+      autorizadorId,
       origen: almacenes.get(Number(item.origenId))?.nombre || item.origen || `Almacén #${item.origenId}`,
       destino: almacenes.get(Number(item.destinoId))?.nombre || item.destino || `Almacén #${item.destinoId}`,
-      usuario: item.usuarioId == null ? 'Sin usuario' : usuarios.get(Number(item.usuarioId))?.nombre || item.usuario || `Usuario #${item.usuarioId}`,
+      solicitante: solicitanteId == null
+        ? 'Sin usuario'
+        : usuarios.get(solicitanteId)?.nombre || item.solicitante || `Usuario #${solicitanteId}`,
+      autorizador: autorizadorId == null
+        ? 'Sin autorizar'
+        : usuarios.get(autorizadorId)?.nombre || item.autorizador || `Usuario #${autorizadorId}`,
+      partidas: item.partidas.map((partida) => {
+        const producto = productos.get(Number(partida.productoId));
+        return {
+          ...partida,
+          productoId: Number(partida.productoId),
+          sku: producto?.sku || partida.sku || '—',
+          producto: producto?.nombre || partida.producto || `Producto #${partida.productoId}`,
+          unidad: producto?.unidad || partida.unidad || 'unidad',
+          permiteDecimales: producto?.permiteDecimales ?? partida.permiteDecimales ?? true,
+          cantidadSolicitada: this.numero(partida.cantidadSolicitada),
+          cantidadEnviada: this.numero(partida.cantidadEnviada),
+          cantidadRecibida: this.numero(partida.cantidadRecibida),
+        };
+      }),
     };
   }
 
@@ -679,54 +1062,121 @@ export class GestionInventario {
       detallesPorTransferencia.set(detalle.id_transferencia, lista);
     }
 
-    return transferencias.flatMap((transferencia) => {
-      const filas = detallesPorTransferencia.get(transferencia.id_transferencia) ?? [];
-      return filas.map((detalle, indice) => {
-        const transferenciaId = Number(transferencia.id_transferencia);
+    return transferencias.map((transferencia) => {
+      const transferenciaId = Number(transferencia.id_transferencia);
+      const origenId = Number(transferencia.id_almacen_origen);
+      const destinoId = Number(transferencia.id_almacen_destino);
+      const solicitanteId = transferencia.id_usuario_solicita ? Number(transferencia.id_usuario_solicita) : null;
+      const autorizadorId = transferencia.id_usuario_autoriza ? Number(transferencia.id_usuario_autoriza) : null;
+      const partidas = (detallesPorTransferencia.get(transferencia.id_transferencia) ?? []).map((detalle) => {
         const productoId = Number(detalle.id_producto);
-        const origenId = Number(transferencia.id_almacen_origen);
-        const destinoId = Number(transferencia.id_almacen_destino);
-        const usuarioId = transferencia.id_usuario_solicita ? Number(transferencia.id_usuario_solicita) : null;
         const producto = productos.get(productoId);
-        const recibida = this.numero(detalle.cantidad_recibida);
-        const enviada = this.numero(detalle.cantidad_enviada);
-        const solicitada = this.numero(detalle.cantidad_solicitada);
         return {
-          id: indice === 0 ? transferenciaId : transferenciaId * 1000 + indice,
-          folio: transferencia.folio || `TR-${String(transferenciaId).padStart(4, '0')}`,
-          fecha: transferencia.fecha_recepcion || transferencia.fecha_autorizacion || transferencia.fecha_solicitud || '—',
           productoId,
           sku: producto?.sku || '—',
           producto: producto?.nombre || `Producto #${productoId}`,
-          origenId,
-          origen: almacenes.get(origenId)?.nombre || `Almacén #${origenId}`,
-          destinoId,
-          destino: almacenes.get(destinoId)?.nombre || `Almacén #${destinoId}`,
-          cantidad: recibida || enviada || solicitada,
-          usuarioId,
-          usuario: usuarioId ? usuarios.get(usuarioId)?.nombre || `Usuario #${usuarioId}` : 'Sin usuario',
-          estado: estados.get(transferencia.id_estado_transferencia) || 'Pendiente',
-          observaciones: transferencia.observaciones || '—',
+          unidad: producto?.unidad || 'unidad',
+          permiteDecimales: producto?.permiteDecimales ?? true,
+          cantidadSolicitada: this.numero(detalle.cantidad_solicitada),
+          cantidadEnviada: this.numero(detalle.cantidad_enviada),
+          cantidadRecibida: this.numero(detalle.cantidad_recibida),
         };
       });
+      return {
+        id: transferenciaId,
+        folio: transferencia.folio || `TR-${String(transferenciaId).padStart(4, '0')}`,
+        origenId,
+        origen: almacenes.get(origenId)?.nombre || `Almacén #${origenId}`,
+        destinoId,
+        destino: almacenes.get(destinoId)?.nombre || `Almacén #${destinoId}`,
+        fechaSolicitud: this.soloFecha(transferencia.fecha_solicitud),
+        fechaAutorizacion: this.soloFecha(transferencia.fecha_autorizacion),
+        fechaRecepcion: this.soloFecha(transferencia.fecha_recepcion),
+        solicitanteId,
+        solicitante: solicitanteId ? usuarios.get(solicitanteId)?.nombre || `Usuario #${solicitanteId}` : 'Sin usuario',
+        autorizadorId,
+        autorizador: autorizadorId ? usuarios.get(autorizadorId)?.nombre || `Usuario #${autorizadorId}` : 'Sin autorizar',
+        estado: estados.get(transferencia.id_estado_transferencia) || 'Pendiente',
+        observaciones: transferencia.observaciones || '—',
+        partidas,
+      };
     });
   }
 
-  private tipoMovimiento(id: string, cantidad: number): string {
-    const tipos: Record<string, string> = { '1': 'Entrada', '2': 'Salida', '3': 'Ajuste', '4': 'Transferencia' };
-    return tipos[id] || (cantidad < 0 ? 'Salida' : 'Entrada');
+  private leerTransferenciasLocales(): TransferenciaInventario[] {
+    const actuales = this.persistencia.leer<TransferenciaInventario[]>(this.claveTransferencias, []);
+    const migracionCompletada = this.persistencia.leer<boolean>(
+      this.claveMigracionTransferencias,
+      false,
+    );
+    if (actuales.length || migracionCompletada) return actuales;
+    const legadas = this.persistencia.leer<TransferenciaLegada[]>(this.claveTransferenciasLegadas, []);
+    return this.migrarTransferenciasLegadas(legadas);
   }
 
-  private esEstadoFinalTransferencia(estado: string): boolean {
-    const normalizado = estado.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    return ['recibida', 'cancelada', 'cerrada', 'devuelta'].includes(normalizado);
+  private guardarTransferenciasLocales(transferencias: TransferenciaInventario[]): void {
+    this.persistencia.guardar(this.claveTransferencias, transferencias);
+    this.persistencia.guardar(this.claveMigracionTransferencias, true);
   }
 
-  private nombreUsuario(item: UsuarioDb): string {
-    return [item.nombres || item.nombre, item.apellido_paterno, item.apellido_materno]
+  private migrarTransferenciasLegadas(legadas: TransferenciaLegada[]): TransferenciaInventario[] {
+    const grupos = new Map<string, TransferenciaLegada[]>();
+    for (const item of legadas) {
+      const clave = item.folio || String(item.id);
+      const grupo = grupos.get(clave) ?? [];
+      grupo.push(item);
+      grupos.set(clave, grupo);
+    }
+    return [...grupos.values()].map((grupo) => {
+      const cabecera = grupo[0];
+      const recibida = this.normalizar(cabecera.estado) === 'recibida';
+      const partidasPorProducto = new Map<number, PartidaTransferenciaInventario>();
+      for (const item of grupo) {
+        const cantidad = this.numero(item.cantidad);
+        partidasPorProducto.set(Number(item.productoId), {
+          productoId: Number(item.productoId),
+          sku: item.sku || '—',
+          producto: item.producto || `Producto #${item.productoId}`,
+          unidad: 'unidad',
+          permiteDecimales: true,
+          cantidadSolicitada: cantidad,
+          cantidadEnviada: recibida ? cantidad : 0,
+          cantidadRecibida: recibida ? cantidad : 0,
+          stockOrigenAnterior: item.stockOrigenAnterior,
+          stockDestinoAnterior: item.stockDestinoAnterior,
+        });
+      }
+      const usuarioId = cabecera.usuarioId == null ? null : Number(cabecera.usuarioId);
+      return {
+        id: Number(cabecera.id),
+        folio: cabecera.folio || `TR-${String(cabecera.id).padStart(4, '0')}`,
+        origenId: Number(cabecera.origenId),
+        origen: cabecera.origen,
+        destinoId: Number(cabecera.destinoId),
+        destino: cabecera.destino,
+        fechaSolicitud: this.soloFecha(cabecera.fecha),
+        fechaAutorizacion: recibida ? this.soloFecha(cabecera.fecha) : '',
+        fechaRecepcion: recibida ? this.soloFecha(cabecera.fecha) : '',
+        solicitanteId: usuarioId,
+        solicitante: cabecera.usuario || 'Sin usuario',
+        autorizadorId: recibida ? usuarioId : null,
+        autorizador: recibida ? cabecera.usuario || 'Sin usuario' : 'Sin autorizar',
+        estado: cabecera.estado || 'Pendiente',
+        observaciones: cabecera.observaciones || '',
+        partidas: [...partidasPorProducto.values()],
+      };
+    });
+  }
+
+  private nombreUsuario(item: UsuarioAdministracion): string {
+    return [item.nombres, item.apellidoPaterno, item.apellidoMaterno]
       .filter(Boolean)
       .join(' ')
-      .trim() || item.usuario || item.email || `Usuario #${item.id_usuario}`;
+      .trim() || item.email || `Usuario #${item.id}`;
+  }
+
+  private siguienteId(contexto: TransferenciaInventario[], locales: TransferenciaInventario[]): number {
+    return Math.max(0, ...contexto.map((item) => item.id), ...locales.map((item) => item.id)) + 1;
   }
 
   private siguienteFolio(actuales: TransferenciaInventario[]): string {
@@ -738,8 +1188,21 @@ export class GestionInventario {
     return `${productoId}-${almacenId}`;
   }
 
+  private ajustarCantidad(valor: number, permiteDecimales: boolean): number {
+    const numero = Number(valor);
+    if (!Number.isFinite(numero)) return 0;
+    return permiteDecimales ? Math.round(numero * 100) / 100 : Math.round(numero);
+  }
+
   private numero(valor: string | number | undefined): number {
-    return Number(valor) || 0;
+    const numero = Number(valor);
+    return Number.isFinite(numero) ? numero : 0;
+  }
+
+  private numeroOpcional(valor: string | number | undefined): number | null {
+    if (valor == null || String(valor).trim() === '') return null;
+    const numero = Number(valor);
+    return Number.isFinite(numero) ? numero : null;
   }
 
   private numeroId(valor: string | number): number {
@@ -748,4 +1211,50 @@ export class GestionInventario {
     const numeros = String(valor).match(/\d+/g);
     return numeros?.length ? Number(numeros[numeros.length - 1]) : Number.MAX_SAFE_INTEGER;
   }
+
+  private soloFecha(valor: string | undefined): string {
+    if (!valor || valor === '—') return '';
+    return valor.slice(0, 10);
+  }
+
+  private fechaLocal(): string {
+    const fecha = new Date();
+    fecha.setMinutes(fecha.getMinutes() - fecha.getTimezoneOffset());
+    return fecha.toISOString().slice(0, 10);
+  }
+
+  private fechaMs(valor: string): number {
+    if (!valor || valor === '—') return 0;
+    const fecha = new Date(`${valor.slice(0, 10)}T00:00:00`);
+    return Number.isNaN(fecha.getTime()) ? 0 : fecha.getTime();
+  }
+
+  private fechaMasReciente(actual: string, candidata: string): string {
+    const normalizada = this.soloFecha(candidata);
+    if (!normalizada) return actual || '—';
+    return this.fechaMs(normalizada) >= this.fechaMs(actual) ? normalizada : actual;
+  }
+
+  private combinarTexto(actual: string, candidato: string): string {
+    const valores = new Set(
+      [actual, candidato]
+        .flatMap((valor) => String(valor || '').split(','))
+        .map((valor) => valor.trim())
+        .filter((valor) => valor && valor !== '—'),
+    );
+    return [...valores].join(', ') || '—';
+  }
+
+  private normalizar(valor: string): string {
+    return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+}
+
+export function comprometeStockTransferencia(estado: string): boolean {
+  const normalizado = String(estado || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+  return normalizado !== 'borrador'
+    && !['recibida', 'cancelada', 'cerrada', 'devuelta'].includes(normalizado);
 }

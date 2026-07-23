@@ -1,8 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
-import { Autenticacion } from '../../../shared/services/autenticacion';
+import {
+  Autenticacion, PerfilAccesoPrototipo,
+} from '../../../shared/services/autenticacion';
 
 @Component({
   selector: 'app-login',
@@ -10,32 +12,47 @@ import { Autenticacion } from '../../../shared/services/autenticacion';
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class Login {
+export class Login implements OnInit {
   private readonly formularios = inject(FormBuilder);
   private readonly autenticacion = inject(Autenticacion);
   private readonly router = inject(Router);
-  readonly hide = signal(true);
   readonly error = signal('');
+  readonly cargando = signal(true);
+  readonly perfiles = signal<PerfilAccesoPrototipo[]>([]);
   readonly formulario = this.formularios.nonNullable.group({
-    correo: ['admin@zyro.mx', [Validators.required, Validators.email]],
-    password: ['admin123', Validators.required],
+    usuarioId: ['', Validators.required],
   });
+
+  ngOnInit(): void {
+    this.autenticacion.perfilesDisponibles().subscribe({
+      next: perfiles => {
+        this.perfiles.set(perfiles);
+        this.cargando.set(false);
+        if (!perfiles.length) this.error.set('No hay usuarios activos disponibles para el prototipo.');
+      },
+      error: () => {
+        this.cargando.set(false);
+        this.error.set('No se pudo cargar la lista de usuarios.');
+      },
+    });
+  }
 
   iniciarSesion(): void {
     if (this.formulario.invalid) {
       this.formulario.markAllAsTouched();
       return;
     }
-    const { correo, password } = this.formulario.getRawValue();
-    if (!this.autenticacion.iniciarSesion(correo, password)) {
-      this.error.set('El correo o la contrasena no son correctos.');
-      return;
-    }
-    void this.router.navigate(['/dashboard']);
-  }
-
-  clickEvent(event: MouseEvent): void {
-    this.hide.update((valor) => !valor);
-    event.stopPropagation();
+    this.error.set('');
+    this.autenticacion.iniciarSesionPrototipo(this.formulario.getRawValue().usuarioId)
+      .subscribe({
+        next: valido => {
+          if (valido) {
+            void this.router.navigate(['/dashboard']);
+            return;
+          }
+          this.error.set('El usuario seleccionado ya no está activo.');
+        },
+        error: () => this.error.set('No fue posible iniciar el modo prototipo.'),
+      });
   }
 }

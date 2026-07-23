@@ -3,7 +3,7 @@ import { AsyncPipe, CurrencyPipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatMenuModule } from '@angular/material/menu';
-import { Observable } from 'rxjs';
+import { combineLatest, Observable } from 'rxjs';
 import { MatTableDataSource } from '@angular/material/table';
 import { Router } from '@angular/router';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
@@ -16,6 +16,8 @@ import { ProductD } from './dialogs/product-d/product-d';
 import { Filtro, FiltrosProducto } from './dialogs/filtro/filtro';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { EstatusProducto } from '../../../shared/components/estatus-producto/estatus-producto';
+import { AdministracionDatos } from '../../administracion/administracion-datos';
+import { OpcionAlmacenProducto } from './dialogs/product-d/product-d';
 
 export type PeriodicElement = ProductoCatalogo;
 
@@ -24,6 +26,7 @@ const OPCIONES_VACIAS: OpcionesProducto = {
   categorias: [],
   marcas: [],
   unidades: [],
+  listasPrecios: [],
 };
 
 const FILTROS_VACIOS: FiltrosProducto = {
@@ -40,7 +43,6 @@ const FILTROS_VACIOS: FiltrosProducto = {
   estado: null,
   requiereReceta: null,
   usarExistencias: null,
-  usarLotes: null,
 };
 
 @Component({
@@ -56,6 +58,7 @@ export class Products implements OnInit, AfterViewInit {
   currentSort = 'Más antiguos';
   filtrosAvanzados: FiltrosProducto = { ...FILTROS_VACIOS };
   opciones: OpcionesProducto = { ...OPCIONES_VACIAS };
+  almacenes: OpcionAlmacenProducto[] = [];
   cargando = true;
   errorCarga = '';
   obs!: Observable<PeriodicElement[]>;
@@ -66,6 +69,7 @@ export class Products implements OnInit, AfterViewInit {
     private dialog: MatDialog,
     private catalogo: CatalogoProductos,
     private router: Router,
+    private administracion: AdministracionDatos,
   ) {}
 
   ngOnInit(): void {
@@ -100,8 +104,7 @@ export class Products implements OnInit, AfterViewInit {
         && (avanzados.visible == null || producto.linea === avanzados.visible)
         && (avanzados.estado == null || producto.estado === avanzados.estado)
         && (avanzados.requiereReceta == null || producto.requiereReceta === avanzados.requiereReceta)
-        && (avanzados.usarExistencias == null || producto.usarExistencias === avanzados.usarExistencias)
-        && (avanzados.usarLotes == null || producto.usarLotes === avanzados.usarLotes);
+        && (avanzados.usarExistencias == null || producto.usarExistencias === avanzados.usarExistencias);
     };
 
     this.obs = this.dataSource.connect();
@@ -163,23 +166,37 @@ export class Products implements OnInit, AfterViewInit {
       width: '760px',
       maxWidth: '96vw',
       panelClass: 'custom-dialog',
-      data: { mode: 'add', opciones: this.opciones, productos: this.dataSource.data },
+      data: {
+        mode: 'add',
+        opciones: this.opciones,
+        almacenes: this.almacenes,
+        productos: this.dataSource.data,
+      },
     }).afterClosed().subscribe((resultado?: ProductoCatalogo) => {
       if (!resultado) return;
       const fecha = new Date().toISOString().slice(0, 10);
+      const id = this.siguienteId();
+      let siguienteInventarioId = this.siguienteInventarioId();
+      const inventarios = resultado.inventarios.map(inventario => ({
+        ...inventario,
+        id: siguienteInventarioId++,
+        fechaActualizacion: fecha,
+      }));
       const nuevo: ProductoCatalogo = {
         ...resultado,
-        id: this.siguienteId(),
-        almacen: 'Sin inventario',
-        anaquel: '—',
-        lote: '—',
-        caducidad: '—',
-        stock: 0,
-        stockReorden: 0,
-        stockCritico: 0,
-        stockMaximo: 0,
+        id,
+        inventarios,
+        almacen: inventarios.length === 1 ? inventarios[0].almacen : 'Sin inventario',
+        anaquel: inventarios.length === 1 ? inventarios[0].anaquel || '—' : '—',
+        stock: inventarios.reduce((total, inventario) => total + inventario.stock, 0),
+        stockReorden: inventarios.reduce((total, inventario) => total + inventario.stockReorden, 0),
+        stockCritico: inventarios.reduce((total, inventario) => total + inventario.stockCritico, 0),
+        stockMaximo: inventarios.reduce((total, inventario) => total + inventario.stockMaximo, 0),
         imagen: '',
-        ultimoMovimiento: 'Sin movimientos',
+        imagenes: [],
+        ultimoMovimiento: inventarios.length
+          ? `${fecha} · Inventario inicial · +${inventarios[0].stock}`
+          : 'Sin movimientos',
         fechaCreacion: fecha,
         fechaActualizacion: fecha,
       };
@@ -192,7 +209,13 @@ export class Products implements OnInit, AfterViewInit {
       width: '760px',
       maxWidth: '96vw',
       panelClass: 'custom-dialog',
-      data: { mode: 'edit', product: producto, opciones: this.opciones, productos: this.dataSource.data },
+      data: {
+        mode: 'edit',
+        product: producto,
+        opciones: this.opciones,
+        almacenes: this.almacenes,
+        productos: this.dataSource.data,
+      },
     }).afterClosed().subscribe((resultado?: ProductoCatalogo) => {
       if (!resultado) return;
       const actualizado = {
@@ -208,16 +231,16 @@ export class Products implements OnInit, AfterViewInit {
     this.dialog.open(ConfirmDialog, {
       width: '400px',
       data: {
-        title: 'Eliminar producto',
-        message: `¿Deseas eliminar "${producto.producto}"?`,
-        confirmText: 'Eliminar',
+        title: 'Desactivar producto',
+        message: `¿Deseas descontinuar "${producto.producto}"? Dejará de estar disponible en inventario.`,
+        confirmText: 'Desactivar',
         cancelText: 'Cancelar',
       },
     }).afterClosed().subscribe(confirmado => {
       if (!confirmado) return;
       const hoy = new Date().toISOString().slice(0, 10);
       this.guardar(this.dataSource.data.map(actual => actual.id === producto.id
-        ? { ...actual, estatus: 'Eliminado', estado: false, fechaActualizacion: hoy }
+        ? { ...actual, estatus: 'Descontinuado', estado: false, fechaActualizacion: hoy }
         : actual));
     });
   }
@@ -234,9 +257,31 @@ export class Products implements OnInit, AfterViewInit {
     this.cargando = true;
     this.errorCarga = '';
 
-    this.catalogo.cargarOpciones().subscribe(opciones => this.opciones = opciones);
-    this.catalogo.cargar().subscribe({
-      next: productos => {
+    combineLatest({
+      opciones: this.catalogo.cargarOpciones(),
+      productos: this.catalogo.cargar(),
+      administracion: this.administracion.cargar(),
+    }).subscribe({
+      next: ({ opciones, productos, administracion }) => {
+        const empresasActivas = new Map(administracion.empresas
+          .filter(empresa => empresa.estado)
+          .map(empresa => [Number(empresa.id), empresa.nombre]));
+        this.opciones = {
+          ...opciones,
+          empresas: [...empresasActivas].map(([id, nombre]) => ({
+            id,
+            idEmpresa: id,
+            nombre,
+          })),
+        };
+        this.almacenes = administracion.almacenes
+          .filter(almacen =>
+            almacen.estado && empresasActivas.has(Number(almacen.empresaId)))
+          .map(almacen => ({
+            id: Number(almacen.id),
+            idEmpresa: Number(almacen.empresaId),
+            nombre: almacen.nombre,
+          }));
         this.dataSource.data = productos;
         this.setSort(this.currentSort);
         this.cargando = false;
@@ -258,6 +303,15 @@ export class Products implements OnInit, AfterViewInit {
 
   private siguienteId(): number {
     return Math.max(0, ...this.dataSource.data.map(producto => producto.id)) + 1;
+  }
+
+  private siguienteInventarioId(): number {
+    return Math.max(
+      0,
+      ...this.dataSource.data.flatMap(
+        producto => producto.inventarios.map(inventario => Number(inventario.id) || 0),
+      ),
+    ) + 1;
   }
 
   private guardar(productos: PeriodicElement[]): void {

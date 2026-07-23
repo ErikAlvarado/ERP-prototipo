@@ -3,13 +3,15 @@ import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
-import { Observable, forkJoin } from 'rxjs';
+import { Observable, forkJoin, take } from 'rxjs';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { DatosDb } from '../../../shared/services/datos-db';
 import { CatalogosPersistencia } from '../catalogos-persistencia';
 import { CatalogFilterDialog, ValorFiltroCatalogo } from '../dialogs/catalog-filter-dialog/catalog-filter-dialog';
 import { CategoriasDialog } from './dialogs/categorias-dialog/categorias-dialog';
+import { AdministracionDatos } from '../../administracion/administracion-datos';
+import { CatalogoProductos } from '../../../shared/services/catalogo-productos';
 
 interface CategoriaDb {
   id_categoria: string;
@@ -17,11 +19,6 @@ interface CategoriaDb {
   id_categoria_padre: string;
   nombre_categoria: string;
   activo: string;
-}
-
-interface EmpresaDb {
-  id_empresa: string;
-  nombre_empresa: string;
 }
 
 export interface EmpresaCategoriaOption {
@@ -61,6 +58,8 @@ export class Categorias implements OnInit, AfterViewInit {
     private dialog: MatDialog,
     private db: DatosDb,
     private persistencia: CatalogosPersistencia,
+    private administracion: AdministracionDatos,
+    private catalogoProductos: CatalogoProductos,
   ) {}
 
   ngOnInit(): void {
@@ -77,10 +76,12 @@ export class Categorias implements OnInit, AfterViewInit {
 
     forkJoin({
       categorias: this.db.leer<CategoriaDb>('categorias.txt'),
-      productos: this.db.leer<{ id_categoria: string }>('productos.txt'),
-      empresas: this.db.leer<EmpresaDb>('empresas.txt'),
-    }).subscribe(({ categorias, productos, empresas }) => {
-      this.empresasCatalogo = empresas.map(empresa => ({ id: empresa.id_empresa, nombre: empresa.nombre_empresa }));
+      productos: this.catalogoProductos.cargar(),
+      administracion: this.administracion.cargar().pipe(take(1)),
+    }).subscribe(({ categorias, productos, administracion }) => {
+      this.empresasCatalogo = administracion.empresas
+        .filter(empresa => empresa.estado)
+        .map(empresa => ({ id: empresa.id, nombre: empresa.nombre }));
       const nombres = new Map(categorias.map(categoria => [categoria.id_categoria, categoria.nombre_categoria]));
       const empresasPorId = new Map(this.empresasCatalogo.map(empresa => [empresa.id, empresa.nombre]));
       const fuente = categorias.map(categoria => ({
@@ -90,14 +91,16 @@ export class Categorias implements OnInit, AfterViewInit {
         idPadre: categoria.id_categoria_padre || '',
         categoriaPadre: nombres.get(categoria.id_categoria_padre) || 'Categoría principal',
         nombre: categoria.nombre_categoria,
-        productos: productos.filter(producto => producto.id_categoria === categoria.id_categoria).length,
+        productos: productos.filter(producto =>
+          producto.idCategoria === Number(categoria.id_categoria)).length,
         estado: categoria.activo === '1',
       }));
       const estado = this.persistencia.combinar(this.clave, fuente);
       this.eliminados = estado.eliminados;
       this.dataSource.data = this.actualizarRelaciones(estado.registros.map(categoria => ({
         ...categoria,
-        productos: productos.filter(producto => producto.id_categoria === categoria.id).length,
+        productos: productos.filter(producto =>
+          producto.idCategoria === Number(categoria.id)).length,
       })));
       this.applyFilter();
     });
@@ -177,21 +180,25 @@ export class Categorias implements OnInit, AfterViewInit {
     });
   }
 
-  eliminar(categoria: Categoria): void {
+  desactivar(categoria: Categoria): void {
+    if (!categoria.estado) return;
+    const descendientes = this.idsDescendientes(categoria.id);
+    const relacionadas = categoria.productos + descendientes.length;
     this.dialog.open(ConfirmDialog, {
       width: '400px',
       data: {
-        title: 'Eliminar categoría',
-        message: `¿Deseas eliminar "${categoria.nombre}"?`,
-        confirmText: 'Eliminar',
+        title: 'Desactivar categoría',
+        message: relacionadas
+          ? `¿Deseas desactivar "${categoria.nombre}" y sus ${descendientes.length} subcategoría(s)? Se conservarán los IDs y ${categoria.productos} relación(es) con productos.`
+          : `¿Deseas desactivar "${categoria.nombre}"? Se conservará su ID y podrá reactivarse al editarla.`,
+        confirmText: 'Desactivar',
         cancelText: 'Cancelar',
       },
     }).afterClosed().subscribe(confirmado => {
       if (!confirmado) return;
-      this.eliminados = [...new Set([...this.eliminados, categoria.id])];
-      this.guardar(this.dataSource.data
-        .filter(actual => actual.id !== categoria.id)
-        .map(actual => actual.idPadre === categoria.id ? { ...actual, idPadre: '' } : actual));
+      const ids = new Set([categoria.id, ...descendientes]);
+      this.guardar(this.dataSource.data.map(actual =>
+        ids.has(actual.id) ? { ...actual, estado: false } : actual));
     });
   }
 

@@ -1,0 +1,5 @@
+id_tipo_movimiento|nombre|naturaleza|activo
+1|Inventario inicial|Entrada|1
+2|Salida|Salida|1
+3|Ajuste|Ajuste|1
+4|Transferencia|Transferencia|1

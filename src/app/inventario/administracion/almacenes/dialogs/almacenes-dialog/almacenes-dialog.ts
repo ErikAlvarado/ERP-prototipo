@@ -7,6 +7,7 @@ export interface AlmacenesDialogData {
   mode: 'add' | 'edit';
   almacen?: AlmacenAdministracion;
   empresas: EmpresaAdministracion[];
+  almacenes: AlmacenAdministracion[];
 }
 
 @Component({
@@ -25,10 +26,29 @@ export class AlmacenesDialog {
     this.almacen = data.almacen ? { ...data.almacen } : {
       id: '', empresaId: data.empresas[0]?.id || '', nombre: '', direccion: '', principal: false,
       estado: true, fechaCreacion: '', fechaActualizacion: '',
+      creadoPorUsuarioId: '', actualizadoPorUsuarioId: '',
     };
   }
 
-  get puedeGuardar(): boolean { return !!this.almacen.nombre.trim() && !!this.almacen.empresaId; }
+  get nombreDuplicado(): boolean {
+    const nombre = this.almacen.nombre.trim().toLocaleLowerCase();
+    return this.data.almacenes.some(almacen =>
+      almacen.id !== this.almacen.id &&
+      almacen.empresaId === this.almacen.empresaId &&
+      almacen.nombre.trim().toLocaleLowerCase() === nombre);
+  }
+
+  get principalExistente(): AlmacenAdministracion | undefined {
+    return this.data.almacenes.find(almacen =>
+      almacen.id !== this.almacen.id &&
+      almacen.empresaId === this.almacen.empresaId &&
+      almacen.principal &&
+      almacen.estado);
+  }
+
+  get puedeGuardar(): boolean {
+    return !!this.almacen.nombre.trim() && !!this.almacen.empresaId && !this.nombreDuplicado;
+  }
 
   guardar(): void {
     if (!this.puedeGuardar) return;

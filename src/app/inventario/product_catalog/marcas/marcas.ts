@@ -3,13 +3,15 @@ import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
-import { Observable, forkJoin } from 'rxjs';
+import { Observable, forkJoin, take } from 'rxjs';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { DatosDb } from '../../../shared/services/datos-db';
 import { CatalogosPersistencia } from '../catalogos-persistencia';
 import { CatalogFilterDialog, ValorFiltroCatalogo } from '../dialogs/catalog-filter-dialog/catalog-filter-dialog';
 import { MarcasDialog } from './dialogs/marcas-dialog/marcas-dialog';
+import { AdministracionDatos } from '../../administracion/administracion-datos';
+import { CatalogoProductos } from '../../../shared/services/catalogo-productos';
 
 interface MarcaDb {
   id_marca: string;
@@ -19,7 +21,6 @@ interface MarcaDb {
   activo: string;
 }
 
-interface EmpresaDb { id_empresa: string; nombre_empresa: string; }
 export interface EmpresaMarcaOption { id: string; nombre: string; }
 
 export interface Marca {
@@ -52,6 +53,8 @@ export class Marcas implements OnInit, AfterViewInit {
     private dialog: MatDialog,
     private db: DatosDb,
     private persistencia: CatalogosPersistencia,
+    private administracion: AdministracionDatos,
+    private catalogoProductos: CatalogoProductos,
   ) {}
 
   ngOnInit(): void {
@@ -67,24 +70,28 @@ export class Marcas implements OnInit, AfterViewInit {
 
     forkJoin({
       marcas: this.db.leer<MarcaDb>('marcas.txt'),
-      productos: this.db.leer<{ id_marca: string }>('productos.txt'),
-      empresas: this.db.leer<EmpresaDb>('empresas.txt'),
-    }).subscribe(({ marcas, productos, empresas }) => {
-      this.empresasCatalogo = empresas.map(empresa => ({ id: empresa.id_empresa, nombre: empresa.nombre_empresa }));
+      productos: this.catalogoProductos.cargar(),
+      administracion: this.administracion.cargar().pipe(take(1)),
+    }).subscribe(({ marcas, productos, administracion }) => {
+      this.empresasCatalogo = administracion.empresas
+        .filter(empresa => empresa.estado)
+        .map(empresa => ({ id: empresa.id, nombre: empresa.nombre }));
       const empresasPorId = new Map(this.empresasCatalogo.map(empresa => [empresa.id, empresa.nombre]));
       const fuente = marcas.map(marca => ({
         id: marca.id_marca,
         idEmpresa: marca.id_empresa,
         empresa: empresasPorId.get(marca.id_empresa) || 'Empresa no disponible',
         nombre: marca.nombre || marca.nombre_marca || '',
-        productos: productos.filter(producto => producto.id_marca === marca.id_marca).length,
+        productos: productos.filter(producto =>
+          producto.idMarca === Number(marca.id_marca)).length,
         estado: marca.activo === '1',
       }));
       const estado = this.persistencia.combinar(this.clave, fuente);
       this.eliminados = estado.eliminados;
       this.dataSource.data = this.actualizarEmpresas(estado.registros.map(marca => ({
         ...marca,
-        productos: productos.filter(producto => producto.id_marca === marca.id).length,
+        productos: productos.filter(producto =>
+          producto.idMarca === Number(marca.id)).length,
       })));
       this.applyFilter();
     });
@@ -152,19 +159,22 @@ export class Marcas implements OnInit, AfterViewInit {
     });
   }
 
-  eliminar(marca: Marca): void {
+  desactivar(marca: Marca): void {
+    if (!marca.estado) return;
     this.dialog.open(ConfirmDialog, {
       width: '400px',
       data: {
-        title: 'Eliminar marca',
-        message: `¿Deseas eliminar "${marca.nombre}"?`,
-        confirmText: 'Eliminar',
+        title: 'Desactivar marca',
+        message: marca.productos
+          ? `¿Deseas desactivar "${marca.nombre}"? Se conservarán su ID y las ${marca.productos} relación(es) con productos.`
+          : `¿Deseas desactivar "${marca.nombre}"? Se conservará su ID y podrá reactivarse al editarla.`,
+        confirmText: 'Desactivar',
         cancelText: 'Cancelar',
       },
     }).afterClosed().subscribe(confirmado => {
       if (!confirmado) return;
-      this.eliminados = [...new Set([...this.eliminados, marca.id])];
-      this.guardar(this.dataSource.data.filter(actual => actual.id !== marca.id));
+      this.guardar(this.dataSource.data.map(actual =>
+        actual.id === marca.id ? { ...actual, estado: false } : actual));
     });
   }
 

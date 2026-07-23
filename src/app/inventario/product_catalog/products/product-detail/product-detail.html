@@ -8,8 +8,8 @@
         <h1>Detalle del producto</h1>
       </div>
       <div class="header-actions">
-        <button mat-raised-button class="delete-button" (click)="eliminar()">
-          <mat-icon>delete_outline</mat-icon>Eliminar
+        <button mat-raised-button class="delete-button" (click)="desactivar()">
+          <mat-icon>block</mat-icon>Desactivar
         </button>
         <button mat-raised-button color="primary" (click)="editar()">
           <mat-icon>edit</mat-icon>Editar
@@ -31,7 +31,7 @@
           <p class="barcode">SKU: {{ p.sku }} · Código: {{ p.codigo || 'Sin código de barras' }}</p>
           <mat-divider></mat-divider>
           <div class="metrics">
-            <div><span>Precio de venta</span><strong>{{ p.precio | currency:'MXN' }}</strong><small>Impuestos incluidos</small></div>
+            <div><span>Precio de venta</span><strong>{{ p.precio | currency:'MXN' }}</strong><small>{{ p.listaPrecio }}</small></div>
             <div><span>Costo</span><strong>{{ p.costo | currency:'MXN' }}</strong><small>Margen: {{ p.margen }}%</small></div>
             <div><span>Existencias</span><strong>{{ p.stock }}</strong><small>{{ p.medida }}</small></div>
           </div>
@@ -45,26 +45,50 @@
 
     <mat-card appearance="outlined">
       <mat-card-header><mat-icon mat-card-avatar>warehouse</mat-icon><mat-card-title>Inventario por ubicación</mat-card-title></mat-card-header>
-      <mat-card-content class="data-grid inventory-grid">
-        <div><span>Almacén</span><strong>{{ p.almacen }}</strong></div>
-        <div><span>Existencias</span><strong>{{ p.stock }}</strong></div>
-        <div><span>Reorden</span><strong>{{ p.stockReorden }}</strong></div>
-        <div><span>Crítico</span><strong>{{ p.stockCritico }}</strong></div>
-        <div><span>Máximo</span><strong>{{ p.stockMaximo }}</strong></div>
-        <div><span>Anaquel</span><strong>{{ p.anaquel }}</strong></div>
-        <div><span>Lote</span><strong>{{ p.lote }}</strong></div>
-        <div><span>Caducidad</span><strong>{{ p.caducidad }}</strong></div>
+      <mat-card-content class="locations-content">
+        @for (ubicacion of p.inventarios; track ubicacion.id) {
+          <section class="location-card">
+            <div class="location-heading">
+              <div><strong>{{ ubicacion.almacen }}</strong><span>{{ ubicacion.anaquel }}</span></div>
+              <b>{{ ubicacion.stock }} {{ p.medida }}</b>
+            </div>
+            <div class="data-grid inventory-grid">
+              <div><span>Existencias</span><strong>{{ ubicacion.stock }}</strong></div>
+              <div><span>Reorden</span><strong>{{ ubicacion.stockReorden }}</strong></div>
+              <div><span>Crítico</span><strong>{{ ubicacion.stockCritico }}</strong></div>
+              <div><span>Máximo</span><strong>{{ ubicacion.stockMaximo }}</strong></div>
+              <div><span>Actualizado</span><strong>{{ ubicacion.fechaActualizacion || '—' }}</strong></div>
+            </div>
+          </section>
+        } @empty {
+          <div class="inline-empty">Este producto aún no tiene una ubicación de inventario registrada. Su existencia actual es 0.</div>
+        }
       </mat-card-content>
     </mat-card>
 
     <mat-card appearance="outlined">
-      <mat-card-header><mat-icon mat-card-avatar>payments</mat-icon><mat-card-title>Precio</mat-card-title></mat-card-header>
-      <mat-card-content class="data-grid price-grid">
-        <div><span>Lista</span><strong>Precio general</strong></div>
-        <div><span>Precio de venta</span><strong>{{ p.precio | currency:'MXN' }}</strong></div>
-        <div><span>Costo</span><strong>{{ p.costo | currency:'MXN' }}</strong></div>
-        <div><span>Margen</span><strong>{{ p.margen }}%</strong></div>
-        <div><span>Ganancia estimada</span><strong>{{ (p.precio - p.costo) | currency:'MXN' }}</strong></div>
+      <mat-card-header><mat-icon mat-card-avatar>payments</mat-icon><mat-card-title>Precios por lista</mat-card-title></mat-card-header>
+      <mat-card-content class="prices-content">
+        @for (precio of p.precios; track precio.id) {
+          <section class="price-card" [class.current-price]="precio.vigente && precio.listaPredeterminada">
+            <div class="price-heading">
+              <div>
+                <strong>{{ precio.lista }}</strong>
+                <span>{{ precio.listaPredeterminada ? 'Predeterminada' : 'Lista alterna' }}</span>
+              </div>
+              <span class="validity" [class.active]="precio.vigente">{{ precio.vigente ? 'Vigente' : 'Fuera de vigencia' }}</span>
+            </div>
+            <div class="data-grid price-grid">
+              <div><span>Precio de venta</span><strong>{{ precio.precio | currency:'MXN' }}</strong></div>
+              <div><span>Costo</span><strong>{{ precio.costo | currency:'MXN' }}</strong></div>
+              <div><span>Margen sobre costo</span><strong>{{ precio.margen }}%</strong></div>
+              <div><span>Ganancia estimada</span><strong>{{ (precio.precio - precio.costo) | currency:'MXN' }}</strong></div>
+              <div><span>Vigencia</span><strong>{{ precio.fechaInicio || 'Sin inicio' }} — {{ precio.fechaFin || 'Sin fin' }}</strong></div>
+            </div>
+          </section>
+        } @empty {
+          <div class="inline-empty">Este producto todavía no tiene precios registrados en una lista.</div>
+        }
       </mat-card-content>
     </mat-card>
 
@@ -74,7 +98,7 @@
         <div><span>Descripción</span><strong>{{ p.descripcion || 'Sin descripción' }}</strong></div>
         <div><span>Clave SAT</span><strong>{{ p.claveSat }}</strong></div>
         <div><span>Ubicación predeterminada</span><strong>{{ p.ubicacionDefault }}</strong></div>
-        <div><span>Configuración</span><strong>POS: {{ p.pos ? 'Sí' : 'No' }} · En línea: {{ p.linea ? 'Sí' : 'No' }} · Lotes: {{ p.usarLotes ? 'Sí' : 'No' }}</strong></div>
+        <div><span>Configuración</span><strong>POS: {{ p.pos ? 'Sí' : 'No' }} · En línea: {{ p.linea ? 'Sí' : 'No' }} · Control de existencias: {{ p.usarExistencias ? 'Sí' : 'No' }}</strong></div>
       </mat-card-content>
     </mat-card>
 

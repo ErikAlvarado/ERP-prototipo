@@ -1,7 +1,7 @@
 <div class="content-header">
   <div>
     <h1>Existencias</h1>
-    <p>Stock actual por producto, lote y almacén.</p>
+    <p>Stock actual de todos los productos por almacén.</p>
   </div>
   <button mat-raised-button color="primary" routerLink="/ajustes">
     <mat-icon>tune</mat-icon>Ir a ajustes
@@ -11,7 +11,7 @@
 <div class="content-search">
   <div class="custom-search">
     <mat-icon>search</mat-icon>
-    <input [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar por SKU, producto, lote, almacén o anaquel">
+    <input [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar por SKU, producto, almacén o anaquel">
   </div>
   <div class="custom-filters">
     <button mat-stroked-button class="filter-btn" (click)="abrirFiltros()">
@@ -34,7 +34,7 @@
     </button>
     <mat-menu #estadoMenu="matMenu">
       <button mat-menu-item (click)="setEstado('')">Todos</button>
-      @for (estado of ['Normal', 'Bajo', 'Crítico', 'Agotado']; track estado) {
+      @for (estado of ['Normal', 'Bajo', 'Crítico', 'Agotado', 'Sin inicializar']; track estado) {
         <button mat-menu-item (click)="setEstado(estado)">{{ estado }}</button>
       }
     </mat-menu>
@@ -62,17 +62,6 @@
       <th mat-header-cell *matHeaderCellDef>Almacén</th>
       <td mat-cell *matCellDef="let e">{{ e.almacen }}</td>
     </ng-container>
-    <ng-container matColumnDef="lote">
-      <th mat-header-cell *matHeaderCellDef>Lote</th>
-      <td mat-cell *matCellDef="let e">{{ e.lote }}</td>
-    </ng-container>
-    <ng-container matColumnDef="caducidad">
-      <th mat-header-cell *matHeaderCellDef>Caducidad</th>
-      <td mat-cell *matCellDef="let e">
-        <span>{{ e.caducidad }}</span>
-        <small>{{ estadoCaducidad(e) }}</small>
-      </td>
-    </ng-container>
     <ng-container matColumnDef="stock">
       <th mat-header-cell *matHeaderCellDef>Existencia</th>
       <td mat-cell *matCellDef="let e"><strong class="stock">{{ e.stock }}</strong><small>{{ e.unidad }}</small></td>
@@ -99,7 +88,7 @@
     </ng-container>
     <ng-container matColumnDef="actualizacion">
       <th mat-header-cell *matHeaderCellDef>Actualización</th>
-      <td mat-cell *matCellDef="let e">{{ e.actualizacion === '—' ? '—' : (e.actualizacion | date:'dd/MM/yyyy HH:mm') }}</td>
+      <td mat-cell *matCellDef="let e">{{ e.actualizacion === '—' ? '—' : (e.actualizacion | date:'dd/MM/yyyy') }}</td>
     </ng-container>
     <ng-container matColumnDef="acciones">
       <th mat-header-cell *matHeaderCellDef>Acciones</th>
@@ -124,12 +113,11 @@
       <div class="card-body">
         <div><strong>Almacén:</strong> {{ e.almacen }}</div>
         <div><span class="stock-badge" [class]="'stock-badge ' + claseNivel(e)">{{ nivel(e) }}</span></div>
-        <div><strong>Lote:</strong> {{ e.lote }}</div>
-        <div><strong>Caducidad:</strong> {{ e.caducidad }}</div>
         <div><strong>Reorden:</strong> {{ e.reorden }}</div>
         <div><strong>Crítico:</strong> {{ e.critico }}</div>
         <div><strong>Máximo:</strong> {{ e.maximo }}</div>
         <div><strong>Anaquel:</strong> {{ e.anaquel }}</div>
+        <div><strong>Actualización:</strong> {{ e.actualizacion === '—' ? '—' : (e.actualizacion | date:'dd/MM/yyyy') }}</div>
       </div>
       <div class="card-actions">
         <button mat-stroked-button color="primary" (click)="nuevoAjuste(e)">Ajustar</button>

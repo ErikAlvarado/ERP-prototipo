@@ -12,14 +12,14 @@
 
 <div class="desktop-view table-responsive">
   <table mat-table [dataSource]="dataSource">
-    <ng-container matColumnDef="clave"><th mat-header-cell *matHeaderCellDef>Clave</th><td mat-cell *matCellDef="let e">ROL-{{ e.id }}</td></ng-container>
+    <ng-container matColumnDef="id"><th mat-header-cell *matHeaderCellDef>ID</th><td mat-cell *matCellDef="let e">{{ e.id }}</td></ng-container>
     <ng-container matColumnDef="nombre"><th mat-header-cell *matHeaderCellDef>Rol</th><td mat-cell *matCellDef="let e">{{ e.nombre }}</td></ng-container>
     <ng-container matColumnDef="empresa"><th mat-header-cell *matHeaderCellDef>Empresa</th><td mat-cell *matCellDef="let e">{{ nombreEmpresa(e.empresaId) }}</td></ng-container>
     <ng-container matColumnDef="descripcion"><th mat-header-cell *matHeaderCellDef>Descripción</th><td mat-cell *matCellDef="let e">{{ e.descripcion || '—' }}</td></ng-container>
     <ng-container matColumnDef="usuarios"><th mat-header-cell *matHeaderCellDef>Usuarios</th><td mat-cell *matCellDef="let e">{{ usuariosPorRol(e.id) }}</td></ng-container>
     <ng-container matColumnDef="permisos"><th mat-header-cell *matHeaderCellDef>Permisos</th><td mat-cell *matCellDef="let e">{{ e.permisoIds.length }}</td></ng-container>
     <ng-container matColumnDef="estado"><th mat-header-cell *matHeaderCellDef>Estado</th><td mat-cell *matCellDef="let e"><app-status [active]="e.estado"></app-status></td></ng-container>
-    <ng-container matColumnDef="acciones"><th mat-header-cell *matHeaderCellDef>Acciones</th><td mat-cell *matCellDef="let e" class="actions-cell"><button mat-icon-button color="primary" matTooltip="Editar" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" matTooltip="Eliminar" (click)="eliminar(e)"><mat-icon>delete</mat-icon></button></td></ng-container>
+    <ng-container matColumnDef="acciones"><th mat-header-cell *matHeaderCellDef>Acciones</th><td mat-cell *matCellDef="let e" class="actions-cell"><button mat-icon-button color="primary" matTooltip="Editar" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" matTooltip="Desactivar" [disabled]="!e.estado" (click)="desactivar(e)"><mat-icon>block</mat-icon></button></td></ng-container>
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr><tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     <tr class="mat-row empty-row" *matNoDataRow><td class="mat-cell" [attr.colspan]="displayedColumns.length">No hay roles que coincidan con los filtros.</td></tr>
   </table>
@@ -30,7 +30,7 @@
     <article class="entity-card">
       <div class="card-header"><div><h3>{{ e.nombre }}</h3><span class="card-subtitle">{{ nombreEmpresa(e.empresaId) }}</span></div><app-status [active]="e.estado"></app-status></div>
       <div class="card-body"><span><strong>Descripción:</strong> {{ e.descripcion || '—' }}</span><span><strong>Usuarios:</strong> {{ usuariosPorRol(e.id) }}</span><span><strong>Permisos:</strong> {{ e.permisoIds.length }}</span></div>
-      <div class="card-actions"><button mat-icon-button color="primary" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" (click)="eliminar(e)"><mat-icon>delete</mat-icon></button></div>
+      <div class="card-actions"><button mat-icon-button color="primary" aria-label="Editar rol" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" aria-label="Desactivar rol" [disabled]="!e.estado" (click)="desactivar(e)"><mat-icon>block</mat-icon></button></div>
     </article>
   } @empty { <div class="entity-card">No hay roles que coincidan con los filtros.</div> }
 </div>

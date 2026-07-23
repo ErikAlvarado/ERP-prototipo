@@ -1,0 +1,92 @@
+id_movimiento|id_producto|id_almacen|id_tipo_movimiento|existencia|cantidad|costo_unitario|observaciones|referencia|fecha|id_usuario
+1|1|1|1|50.00|50.00|5000.00|Inventario inicial|INV-001|2024-01-02|1
+2|2|1|1|200.00|200.00|15.00|Inventario inicial|INV-001|2024-01-02|1
+3|54|2|1|85.00|85.00|38.00|Inventario inicial|INV-054|2026-07-11|2
+4|55|3|1|18.00|18.00|185.00|Inventario inicial|INV-055|2026-07-02|3
+5|56|4|1|64.00|64.00|42.00|Inventario inicial|INV-056|2026-07-13|4
+6|57|5|1|9.00|9.00|145.00|Inventario inicial|INV-057|2026-07-14|5
+7|58|6|1|27.00|27.00|210.00|Inventario inicial|INV-058|2026-07-15|6
+8|59|7|1|33.00|33.00|260.00|Inventario inicial|INV-059|2026-07-06|7
+9|60|8|1|42.00|42.00|175.00|Inventario inicial|INV-060|2026-07-17|8
+10|61|9|1|56.00|56.00|98.00|Inventario inicial|INV-061|2026-07-18|9
+11|62|10|1|75.00|75.00|52.00|Inventario inicial|INV-062|2026-07-19|10
+12|63|11|1|14.00|14.00|31.00|Inventario inicial|INV-063|2026-07-10|11
+13|3|1|1|12.00|12.00|12500.00|Inventario inicial|INV-003|2026-07-11|1
+14|4|2|1|95.00|95.00|28.00|Inventario inicial|INV-004|2026-07-11|2
+15|5|3|1|48.00|48.00|145.00|Inventario inicial|INV-005|2026-07-12|3
+16|6|4|1|37.00|37.00|310.00|Inventario inicial|INV-006|2026-07-12|4
+17|7|5|1|16.00|16.00|620.00|Inventario inicial|INV-007|2026-07-13|5
+18|8|6|1|14.00|14.00|780.00|Inventario inicial|INV-008|2026-07-13|6
+19|9|7|1|28.00|28.00|890.00|Inventario inicial|INV-009|2026-07-14|7
+20|10|8|1|76.00|76.00|95.00|Inventario inicial|INV-010|2026-07-14|8
+21|11|9|1|32.00|32.00|540.00|Inventario inicial|INV-011|2026-07-15|9
+22|12|10|1|44.00|44.00|65.00|Inventario inicial|INV-012|2026-07-15|10
+23|13|11|1|68.00|68.00|32.00|Inventario inicial|INV-013|2026-07-16|11
+24|14|1|1|53.00|53.00|48.00|Inventario inicial|INV-014|2026-07-16|1
+25|15|2|1|21.00|21.00|720.00|Inventario inicial|INV-015|2026-07-17|2
+26|16|3|1|30.00|30.00|330.00|Inventario inicial|INV-016|2026-07-17|3
+27|17|4|1|17.00|17.00|510.00|Inventario inicial|INV-017|2026-07-18|4
+28|18|5|3|11.00|-2.00|1450.00|Conteo físico menor al sistema|AJ-0018|2026-07-18|5
+29|19|6|3|24.00|2.00|2100.00|Equipo localizado en recepción|AJ-0019|2026-07-18|6
+30|20|7|3|13.00|-2.00|1850.00|Merma por daño de empaque|AJ-0020|2026-07-19|7
+31|21|8|3|81.00|3.00|35.00|Corrección de conteo de inventario|AJ-0021|2026-07-19|8
+32|22|9|3|39.00|-2.00|92.00|Producto dañado en almacén|AJ-0022|2026-07-19|9
+33|23|10|3|46.00|2.00|110.00|Devolución reincorporada|AJ-0023|2026-07-20|10
+34|24|11|3|62.00|2.00|75.00|Diferencia favorable en conteo|AJ-0024|2026-07-20|11
+35|25|1|3|19.00|-1.00|460.00|Baja por producto defectuoso|AJ-0025|2026-07-20|1
+36|26|2|3|22.00|2.00|390.00|Recepción pendiente registrada|AJ-0026|2026-07-21|2
+37|27|3|3|88.00|-3.00|58.00|Ajuste posterior a inventario físico|AJ-0027|2026-07-21|3
+38|28|1|1|10.00|10.00|95.00|Inventario inicial|INV-028|2026-07-23|1
+39|29|1|1|10.00|10.00|980.00|Inventario inicial|INV-029|2026-07-23|1
+40|30|1|1|10.00|10.00|38.00|Inventario inicial|INV-030|2026-07-23|1
+41|31|1|1|10.00|10.00|46.00|Inventario inicial|INV-031|2026-07-23|1
+42|32|1|1|10.00|10.00|180.00|Inventario inicial|INV-032|2026-07-23|1
+43|33|1|1|10.00|10.00|420.00|Inventario inicial|INV-033|2026-07-23|1
+44|34|1|1|10.00|10.00|510.00|Inventario inicial|INV-034|2026-07-23|1
+45|35|1|1|10.00|10.00|390.00|Inventario inicial|INV-035|2026-07-23|1
+46|36|1|1|10.00|10.00|85.00|Inventario inicial|INV-036|2026-07-23|1
+47|37|1|1|10.00|10.00|2850.00|Inventario inicial|INV-037|2026-07-23|1
+48|38|1|1|10.00|10.00|72.00|Inventario inicial|INV-038|2026-07-23|1
+49|39|1|1|10.00|10.00|340.00|Inventario inicial|INV-039|2026-07-23|1
+50|40|1|1|10.00|10.00|190.00|Inventario inicial|INV-040|2026-07-23|1
+51|41|1|1|10.00|10.00|620.00|Inventario inicial|INV-041|2026-07-23|1
+52|42|1|1|10.00|10.00|480.00|Inventario inicial|INV-042|2026-07-23|1
+53|43|1|1|10.00|10.00|1150.00|Inventario inicial|INV-043|2026-07-23|1
+54|44|1|1|10.00|10.00|520.00|Inventario inicial|INV-044|2026-07-23|1
+55|45|1|1|10.00|10.00|260.00|Inventario inicial|INV-045|2026-07-23|1
+56|46|1|1|10.00|10.00|88.00|Inventario inicial|INV-046|2026-07-23|1
+57|47|1|1|10.00|10.00|54.00|Inventario inicial|INV-047|2026-07-23|1
+58|48|1|1|10.00|10.00|155.00|Inventario inicial|INV-048|2026-07-23|1
+59|49|1|1|10.00|10.00|175.00|Inventario inicial|INV-049|2026-07-23|1
+60|50|1|1|10.00|10.00|310.00|Inventario inicial|INV-050|2026-07-23|1
+61|51|1|1|10.00|10.00|590.00|Inventario inicial|INV-051|2026-07-23|1
+62|52|1|1|10.00|10.00|420.00|Inventario inicial|INV-052|2026-07-23|1
+63|53|1|1|10.00|10.00|650.00|Inventario inicial|INV-053|2026-07-23|1
+64|64|1|1|10.00|10.00|2735.00|Inventario inicial|INV-064|2026-07-23|1
+65|65|1|1|10.00|10.00|5890.00|Inventario inicial|INV-065|2026-07-23|1
+66|66|1|1|10.00|10.00|1400.00|Inventario inicial|INV-066|2026-07-23|1
+67|67|1|1|10.00|10.00|940.00|Inventario inicial|INV-067|2026-07-23|1
+68|68|1|1|10.00|10.00|75.00|Inventario inicial|INV-068|2026-07-23|1
+69|69|1|1|10.00|10.00|13015.00|Inventario inicial|INV-069|2026-07-23|1
+70|70|1|1|10.00|10.00|184.00|Inventario inicial|INV-070|2026-07-23|1
+71|71|1|1|10.00|10.00|1525.00|Inventario inicial|INV-071|2026-07-23|1
+72|72|1|1|10.00|10.00|1630.00|Inventario inicial|INV-072|2026-07-23|1
+73|73|1|1|10.00|10.00|209.00|Inventario inicial|INV-073|2026-07-23|1
+74|18|5|1|13.00|13.00|1450.00|Inventario inicial reconstruido|INV-018|2024-01-10|5
+75|19|6|1|22.00|22.00|2100.00|Inventario inicial reconstruido|INV-019|2024-01-11|6
+76|20|7|1|15.00|15.00|1850.00|Inventario inicial reconstruido|INV-020|2024-01-11|7
+77|21|8|1|78.00|78.00|35.00|Inventario inicial reconstruido|INV-021|2024-01-12|8
+78|22|9|1|41.00|41.00|92.00|Inventario inicial reconstruido|INV-022|2024-01-12|9
+79|23|10|1|44.00|44.00|110.00|Inventario inicial reconstruido|INV-023|2024-01-13|10
+80|24|11|1|60.00|60.00|75.00|Inventario inicial reconstruido|INV-024|2024-01-13|11
+81|25|1|1|20.00|20.00|460.00|Inventario inicial reconstruido|INV-025|2024-01-14|1
+82|26|2|1|20.00|20.00|390.00|Inventario inicial reconstruido|INV-026|2024-01-14|2
+83|27|3|1|91.00|91.00|58.00|Inventario inicial reconstruido|INV-027|2024-01-15|3
+84|1|1|4|45.00|-5.00|5000.00|Salida por transferencia a almacén 2|TR-0001|2024-07-21|1
+85|1|2|4|5.00|5.00|5000.00|Entrada por transferencia desde almacén 1|TR-0001|2024-07-21|1
+86|55|3|4|14.00|-4.00|185.00|Salida por transferencia a almacén 4|TR-0003|2026-07-03|1
+87|55|4|4|4.00|4.00|185.00|Entrada por transferencia desde almacén 3|TR-0003|2026-07-03|1
+88|59|7|4|25.00|-8.00|260.00|Salida por transferencia a almacén 8|TR-0007|2026-07-07|1
+89|59|8|4|8.00|8.00|260.00|Entrada por transferencia desde almacén 7|TR-0007|2026-07-07|1
+90|63|11|4|5.00|-9.00|31.00|Salida por transferencia a almacén 2|TR-0011|2026-07-11|1
+91|63|2|4|9.00|9.00|31.00|Entrada por transferencia desde almacén 11|TR-0011|2026-07-11|1

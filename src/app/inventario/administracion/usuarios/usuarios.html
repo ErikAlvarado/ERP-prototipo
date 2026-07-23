@@ -12,14 +12,14 @@
 
 <div class="desktop-view table-responsive">
   <table mat-table [dataSource]="dataSource">
-    <ng-container matColumnDef="clave"><th mat-header-cell *matHeaderCellDef>Clave</th><td mat-cell *matCellDef="let e">USR-{{ e.id }}</td></ng-container>
+    <ng-container matColumnDef="id"><th mat-header-cell *matHeaderCellDef>ID</th><td mat-cell *matCellDef="let e">{{ e.id }}</td></ng-container>
     <ng-container matColumnDef="nombre"><th mat-header-cell *matHeaderCellDef>Nombre</th><td mat-cell *matCellDef="let e">{{ nombreCompleto(e) }}</td></ng-container>
     <ng-container matColumnDef="correo"><th mat-header-cell *matHeaderCellDef>Correo</th><td mat-cell *matCellDef="let e">{{ e.email }}</td></ng-container>
     <ng-container matColumnDef="empresa"><th mat-header-cell *matHeaderCellDef>Empresa</th><td mat-cell *matCellDef="let e">{{ nombreEmpresa(e.empresaId) }}</td></ng-container>
     <ng-container matColumnDef="roles"><th mat-header-cell *matHeaderCellDef>Roles</th><td mat-cell *matCellDef="let e">{{ nombresRoles(e.rolIds) }}</td></ng-container>
     <ng-container matColumnDef="almacen"><th mat-header-cell *matHeaderCellDef>Almacén</th><td mat-cell *matCellDef="let e">{{ nombreAlmacen(e.almacenId) }}</td></ng-container>
     <ng-container matColumnDef="estado"><th mat-header-cell *matHeaderCellDef>Estado</th><td mat-cell *matCellDef="let e"><app-status [active]="e.estado"></app-status></td></ng-container>
-    <ng-container matColumnDef="acciones"><th mat-header-cell *matHeaderCellDef>Acciones</th><td mat-cell *matCellDef="let e" class="actions-cell"><button mat-icon-button color="primary" matTooltip="Editar" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" matTooltip="Eliminar" (click)="eliminar(e)"><mat-icon>delete</mat-icon></button></td></ng-container>
+    <ng-container matColumnDef="acciones"><th mat-header-cell *matHeaderCellDef>Acciones</th><td mat-cell *matCellDef="let e" class="actions-cell"><button mat-icon-button color="primary" matTooltip="Editar" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" matTooltip="Desactivar" [disabled]="!e.estado" (click)="desactivar(e)"><mat-icon>block</mat-icon></button></td></ng-container>
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr><tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     <tr class="mat-row empty-row" *matNoDataRow><td class="mat-cell" [attr.colspan]="displayedColumns.length">No hay usuarios que coincidan con los filtros.</td></tr>
   </table>
@@ -30,7 +30,7 @@
     <article class="entity-card">
       <div class="card-header"><div><h3>{{ nombreCompleto(e) }}</h3><span class="card-subtitle">{{ e.email }}</span></div><app-status [active]="e.estado"></app-status></div>
       <div class="card-body"><span><strong>Empresa:</strong> {{ nombreEmpresa(e.empresaId) }}</span><span><strong>Roles:</strong> {{ nombresRoles(e.rolIds) }}</span><span><strong>Almacén:</strong> {{ nombreAlmacen(e.almacenId) }}</span><span><strong>Teléfono:</strong> {{ e.telefono || '—' }}</span><span><strong>Último acceso:</strong> {{ e.ultimoAcceso || '—' }}</span></div>
-      <div class="card-actions"><button mat-icon-button color="primary" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" (click)="eliminar(e)"><mat-icon>delete</mat-icon></button></div>
+      <div class="card-actions"><button mat-icon-button color="primary" aria-label="Editar usuario" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" aria-label="Desactivar usuario" [disabled]="!e.estado" (click)="desactivar(e)"><mat-icon>block</mat-icon></button></div>
     </article>
   } @empty { <div class="entity-card">No hay usuarios que coincidan con los filtros.</div> }
 </div>

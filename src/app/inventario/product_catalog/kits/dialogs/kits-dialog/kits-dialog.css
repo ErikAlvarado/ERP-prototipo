@@ -1,5 +1,6 @@
 .elementos-section { margin-top: 4px; padding: 16px; border: 1px solid #dbe5f0; border-radius: 9px; background: #f8fbff; }
 .elementos-section h3 { margin: 0 0 14px; color: #163a63; font-size: 15px; }
+.section-help { margin: -8px 0 14px; color: #667085; font-size: 12px; }
 .product-picker { display: grid; grid-template-columns: minmax(0, 1fr) 110px auto; align-items: start; gap: 10px; }
 .product-picker button { height: 48px; }
 .elements-list { display: grid; gap: 8px; margin-top: 8px; }

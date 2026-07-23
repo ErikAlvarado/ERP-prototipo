@@ -2,7 +2,7 @@
 <mat-dialog-content>
   <div class="formulario">
     <mat-form-field appearance="outline">
-      <mat-label>Empresa</mat-label><mat-select [(ngModel)]="usuario.empresaId" (selectionChange)="cambiarEmpresa()" required>@for (empresa of data.empresas; track empresa.id) { <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option> }</mat-select>
+      <mat-label>Empresa</mat-label><mat-select [(ngModel)]="usuario.empresaId" (selectionChange)="cambiarEmpresa()" required [disabled]="data.mode === 'edit'">@for (empresa of data.empresas; track empresa.id) { <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option> }</mat-select>
       @if (!data.empresas.length) { <mat-hint>Primero registra una empresa</mat-hint> }
     </mat-form-field>
     <mat-form-field appearance="outline"><mat-label>Nombres</mat-label><input matInput [(ngModel)]="usuario.nombres" required maxlength="100"></mat-form-field>
@@ -11,14 +11,10 @@
     <mat-form-field appearance="outline"><mat-label>Fecha de nacimiento</mat-label><input matInput type="date" [(ngModel)]="usuario.fechaNacimiento"></mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Correo electrónico</mat-label><input matInput type="email" [(ngModel)]="usuario.email" required maxlength="150">
-      @if (emailDuplicado) { <mat-error>Este correo ya está registrado</mat-error> }
+      @if (emailDuplicado) { <mat-error>Este correo ya está registrado en la empresa</mat-error> }
     </mat-form-field>
     <mat-form-field appearance="outline"><mat-label>Teléfono</mat-label><input matInput type="tel" [(ngModel)]="usuario.telefono" maxlength="30"></mat-form-field>
-    <mat-form-field appearance="outline">
-      <mat-label>{{ data.mode === 'add' ? 'Contraseña temporal' : 'Nueva contraseña (opcional)' }}</mat-label>
-      <input matInput type="password" [(ngModel)]="password" minlength="8" autocomplete="new-password">
-      <mat-hint>Mínimo 8 caracteres; no se muestra en la tabla</mat-hint>
-    </mat-form-field>
+    <p class="security-note">Este prototipo no almacena contraseñas. Las credenciales deberán configurarse en el backend antes de habilitar autenticación real.</p>
     <mat-form-field appearance="outline">
       <mat-label>Roles</mat-label><mat-select [(ngModel)]="usuario.rolIds" multiple>@for (rol of rolesDisponibles; track rol.id) { <mat-option [value]="rol.id">{{ rol.nombre }}</mat-option> }</mat-select>
       @if (!rolesDisponibles.length) { <mat-hint>No hay roles para la empresa seleccionada</mat-hint> }

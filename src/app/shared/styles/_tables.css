@@ -247,13 +247,7 @@ mat-accordion { width: 100%; }
    MEDIA QUERIES (El Switch Móvil/Escritorio)
 ========================================= */
 @media (max-width: 992px) {
-  .desktop-view {
-    display: none;
-  }
-  
-  .cards-container {
-    display: flex;
-  }
+  /* Cada pantalla define su propio punto de cambio entre tabla y tarjetas. */
 }
 
 @media (max-width: 600px) {

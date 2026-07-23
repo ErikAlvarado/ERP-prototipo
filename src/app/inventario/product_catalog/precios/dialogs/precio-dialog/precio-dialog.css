@@ -1,0 +1,12 @@
+.formulario { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding-top: 8px; }
+.full-width { grid-column: 1 / -1; }
+.margin-preview { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 14px; border: 1px solid #dbeafe; border-radius: 9px; background: #f8fbff; color: #475467; }
+.margin-preview strong { color: #155eef; font-size: 18px; }
+.margin-preview strong.negative { color: #b42318; }
+.margin-preview small { grid-column: 1 / -1; color: #667085; }
+.error-text { margin: 0; color: #b42318; font-size: 12px; }
+
+@media (max-width: 600px) {
+  .formulario { grid-template-columns: 1fr; }
+  .full-width { grid-column: auto; }
+}

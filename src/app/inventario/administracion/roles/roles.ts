@@ -20,7 +20,7 @@ import { RolesDialog } from './dialogs/roles-dialog/roles-dialog';
   styleUrls: ['../administracion-listas.css'],
 })
 export class Roles implements OnInit, AfterViewInit {
-  displayedColumns = ['clave', 'nombre', 'empresa', 'descripcion', 'usuarios', 'permisos', 'estado', 'acciones'];
+  displayedColumns = ['id', 'nombre', 'empresa', 'descripcion', 'usuarios', 'permisos', 'estado', 'acciones'];
   dataSource = new MatTableDataSource<RolAdministracion>([]);
   obs!: Observable<RolAdministracion[]>;
   empresas: EmpresaAdministracion[] = [];
@@ -88,7 +88,10 @@ export class Roles implements OnInit, AfterViewInit {
   abrirDialogo(): void {
     this.dialog.open(RolesDialog, {
       width: '680px', panelClass: 'custom-dialog',
-      data: { mode: 'add', empresas: this.empresas, permisos: this.permisos, nombres: this.dataSource.data.map(rol => rol.nombre) },
+      data: {
+        mode: 'add', empresas: this.empresas.filter(empresa => empresa.estado),
+        permisos: this.permisos, roles: this.dataSource.data,
+      },
     }).afterClosed().subscribe((resultado?: RolAdministracion) => {
       if (!resultado) return;
       const fecha = new Date().toISOString().slice(0, 10);
@@ -100,7 +103,7 @@ export class Roles implements OnInit, AfterViewInit {
     this.dialog.open(RolesDialog, {
       width: '680px', panelClass: 'custom-dialog', data: {
         mode: 'edit', rol, empresas: this.empresas, permisos: this.permisos,
-        nombres: this.dataSource.data.filter(actual => actual.id !== rol.id).map(actual => actual.nombre),
+        roles: this.dataSource.data,
       },
     }).afterClosed().subscribe((resultado?: RolAdministracion) => {
       if (!resultado) return;
@@ -109,18 +112,22 @@ export class Roles implements OnInit, AfterViewInit {
     });
   }
 
-  eliminar(rol: RolAdministracion): void {
+  desactivar(rol: RolAdministracion): void {
+    if (!rol.estado) return;
     const asignados = this.usuariosPorRol(rol.id);
     this.dialog.open(ConfirmDialog, {
       width: '430px', data: {
-        title: 'Eliminar rol',
+        title: 'Desactivar rol',
         message: asignados
-          ? `¿Deseas eliminar "${rol.nombre}"? Se quitará este rol de ${asignados} usuario(s).`
-          : `¿Deseas eliminar el rol "${rol.nombre}"?`,
-        confirmText: 'Eliminar', cancelText: 'Cancelar',
+          ? `Se desactivará “${rol.nombre}”. Sus ${asignados} asignación(es) se conservarán para auditoría, pero el rol dejará de dar acceso.`
+          : `¿Deseas desactivar el rol “${rol.nombre}”?`,
+        confirmText: 'Desactivar', cancelText: 'Cancelar',
       },
     }).afterClosed().subscribe(confirmado => {
-      if (confirmado) this.guardar(this.dataSource.data.filter(actual => actual.id !== rol.id));
+      if (confirmado) {
+        this.guardar(this.dataSource.data.map(actual =>
+          actual.id === rol.id ? { ...actual, estado: false } : actual));
+      }
     });
   }
 

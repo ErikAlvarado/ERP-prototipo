@@ -8,7 +8,7 @@ export interface RolDialogData {
   rol?: RolAdministracion;
   empresas: EmpresaAdministracion[];
   permisos: PermisoAdministracion[];
-  nombres?: string[];
+  roles: RolAdministracion[];
 }
 
 @Component({
@@ -27,11 +27,16 @@ export class RolesDialog {
     this.rol = data.rol ? { ...data.rol, permisoIds: [...data.rol.permisoIds] } : {
       id: '', empresaId: data.empresas[0]?.id || '', nombre: '', descripcion: '', estado: true,
       permisoIds: [], fechaCreacion: '', fechaActualizacion: '',
+      creadoPorUsuarioId: '', actualizadoPorUsuarioId: '',
     };
   }
 
   get nombreDuplicado(): boolean {
-    return (this.data.nombres || []).some(nombre => nombre.toLowerCase() === this.rol.nombre.trim().toLowerCase());
+    const nombre = this.rol.nombre.trim().toLocaleLowerCase();
+    return this.data.roles.some(rol =>
+      rol.id !== this.rol.id &&
+      rol.empresaId === this.rol.empresaId &&
+      rol.nombre.trim().toLocaleLowerCase() === nombre);
   }
 
   get puedeGuardar(): boolean { return !!this.rol.nombre.trim() && !!this.rol.empresaId && !this.nombreDuplicado; }

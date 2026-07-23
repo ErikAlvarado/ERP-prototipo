@@ -99,7 +99,10 @@
 
       <ng-container matColumnDef="precio">
         <th mat-header-cell *matHeaderCellDef>Precio</th>
-        <td mat-cell *matCellDef="let producto"><strong>{{ producto.precio | currency:'MXN':'symbol':'1.2-2' }}</strong></td>
+        <td mat-cell *matCellDef="let producto">
+          <strong>{{ producto.precio | currency:'MXN':'symbol':'1.2-2' }}</strong>
+          <small>{{ producto.listaPrecio }}</small>
+        </td>
       </ng-container>
 
       <ng-container matColumnDef="estatus">
@@ -118,8 +121,8 @@
           <button mat-icon-button color="primary" matTooltip="Editar" (click)="editar(producto)">
             <mat-icon>edit</mat-icon>
           </button>
-          <button mat-icon-button color="warn" matTooltip="Eliminar" (click)="eliminar(producto)">
-            <mat-icon>delete</mat-icon>
+          <button mat-icon-button color="warn" matTooltip="Desactivar" (click)="eliminar(producto)">
+            <mat-icon>block</mat-icon>
           </button>
         </td>
       </ng-container>
@@ -152,6 +155,7 @@
           <div><strong>Marca:</strong> {{ producto.marca }}</div>
           <div><strong>Unidad:</strong> {{ producto.medida }}</div>
           <div><strong>Precio:</strong> {{ producto.precio | currency:'MXN':'symbol':'1.2-2' }}</div>
+          <div><strong>Lista:</strong> {{ producto.listaPrecio }}</div>
           <div><strong>Empresa:</strong> {{ producto.empresa }}</div>
         </div>
 
@@ -159,7 +163,7 @@
           <button mat-stroked-button color="primary" (click)="verDetalle(producto)">Ver detalle</button>
           <div>
             <button mat-icon-button color="primary" (click)="editar(producto)" aria-label="Editar producto"><mat-icon>edit</mat-icon></button>
-            <button mat-icon-button color="warn" (click)="eliminar(producto)" aria-label="Eliminar producto"><mat-icon>delete</mat-icon></button>
+            <button mat-icon-button color="warn" (click)="eliminar(producto)" aria-label="Desactivar producto"><mat-icon>block</mat-icon></button>
           </div>
         </div>
       </article>

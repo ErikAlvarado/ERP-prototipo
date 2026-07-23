@@ -10,9 +10,11 @@
 mat-dialog-actions.dialog-footer { display: block; }
 @media (max-width: 600px) { .transfer-summary { grid-template-columns: 1fr; } }
 .product-picker { display: grid; grid-template-columns: minmax(0, 1fr) 130px auto; align-items: start; gap: 12px; }
+.three-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .product-picker button { min-height: 48px; }
 .transfer-lines { display: grid; gap: 10px; }
-.transfer-line { display: grid; grid-template-columns: minmax(0, 1fr) 130px 44px; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #e4e7ec; border-radius: 10px; background: #f8fafc; }
+.quantity-legend { display: grid; grid-template-columns: minmax(220px, 1fr) repeat(3, 118px) 44px; gap: 12px; padding: 0 14px 6px; color: #667085; font-size: 11px; text-transform: uppercase; }
+.transfer-line { display: grid; grid-template-columns: minmax(220px, 1fr) repeat(3, 118px) 44px; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #e4e7ec; border-radius: 10px; background: #f8fafc; }
 .transfer-line > div { display: grid; gap: 4px; }.transfer-line strong { color: #0f2742; }.transfer-line span { color: #667085; font-size: 12px; }
 .transfer-line mat-form-field { margin-bottom: -20px; }
-@media (max-width: 700px) { .product-picker, .transfer-line { grid-template-columns: 1fr; }.transfer-line > button { justify-self: end; } }
+@media (max-width: 800px) { .three-columns { grid-template-columns: 1fr; }.quantity-legend { display: none; }.product-picker, .transfer-line { grid-template-columns: 1fr; }.transfer-line > button { justify-self: end; } }

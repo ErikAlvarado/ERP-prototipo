@@ -12,12 +12,10 @@
     <section>
       <h3>Información del movimiento</h3>
       <dl>
-        <div><dt>Fecha</dt><dd>{{ movimiento.fecha | date:'dd/MM/yyyy HH:mm' }}</dd></div>
+        <div><dt>Fecha</dt><dd>{{ movimiento.fecha | date:'dd/MM/yyyy' }}</dd></div>
         <div><dt>Almacén</dt><dd>{{ movimiento.almacen }}</dd></div>
         <div><dt>Usuario</dt><dd>{{ movimiento.usuario }}</dd></div>
-        <div><dt>Costo unitario</dt><dd>{{ movimiento.costoUnitario | currency:'MXN' }}</dd></div>
-        <div><dt>Lote</dt><dd>{{ movimiento.lote }}</dd></div>
-        <div><dt>Caducidad</dt><dd>{{ movimiento.caducidad }}</dd></div>
+        <div><dt>Costo unitario</dt><dd>@if (movimiento.costoUnitario !== null) { {{ movimiento.costoUnitario | currency:'MXN' }} } @else { — }</dd></div>
         <div class="full"><dt>Observaciones</dt><dd>{{ movimiento.observaciones }}</dd></div>
       </dl>
     </section>

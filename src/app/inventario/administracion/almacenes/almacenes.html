@@ -17,17 +17,17 @@
 
 <div class="desktop-view table-responsive">
   <table mat-table [dataSource]="dataSource">
-    <ng-container matColumnDef="clave"><th mat-header-cell *matHeaderCellDef>Clave</th><td mat-cell *matCellDef="let e">ALM-{{ e.id }}</td></ng-container>
+    <ng-container matColumnDef="id"><th mat-header-cell *matHeaderCellDef>ID</th><td mat-cell *matCellDef="let e">{{ e.id }}</td></ng-container>
     <ng-container matColumnDef="nombre"><th mat-header-cell *matHeaderCellDef>Almacén</th><td mat-cell *matCellDef="let e">{{ e.nombre }}</td></ng-container>
     <ng-container matColumnDef="empresa"><th mat-header-cell *matHeaderCellDef>Empresa</th><td mat-cell *matCellDef="let e">{{ nombreEmpresa(e.empresaId) }}</td></ng-container>
     <ng-container matColumnDef="direccion"><th mat-header-cell *matHeaderCellDef>Dirección</th><td mat-cell *matCellDef="let e">{{ e.direccion || '—' }}</td></ng-container>
-    <ng-container matColumnDef="principal"><th mat-header-cell *matHeaderCellDef>Principal</th><td mat-cell *matCellDef="let e"><app-status [active]="e.principal"></app-status></td></ng-container>
+    <ng-container matColumnDef="principal"><th mat-header-cell *matHeaderCellDef>Principal</th><td mat-cell *matCellDef="let e">{{ e.principal ? 'Sí' : 'No' }}</td></ng-container>
     <ng-container matColumnDef="estado"><th mat-header-cell *matHeaderCellDef>Estado</th><td mat-cell *matCellDef="let e"><app-status [active]="e.estado"></app-status></td></ng-container>
     <ng-container matColumnDef="acciones">
       <th mat-header-cell *matHeaderCellDef>Acciones</th>
       <td mat-cell *matCellDef="let e" class="actions-cell">
         <button mat-icon-button color="primary" matTooltip="Editar" (click)="editar(e)"><mat-icon>edit</mat-icon></button>
-        <button mat-icon-button color="warn" matTooltip="Eliminar" (click)="eliminar(e)"><mat-icon>delete</mat-icon></button>
+        <button mat-icon-button color="warn" matTooltip="Desactivar" [disabled]="!e.estado" (click)="desactivar(e)"><mat-icon>block</mat-icon></button>
       </td>
     </ng-container>
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -39,9 +39,9 @@
 <div class="cards-container">
   @for (e of obs | async; track e.id) {
     <article class="entity-card">
-      <div class="card-header"><div><h3>{{ e.nombre }}</h3><span class="card-subtitle">ALM-{{ e.id }}</span></div><app-status [active]="e.estado"></app-status></div>
-      <div class="card-body"><span><strong>Empresa:</strong> {{ nombreEmpresa(e.empresaId) }}</span><span><strong>Tipo:</strong> {{ e.principal ? 'Principal' : 'Secundario' }}</span><span><strong>Dirección:</strong> {{ e.direccion || '—' }}</span></div>
-      <div class="card-actions"><button mat-icon-button color="primary" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" (click)="eliminar(e)"><mat-icon>delete</mat-icon></button></div>
+      <div class="card-header"><div><h3>{{ e.nombre }}</h3><span class="card-subtitle">ID {{ e.id }}</span></div><app-status [active]="e.estado"></app-status></div>
+      <div class="card-body"><span><strong>Empresa:</strong> {{ nombreEmpresa(e.empresaId) }}</span><span><strong>Principal:</strong> {{ e.principal ? 'Sí' : 'No' }}</span><span><strong>Dirección:</strong> {{ e.direccion || '—' }}</span></div>
+      <div class="card-actions"><button mat-icon-button color="primary" aria-label="Editar almacén" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" aria-label="Desactivar almacén" [disabled]="!e.estado" (click)="desactivar(e)"><mat-icon>block</mat-icon></button></div>
     </article>
   } @empty { <div class="entity-card">No hay almacenes que coincidan con los filtros.</div> }
 </div>

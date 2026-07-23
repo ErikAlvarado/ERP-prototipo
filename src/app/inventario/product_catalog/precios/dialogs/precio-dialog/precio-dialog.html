@@ -1,0 +1,53 @@
+<h2 mat-dialog-title>{{ data.mode === 'add' ? 'Agregar precio' : 'Editar precio' }}</h2>
+<mat-dialog-content>
+  <div class="formulario">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Producto</mat-label>
+      <mat-select [(ngModel)]="precio.idProducto" (selectionChange)="cambiarProducto()" required>
+        @for (producto of data.productos; track producto.id) {
+          <mat-option [value]="producto.id">{{ producto.sku }} · {{ producto.nombre }} · {{ producto.empresa }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Lista de precios</mat-label>
+      <mat-select [(ngModel)]="precio.idLista" required>
+        @for (lista of listasDisponibles; track lista.id) {
+          <mat-option [value]="lista.id" [disabled]="!lista.activa && lista.id !== data.precio?.idLista">
+            {{ lista.nombre }}{{ lista.predeterminada ? ' · Predeterminada' : '' }}{{ lista.activa ? '' : ' · Inactiva' }}
+          </mat-option>
+        }
+      </mat-select>
+      <mat-hint>Solo se muestran listas de la empresa del producto.</mat-hint>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Costo</mat-label>
+      <span matTextPrefix>$&nbsp;</span>
+      <input matInput type="number" min="0" step="0.01" [(ngModel)]="precio.costo" required>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Precio de venta</mat-label>
+      <span matTextPrefix>$&nbsp;</span>
+      <input matInput type="number" min="0" step="0.01" [(ngModel)]="precio.precio" required>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Inicio de vigencia</mat-label>
+      <input matInput type="date" [(ngModel)]="precio.fechaInicio" required>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Fin de vigencia</mat-label>
+      <input matInput type="date" [(ngModel)]="precio.fechaFin">
+      <mat-hint>Déjala vacía para una vigencia indefinida.</mat-hint>
+    </mat-form-field>
+    <div class="margin-preview full-width">
+      <span>Margen sobre costo</span>
+      <strong [class.negative]="margen < 0">{{ margen }}%</strong>
+      <small>Fórmula: (precio − costo) / costo × 100</small>
+    </div>
+    @if (error) { <p class="error-text full-width">{{ error }}</p> }
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-raised-button mat-dialog-close>Cancelar</button>
+  <button mat-raised-button color="primary" (click)="guardar()">{{ data.mode === 'add' ? 'Agregar' : 'Guardar cambios' }}</button>
+</mat-dialog-actions>

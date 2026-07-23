@@ -3,13 +3,16 @@ import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
-import { Observable, forkJoin } from 'rxjs';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Observable, forkJoin, take } from 'rxjs';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { DatosDb } from '../../../shared/services/datos-db';
 import { CatalogosPersistencia } from '../catalogos-persistencia';
 import { CatalogFilterDialog, ValorFiltroCatalogo } from '../dialogs/catalog-filter-dialog/catalog-filter-dialog';
 import { UnidadesDialog } from './dialogs/unidades-dialog/unidades-dialog';
+import { AdministracionDatos } from '../../administracion/administracion-datos';
+import { CatalogoProductos } from '../../../shared/services/catalogo-productos';
 
 interface UnidadDb {
   id_unidad: string;
@@ -19,7 +22,6 @@ interface UnidadDb {
   permitir_decimales: string;
 }
 
-interface EmpresaDb { id_empresa: string; nombre_empresa: string; }
 export interface EmpresaUnidadOption { id: string; nombre: string; }
 
 export interface Unidad {
@@ -35,7 +37,7 @@ export interface Unidad {
 
 @Component({
   selector: 'app-unidades',
-  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule],
+  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule, MatSnackBarModule],
   templateUrl: './unidades.html',
   styleUrls: ['../catalog-list.css', './unidades.css'],
 })
@@ -54,6 +56,9 @@ export class Unidades implements OnInit, AfterViewInit {
     private dialog: MatDialog,
     private db: DatosDb,
     private persistencia: CatalogosPersistencia,
+    private snackBar: MatSnackBar,
+    private administracion: AdministracionDatos,
+    private catalogoProductos: CatalogoProductos,
   ) {}
 
   ngOnInit(): void {
@@ -69,11 +74,13 @@ export class Unidades implements OnInit, AfterViewInit {
 
     forkJoin({
       unidades: this.db.leer<UnidadDb>('unidades.txt'),
-      productos: this.db.leer<{ id_unidad: string }>('productos.txt'),
+      productos: this.catalogoProductos.cargar(),
       medidas: this.db.leer<{ id_unidad: string }>('medidas.txt'),
-      empresas: this.db.leer<EmpresaDb>('empresas.txt'),
-    }).subscribe(({ unidades, productos, medidas, empresas }) => {
-      this.empresasCatalogo = empresas.map(empresa => ({ id: empresa.id_empresa, nombre: empresa.nombre_empresa }));
+      administracion: this.administracion.cargar().pipe(take(1)),
+    }).subscribe(({ unidades, productos, medidas, administracion }) => {
+      this.empresasCatalogo = administracion.empresas
+        .filter(empresa => empresa.estado)
+        .map(empresa => ({ id: empresa.id, nombre: empresa.nombre }));
       const empresasPorId = new Map(this.empresasCatalogo.map(empresa => [empresa.id, empresa.nombre]));
       const fuente = unidades.map(unidad => ({
         id: unidad.id_unidad,
@@ -82,14 +89,16 @@ export class Unidades implements OnInit, AfterViewInit {
         nombre: unidad.nombre,
         abreviatura: unidad.abreviatura,
         permitirDecimales: unidad.permitir_decimales === '1',
-        productos: productos.filter(producto => producto.id_unidad === unidad.id_unidad).length,
+        productos: productos.filter(producto =>
+          producto.idUnidad === Number(unidad.id_unidad)).length,
         medidas: medidas.filter(medida => medida.id_unidad === unidad.id_unidad).length,
       }));
       const estado = this.persistencia.combinar(this.clave, fuente);
       this.eliminados = estado.eliminados;
       this.dataSource.data = this.actualizarEmpresas(estado.registros.map(unidad => ({
         ...unidad,
-        productos: productos.filter(producto => producto.id_unidad === unidad.id).length,
+        productos: productos.filter(producto =>
+          producto.idUnidad === Number(unidad.id)).length,
         medidas: medidas.filter(medida => medida.id_unidad === unidad.id).length,
       })));
       this.applyFilter();
@@ -165,11 +174,19 @@ export class Unidades implements OnInit, AfterViewInit {
   }
 
   eliminar(unidad: Unidad): void {
+    if (unidad.productos > 0 || unidad.medidas > 0) {
+      this.snackBar.open(
+        `No se puede eliminar "${unidad.nombre}": tiene ${unidad.productos} producto(s) y ${unidad.medidas} medida(s) relacionados.`,
+        'Cerrar',
+        { duration: 6000 },
+      );
+      return;
+    }
     this.dialog.open(ConfirmDialog, {
       width: '400px',
       data: {
-        title: 'Eliminar unidad',
-        message: `¿Deseas eliminar "${unidad.nombre}"?`,
+        title: 'Eliminar unidad sin uso',
+        message: `¿Deseas eliminar "${unidad.nombre}"? No tiene productos ni medidas relacionados.`,
         confirmText: 'Eliminar',
         cancelText: 'Cancelar',
       },

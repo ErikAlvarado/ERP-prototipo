@@ -1,23 +1,26 @@
 <div class="container">
   <mat-card class="card">
-    <mat-card-header><mat-card-title>Iniciar sesion</mat-card-title></mat-card-header>
+    <mat-card-header><mat-card-title>Acceso al prototipo</mat-card-title></mat-card-header>
     <mat-card-content>
       <form class="cont-form" [formGroup]="formulario" (ngSubmit)="iniciarSesion()">
+        <p class="prototype-notice">
+          Esta versión no tiene un backend de autenticación. Selecciona un perfil activo para probar
+          la interfaz; este acceso no sustituye una validación real de credenciales.
+        </p>
         <mat-form-field class="full-width" appearance="outline">
-          <mat-label>Correo electronico</mat-label>
-          <input type="email" matInput formControlName="correo" autocomplete="email" />
-          <mat-error>Escribe un correo valido</mat-error>
+          <mat-label>Perfil de prueba</mat-label>
+          <mat-select formControlName="usuarioId">
+            @for (perfil of perfiles(); track perfil.id) {
+              <mat-option [value]="perfil.id">
+                {{ perfil.nombre }} · {{ perfil.empresa }} · {{ perfil.roles.join(', ') || 'Sin rol' }}
+              </mat-option>
+            }
+          </mat-select>
+          <mat-error>Selecciona un perfil</mat-error>
         </mat-form-field>
-        <mat-form-field class="full-width" appearance="outline">
-          <mat-label>Contrasena</mat-label>
-          <input matInput [type]="hide() ? 'password' : 'text'" formControlName="password" autocomplete="current-password" />
-          <button matIconButton matSuffix type="button" (click)="clickEvent($event)" [attr.aria-label]="hide() ? 'Mostrar contrasena' : 'Ocultar contrasena'">
-            <mat-icon>{{ hide() ? 'visibility_off' : 'visibility' }}</mat-icon>
-          </button>
-        </mat-form-field>
+        @if (cargando()) { <mat-progress-bar mode="indeterminate"></mat-progress-bar> }
         @if (error()) { <p class="error-sesion" role="alert">{{ error() }}</p> }
-        <button mat-raised-button color="primary" class="full-width" type="submit">Iniciar sesion</button>
-        <p>¿Aun no tienes una cuenta? <a routerLink="/register">Registrate</a></p>
+        <button mat-raised-button color="primary" class="full-width" type="submit" [disabled]="cargando() || !perfiles().length">Entrar al prototipo</button>
       </form>
     </mat-card-content>
   </mat-card>

@@ -1,36 +1,97 @@
 <h2 mat-dialog-title>{{ data.mode === 'add' ? 'Agregar kit' : 'Actualizar kit' }}</h2>
 <mat-dialog-content>
   <div class="formulario">
-    <mat-form-field appearance="outline"><mat-label>Nombre del kit</mat-label><input matInput [(ngModel)]="kit.nombre" maxlength="120" required></mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>Precio de venta</mat-label><span matTextPrefix>$&nbsp;</span><input matInput type="number" min="0" step="0.01" [(ngModel)]="kit.precio" (input)="calcularTotales()" required></mat-form-field>
-    <mat-form-field appearance="outline" class="full-width"><mat-label>Descripción</mat-label><textarea matInput [(ngModel)]="kit.descripcion" rows="2" maxlength="300"></textarea></mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Empresa</mat-label>
+      <mat-select [(ngModel)]="kit.idEmpresa" (selectionChange)="cambiarEmpresa()" [disabled]="data.mode === 'edit'" required>
+        @for (empresa of data.opciones.empresas; track empresa.id) {
+          <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>SKU</mat-label>
+      <input matInput [(ngModel)]="kit.sku" maxlength="60" required>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre del kit</mat-label>
+      <input matInput [(ngModel)]="kit.nombre" maxlength="160" required>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Marca</mat-label>
+      <mat-select [(ngModel)]="kit.idMarca" required>
+        @for (marca of marcasDisponibles; track marca.id) {
+          <mat-option [value]="marca.id">{{ marca.nombre }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Categoría</mat-label>
+      <mat-select [(ngModel)]="kit.idCategoria" required>
+        @for (categoria of categoriasDisponibles; track categoria.id) {
+          <mat-option [value]="categoria.id">{{ categoria.nombre }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Unidad</mat-label>
+      <mat-select [(ngModel)]="kit.idUnidad" required>
+        @for (unidad of unidadesDisponibles; track unidad.id) {
+          <mat-option [value]="unidad.id">{{ unidad.nombre }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Costo registrado</mat-label>
+      <span matTextPrefix>$&nbsp;</span>
+      <input matInput type="number" min="0" step="0.01" [(ngModel)]="kit.costo" required>
+      <mat-hint>No se reemplaza con el costo de componentes.</mat-hint>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Precio de venta</mat-label>
+      <span matTextPrefix>$&nbsp;</span>
+      <input matInput type="number" min="0" step="0.01" [(ngModel)]="kit.precio" required>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Descripción</mat-label>
+      <textarea matInput [(ngModel)]="kit.descripcion" rows="2" maxlength="300"></textarea>
+    </mat-form-field>
 
-    <section class="elementos-section">
+    <section class="elementos-section full-width">
       <h3>Productos incluidos</h3>
+      <p class="section-help">La definición del kit no depende del stock actual; las existencias se muestran sólo como referencia.</p>
       <div class="product-picker">
         <mat-form-field appearance="outline">
           <mat-label>Producto</mat-label>
           <mat-select [(ngModel)]="nuevoProductoId">
-            @for (producto of data.productos; track producto.idProducto) {
-              <mat-option [value]="producto.idProducto" [disabled]="producto.stock <= 0">{{ producto.sku }} · {{ producto.nombre }} · Stock: {{ producto.stock }}</mat-option>
+            @for (producto of productosDisponibles; track producto.idProducto) {
+              <mat-option [value]="producto.idProducto">{{ producto.sku }} · {{ producto.nombre }} · Stock actual: {{ producto.stock }}</mat-option>
             }
           </mat-select>
-          <mat-hint>{{ data.productos.length ? 'Productos vigentes con sus existencias actuales' : 'No hay productos disponibles' }}</mat-hint>
+          <mat-hint>{{ productosDisponibles.length ? 'Productos vigentes de la misma empresa' : 'No hay productos disponibles para esta empresa' }}</mat-hint>
         </mat-form-field>
         <mat-form-field appearance="outline" class="quantity-field">
           <mat-label>Cantidad</mat-label>
-          <input matInput type="number" min="1" [max]="stockSeleccionado || 1" step="1" [(ngModel)]="cantidadNueva">
-          <mat-hint>Disponible: {{ stockSeleccionado }}</mat-hint>
+          <input matInput type="number" min="1" step="1" [(ngModel)]="cantidadNueva">
+          <mat-hint>Stock informativo: {{ stockSeleccionado }}</mat-hint>
         </mat-form-field>
-        <button mat-raised-button color="primary" type="button" (click)="agregarElemento()" [disabled]="!nuevoProductoId || stockSeleccionado <= 0"><mat-icon>add</mat-icon>Agregar</button>
+        <button mat-raised-button color="primary" type="button" (click)="agregarElemento()" [disabled]="!nuevoProductoId">
+          <mat-icon>add</mat-icon>Agregar
+        </button>
       </div>
 
       @if (kit.elementos.length) {
         <div class="elements-list">
           @for (elemento of kit.elementos; track elemento.idProducto; let i = $index) {
             <div class="element-row">
-              <div class="element-name"><strong>{{ elemento.nombre }}</strong><span>{{ elemento.sku }} · Costo unitario {{ elemento.costo | currency:'MXN' }} · Stock: {{ elemento.stock }}</span></div>
-              <mat-form-field appearance="outline" class="element-quantity"><mat-label>Cantidad</mat-label><input matInput type="number" min="1" [max]="elemento.stock" step="1" [(ngModel)]="elemento.cantidad" (change)="actualizarCantidad(elemento)"></mat-form-field>
+              <div class="element-name">
+                <strong>{{ elemento.nombre }}</strong>
+                <span>{{ elemento.sku }} · Costo unitario {{ elemento.costo | currency:'MXN' }} · Stock actual: {{ elemento.stock }}</span>
+              </div>
+              <mat-form-field appearance="outline" class="element-quantity">
+                <mat-label>Cantidad</mat-label>
+                <input matInput type="number" min="1" step="1" [(ngModel)]="elemento.cantidad" (change)="actualizarCantidad(elemento)">
+              </mat-form-field>
               <span class="subtotal">{{ elemento.costo * elemento.cantidad | currency:'MXN' }}</span>
               <button mat-icon-button color="warn" type="button" matTooltip="Quitar" (click)="removerElemento(i)"><mat-icon>close</mat-icon></button>
             </div>
@@ -41,9 +102,16 @@
       }
     </section>
 
-    <div class="totals full-width"><div><span>Costo calculado</span><strong>{{ kit.costo | currency:'MXN' }}</strong></div><div><span>Margen</span><strong [class.negative]="kit.margen < 0">{{ kit.margen }}%</strong></div></div>
-    <div class="checks"><mat-checkbox [(ngModel)]="kit.estado">Kit activo</mat-checkbox></div>
+    <div class="totals full-width">
+      <div><span>Costo registrado</span><strong>{{ kit.costo | currency:'MXN' }}</strong></div>
+      <div><span>Costo de componentes</span><strong>{{ costoComponentes | currency:'MXN' }}</strong></div>
+      <div><span>Margen sobre costo</span><strong [class.negative]="margen < 0">{{ margen }}%</strong></div>
+    </div>
+    <div class="checks full-width"><mat-checkbox [(ngModel)]="kit.estado">Kit activo</mat-checkbox></div>
     @if (error) { <p class="error-text full-width">{{ error }}</p> }
   </div>
 </mat-dialog-content>
-<mat-dialog-actions><button mat-raised-button mat-dialog-close>Cancelar</button><button mat-raised-button color="primary" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button></mat-dialog-actions>
+<mat-dialog-actions>
+  <button mat-raised-button mat-dialog-close>Cancelar</button>
+  <button mat-raised-button color="primary" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button>
+</mat-dialog-actions>

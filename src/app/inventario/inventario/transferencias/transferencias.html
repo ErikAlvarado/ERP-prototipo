@@ -1,9 +1,13 @@
 <div class="content-header">
   <div>
     <h1>Transferencias</h1>
-    <p>Movimientos controlados de mercancía entre almacenes.</p>
+    <p>Movimientos de mercancía entre almacenes, agrupados por folio y sus partidas.</p>
   </div>
-  <button mat-raised-button color="primary" (click)="abrirAgregar()" [disabled]="!contexto?.productos?.length || (contexto?.almacenes?.length ?? 0) < 2">
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="abrirAgregar()"
+    [disabled]="!contexto?.productos?.length || (contexto?.almacenes?.length ?? 0) < 2">
     <mat-icon>add</mat-icon>Nueva transferencia
   </button>
 </div>
@@ -11,7 +15,10 @@
 <div class="content-search">
   <div class="custom-search">
     <mat-icon>search</mat-icon>
-    <input [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar folio, SKU, producto, almacén, responsable u observaciones">
+    <input
+      [(ngModel)]="currentSearch"
+      (input)="applyFilter()"
+      placeholder="Buscar folio, producto, almacén, solicitante u observaciones">
   </div>
   <div class="custom-filters">
     <button mat-stroked-button class="filter-btn" (click)="abrirFiltros()">
@@ -54,56 +61,120 @@
   <table mat-table [dataSource]="dataSource">
     <ng-container matColumnDef="folio">
       <th mat-header-cell *matHeaderCellDef>Folio</th>
-      <td mat-cell *matCellDef="let e"><strong class="folio">{{ e.folio }}</strong><small>ID {{ e.id }}</small></td>
+      <td mat-cell *matCellDef="let e">
+        <strong class="folio">{{ e.folio }}</strong>
+        <small>{{ e.partidas.length }} {{ e.partidas.length === 1 ? 'partida' : 'partidas' }}</small>
+      </td>
     </ng-container>
-    <ng-container matColumnDef="producto">
-      <th mat-header-cell *matHeaderCellDef>Producto</th>
-      <td mat-cell *matCellDef="let e"><strong>{{ e.producto }}</strong><small>{{ e.sku }}</small></td>
+
+    <ng-container matColumnDef="partidas">
+      <th mat-header-cell *matHeaderCellDef>Partidas · Sol. / Env. / Rec.</th>
+      <td mat-cell *matCellDef="let e" class="items-cell">
+        @for (partida of e.partidas; track partida.productoId) {
+          <div class="item-line">
+            <strong>{{ partida.producto }}</strong>
+            <small>
+              {{ partida.sku }} ·
+              {{ partida.cantidadSolicitada | number:'1.0-2' }} /
+              {{ partida.cantidadEnviada | number:'1.0-2' }} /
+              {{ partida.cantidadRecibida | number:'1.0-2' }}
+              {{ partida.unidad }}
+            </small>
+          </div>
+        } @empty {
+          <span>Sin partidas</span>
+        }
+      </td>
     </ng-container>
+
     <ng-container matColumnDef="origen">
-      <th mat-header-cell *matHeaderCellDef>Almacén origen</th>
+      <th mat-header-cell *matHeaderCellDef>Origen</th>
       <td mat-cell *matCellDef="let e">{{ e.origen }}</td>
     </ng-container>
+
     <ng-container matColumnDef="destino">
-      <th mat-header-cell *matHeaderCellDef>Almacén destino</th>
+      <th mat-header-cell *matHeaderCellDef>Destino</th>
       <td mat-cell *matCellDef="let e">{{ e.destino }}</td>
     </ng-container>
-    <ng-container matColumnDef="cantidad">
-      <th mat-header-cell *matHeaderCellDef>Cantidad</th>
-      <td mat-cell *matCellDef="let e"><strong>{{ e.cantidad }}</strong></td>
+
+    <ng-container matColumnDef="fechaSolicitud">
+      <th mat-header-cell *matHeaderCellDef>Solicitud</th>
+      <td mat-cell *matCellDef="let e">{{ e.fechaSolicitud | date:'dd/MM/yyyy' }}</td>
     </ng-container>
-    <ng-container matColumnDef="fecha">
-      <th mat-header-cell *matHeaderCellDef>Fecha</th>
-      <td mat-cell *matCellDef="let e">{{ e.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+
+    <ng-container matColumnDef="fechaAutorizacion">
+      <th mat-header-cell *matHeaderCellDef>Autorización</th>
+      <td mat-cell *matCellDef="let e">
+        {{ e.fechaAutorizacion ? (e.fechaAutorizacion | date:'dd/MM/yyyy') : '—' }}
+      </td>
     </ng-container>
-    <ng-container matColumnDef="usuario">
-      <th mat-header-cell *matHeaderCellDef>Responsable</th>
-      <td mat-cell *matCellDef="let e">{{ e.usuario }}</td>
+
+    <ng-container matColumnDef="fechaRecepcion">
+      <th mat-header-cell *matHeaderCellDef>Recepción</th>
+      <td mat-cell *matCellDef="let e">
+        {{ e.fechaRecepcion ? (e.fechaRecepcion | date:'dd/MM/yyyy') : '—' }}
+      </td>
     </ng-container>
+
+    <ng-container matColumnDef="responsables">
+      <th mat-header-cell *matHeaderCellDef>Responsables</th>
+      <td mat-cell *matCellDef="let e">
+        <span>Solicita: {{ e.solicitante }}</span>
+        <small>Autoriza: {{ e.autorizador }}</small>
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="estado">
       <th mat-header-cell *matHeaderCellDef>Estado</th>
-      <td mat-cell *matCellDef="let e"><span class="status-badge" [class]="'status-badge ' + claseEstado(e.estado)">{{ e.estado }}</span></td>
+      <td mat-cell *matCellDef="let e">
+        <span class="status-badge" [class]="'status-badge ' + claseEstado(e.estado)">
+          {{ e.estado }}
+        </span>
+      </td>
     </ng-container>
+
     <ng-container matColumnDef="observaciones">
       <th mat-header-cell *matHeaderCellDef>Observaciones</th>
       <td mat-cell *matCellDef="let e" class="observations">{{ e.observaciones || '—' }}</td>
     </ng-container>
+
     <ng-container matColumnDef="acciones">
       <th mat-header-cell *matHeaderCellDef>Acciones</th>
       <td mat-cell *matCellDef="let e">
-        <button mat-icon-button color="primary" matTooltip="Ver detalle" (click)="ver(e)"><mat-icon>visibility</mat-icon></button>
-        <button mat-icon-button [matMenuTriggerFor]="accionesMenu" matTooltip="Más acciones"><mat-icon>more_vert</mat-icon></button>
+        <button mat-icon-button color="primary" matTooltip="Ver detalle" (click)="ver(e)">
+          <mat-icon>visibility</mat-icon>
+        </button>
+        <button mat-icon-button [matMenuTriggerFor]="accionesMenu" matTooltip="Más acciones">
+          <mat-icon>more_vert</mat-icon>
+        </button>
         <mat-menu #accionesMenu="matMenu">
-          <button mat-menu-item (click)="editar(e)" [disabled]="!esEditable(e)"><mat-icon>edit</mat-icon>Editar</button>
-          <button mat-menu-item (click)="recibir(e)" [disabled]="e.estado === 'Recibida' || e.estado === 'Cancelada'"><mat-icon>move_to_inbox</mat-icon>Marcar recibida</button>
-          <button mat-menu-item (click)="cancelar(e)" [disabled]="e.estado === 'Recibida' || e.estado === 'Cancelada'"><mat-icon>cancel</mat-icon>Cancelar</button>
-          <button mat-menu-item class="danger-action" (click)="eliminar(e)" [disabled]="!esEditable(e)"><mat-icon>delete</mat-icon>Eliminar</button>
+          <button mat-menu-item (click)="editar(e)" [disabled]="!esEditable(e)">
+            <mat-icon>edit</mat-icon>Editar
+          </button>
+          <button mat-menu-item (click)="recibir(e)" [disabled]="!puedeRecibirse(e)">
+            <mat-icon>move_to_inbox</mat-icon>Completar recepción
+          </button>
+          <button mat-menu-item (click)="cancelar(e)" [disabled]="!puedeRecibirse(e)">
+            <mat-icon>cancel</mat-icon>Cancelar
+          </button>
+          <button
+            mat-menu-item
+            class="danger-action"
+            (click)="eliminar(e)"
+            [disabled]="!esEditable(e)">
+            <mat-icon>delete</mat-icon>Eliminar
+          </button>
         </mat-menu>
       </td>
     </ng-container>
+
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-    <tr class="empty-row" *matNoDataRow><td [attr.colspan]="displayedColumns.length">No hay transferencias que coincidan con los filtros.</td></tr>
+    <tr class="empty-row" *matNoDataRow>
+      <td [attr.colspan]="displayedColumns.length">
+        No hay transferencias que coincidan con los filtros.
+      </td>
+    </tr>
   </table>
 </div>
 
@@ -111,30 +182,65 @@
   @for (e of obs | async; track e.id) {
     <article class="product-card">
       <div class="card-header">
-        <div><h3>{{ e.producto }}</h3><span class="brand-badge">{{ e.folio }} · {{ e.sku }}</span></div>
-        <span class="status-badge" [class]="'status-badge ' + claseEstado(e.estado)">{{ e.estado }}</span>
+        <div>
+          <h3>{{ e.folio }}</h3>
+          <span class="brand-badge">{{ e.partidas.length }} {{ e.partidas.length === 1 ? 'partida' : 'partidas' }}</span>
+        </div>
+        <span class="status-badge" [class]="'status-badge ' + claseEstado(e.estado)">
+          {{ e.estado }}
+        </span>
       </div>
       <div class="card-body">
         <div><strong>Origen:</strong> {{ e.origen }}</div>
         <div><strong>Destino:</strong> {{ e.destino }}</div>
-        <div><strong>Cantidad:</strong> {{ e.cantidad }}</div>
-        <div><strong>Fecha:</strong> {{ e.fecha | date:'dd/MM/yyyy' }}</div>
-        <div class="wide"><strong>Responsable:</strong> {{ e.usuario }}</div>
-        <div class="wide"><strong>Observaciones:</strong> {{ e.observaciones || '—' }}</div>
+        <div><strong>Solicitud:</strong> {{ e.fechaSolicitud | date:'dd/MM/yyyy' }}</div>
+        <div><strong>Autorización:</strong> {{ e.fechaAutorizacion ? (e.fechaAutorizacion | date:'dd/MM/yyyy') : '—' }}</div>
+        <div><strong>Recepción:</strong> {{ e.fechaRecepcion ? (e.fechaRecepcion | date:'dd/MM/yyyy') : '—' }}</div>
+        <div><strong>Solicita:</strong> {{ e.solicitante }}</div>
+        <div class="wide"><strong>Autoriza:</strong> {{ e.autorizador }}</div>
+        <div class="wide card-items">
+          @for (partida of e.partidas; track partida.productoId) {
+            <span>
+              <strong>{{ partida.producto }}:</strong>
+              {{ partida.cantidadSolicitada | number:'1.0-2' }} /
+              {{ partida.cantidadEnviada | number:'1.0-2' }} /
+              {{ partida.cantidadRecibida | number:'1.0-2' }}
+              {{ partida.unidad }}
+            </span>
+          }
+        </div>
       </div>
       <div class="card-actions">
         <button mat-stroked-button color="primary" (click)="ver(e)">Ver detalle</button>
         <div>
-          <button mat-icon-button color="primary" (click)="editar(e)" [disabled]="!esEditable(e)"><mat-icon>edit</mat-icon></button>
-          <button mat-icon-button color="primary" (click)="recibir(e)" [disabled]="e.estado === 'Recibida' || e.estado === 'Cancelada'"><mat-icon>move_to_inbox</mat-icon></button>
+          <button
+            mat-icon-button
+            color="primary"
+            (click)="editar(e)"
+            [disabled]="!esEditable(e)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            color="primary"
+            (click)="recibir(e)"
+            [disabled]="!puedeRecibirse(e)">
+            <mat-icon>move_to_inbox</mat-icon>
+          </button>
         </div>
       </div>
     </article>
   } @empty {
-    <div class="empty-card">No hay transferencias. Para crear una necesitas al menos dos almacenes activos.</div>
+    <div class="empty-card">
+      No hay transferencias. Para crear una necesitas al menos dos almacenes activos.
+    </div>
   }
 </div>
 
 <div class="paginator-container">
-  <mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 50]" showFirstLastButtons></mat-paginator>
+  <mat-paginator
+    [pageSize]="10"
+    [pageSizeOptions]="[5, 10, 25, 50]"
+    showFirstLastButtons>
+  </mat-paginator>
 </div>

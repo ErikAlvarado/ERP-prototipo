@@ -6,7 +6,10 @@ import { MatTableDataSource } from '@angular/material/table';
 import { Observable } from 'rxjs';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
-import { AdministracionDatos, EmpresaAdministracion } from '../administracion-datos';
+import {
+  AdministracionDatos, AlmacenAdministracion, EmpresaAdministracion,
+  RolAdministracion, UsuarioAdministracion,
+} from '../administracion-datos';
 import { FiltrosAdministracionDialog, ValorFiltroAdministracion } from '../filtros-administracion-dialog/filtros-administracion-dialog';
 import { EmpresasDialog } from './dialogs/empresas-dialog/empresas-dialog';
 
@@ -17,11 +20,14 @@ import { EmpresasDialog } from './dialogs/empresas-dialog/empresas-dialog';
   styleUrls: ['../administracion-listas.css'],
 })
 export class Empresas implements OnInit, AfterViewInit {
-  displayedColumns = ['clave', 'empresa', 'razonSocial', 'rfc', 'contacto', 'estado', 'acciones'];
+  displayedColumns = ['id', 'empresa', 'razonSocial', 'rfc', 'contacto', 'estado', 'acciones'];
   dataSource = new MatTableDataSource<EmpresaAdministracion>([]);
   obs!: Observable<EmpresaAdministracion[]>;
   currentSearch = '';
   currentStatus: boolean | null = null;
+  almacenes: AlmacenAdministracion[] = [];
+  roles: RolAdministracion[] = [];
+  usuarios: UsuarioAdministracion[] = [];
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
@@ -35,6 +41,9 @@ export class Empresas implements OnInit, AfterViewInit {
     };
     this.obs = this.dataSource.connect();
     this.datos.cargar().subscribe(estado => {
+      this.almacenes = estado.almacenes;
+      this.roles = estado.roles;
+      this.usuarios = estado.usuarios;
       this.dataSource.data = [...estado.empresas].sort((a, b) => Number(a.id) - Number(b.id));
       this.applyFilter();
     });
@@ -89,15 +98,24 @@ export class Empresas implements OnInit, AfterViewInit {
     });
   }
 
-  eliminar(empresa: EmpresaAdministracion): void {
+  desactivar(empresa: EmpresaAdministracion): void {
+    if (!empresa.estado) return;
+    const dependencias = this.almacenes.filter(item => item.empresaId === empresa.id && item.estado).length +
+      this.roles.filter(item => item.empresaId === empresa.id && item.estado).length +
+      this.usuarios.filter(item => item.empresaId === empresa.id && item.estado).length;
     this.dialog.open(ConfirmDialog, {
       width: '430px', data: {
-        title: 'Eliminar empresa',
-        message: `¿Deseas eliminar "${empresa.nombre}"? Sus almacenes, roles y usuarios quedarán sin empresa asignada.`,
-        confirmText: 'Eliminar', cancelText: 'Cancelar',
+        title: 'Desactivar empresa',
+        message: dependencias
+          ? `Se desactivará “${empresa.nombre}” junto con ${dependencias} registro(s) activo(s) relacionado(s). Las referencias y la auditoría se conservarán.`
+          : `¿Deseas desactivar “${empresa.nombre}”?`,
+        confirmText: 'Desactivar', cancelText: 'Cancelar',
       },
     }).afterClosed().subscribe(confirmado => {
-      if (confirmado) this.guardar(this.dataSource.data.filter(actual => actual.id !== empresa.id));
+      if (confirmado) {
+        this.guardar(this.dataSource.data.map(actual =>
+          actual.id === empresa.id ? { ...actual, estado: false } : actual));
+      }
     });
   }
 

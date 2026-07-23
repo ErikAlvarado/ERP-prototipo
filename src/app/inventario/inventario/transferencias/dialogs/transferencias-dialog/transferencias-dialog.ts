@@ -1,9 +1,12 @@
 import { Component, Inject } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SHARED_IMPORTS } from '../../../../../shared/imports/shared-imports';
 import {
   AlmacenInventarioRef,
+  comprometeStockTransferencia,
   ExistenciaInventario,
+  PartidaTransferenciaFormulario,
   ProductoInventarioRef,
   TransferenciaFormulario,
   TransferenciaInventario,
@@ -21,24 +24,23 @@ export interface TransferenciasDialogData {
   transferencias: TransferenciaInventario[];
 }
 
-interface PartidaTransferencia {
-  productoId: number;
+interface PartidaTransferenciaEdicion extends PartidaTransferenciaFormulario {
   sku: string;
   producto: string;
   unidad: string;
-  cantidad: number;
+  permiteDecimales: boolean;
   disponible: number;
 }
 
 @Component({
   selector: 'app-transferencias-dialog',
-  imports: [...SHARED_IMPORTS],
+  imports: [...SHARED_IMPORTS, DecimalPipe],
   templateUrl: './transferencias-dialog.html',
   styleUrl: './transferencias-dialog.css',
 })
 export class TransferenciasDialog {
-  formulario: TransferenciaFormulario;
-  partidas: PartidaTransferencia[] = [];
+  formulario: Omit<TransferenciaFormulario, 'partidas'>;
+  partidas: PartidaTransferenciaEdicion[] = [];
   productoBusqueda = '';
   productoSeleccionadoId = 0;
   cantidadNueva = 1;
@@ -50,40 +52,83 @@ export class TransferenciasDialog {
   ) {
     const actual = data.transferencia;
     const origenId = actual?.origenId ?? data.almacenes[0]?.id ?? 0;
+    const empresaOrigen = data.almacenes.find(almacen => almacen.id === origenId)?.idEmpresa;
+    const destinoCompatible = data.almacenes.find(almacen =>
+      almacen.id !== origenId && almacen.idEmpresa === empresaOrigen);
+    const solicitanteCompatible = data.usuarios.find(usuario =>
+      usuario.idEmpresa === empresaOrigen);
     this.formulario = {
-      fecha: actual?.fecha || this.fechaLocal(),
-      productoId: actual?.productoId ?? 0,
       origenId,
-      destinoId: actual?.destinoId ?? data.almacenes.find(almacen => almacen.id !== origenId)?.id ?? 0,
-      cantidad: actual?.cantidad ?? 1,
-      usuarioId: actual?.usuarioId ?? data.usuarios[0]?.id ?? null,
-      estado: actual?.estado || (data.estados.includes('Pendiente') ? 'Pendiente' : data.estados[0] || 'Pendiente'),
-      observaciones: actual?.observaciones || '',
+      destinoId: actual?.destinoId
+        ?? destinoCompatible?.id
+        ?? 0,
+      fechaSolicitud: actual?.fechaSolicitud || this.fechaLocal(),
+      fechaAutorizacion: actual?.fechaAutorizacion || '',
+      fechaRecepcion: actual?.fechaRecepcion || '',
+      solicitanteId: actual?.solicitanteId ?? solicitanteCompatible?.id ?? null,
+      autorizadorId: actual?.autorizadorId ?? null,
+      estado: actual?.estado
+        || (data.estados.includes('Pendiente') ? 'Pendiente' : data.estados[0] || 'Pendiente'),
+      observaciones: actual?.observaciones === '—' ? '' : actual?.observaciones || '',
     };
     if (actual) {
-      this.partidas = [{
-        productoId: actual.productoId,
-        sku: actual.sku,
-        producto: actual.producto,
-        unidad: this.unidad(actual.productoId),
-        cantidad: actual.cantidad,
-        disponible: this.stockDisponible(actual.productoId),
-      }];
+      this.partidas = actual.partidas.map((partida) => ({
+        productoId: partida.productoId,
+        sku: partida.sku,
+        producto: partida.producto,
+        unidad: partida.unidad,
+        permiteDecimales: partida.permiteDecimales,
+        cantidadSolicitada: partida.cantidadSolicitada,
+        cantidadEnviada: partida.cantidadEnviada,
+        cantidadRecibida: partida.cantidadRecibida,
+        disponible: this.stockDisponible(partida.productoId),
+      }));
     }
   }
 
-  get soloLectura(): boolean { return this.data.mode === 'view'; }
+  get soloLectura(): boolean {
+    return this.data.mode === 'view';
+  }
+
   get titulo(): string {
-    if (this.data.mode === 'view') return `Transferencia ${this.data.transferencia?.folio}`;
+    if (this.soloLectura) return `Transferencia ${this.data.transferencia?.folio}`;
     return this.data.mode === 'edit' ? 'Editar transferencia' : 'Nueva transferencia';
   }
 
   get productosOrigen(): ProductoInventarioRef[] {
     const texto = this.normalizar(this.productoBusqueda);
-    return this.data.productos.filter(producto => {
+    const empresaOrigen = this.empresaOrigen;
+    return this.data.productos.filter((producto) => {
       const disponible = this.stockDisponible(producto.id);
-      return disponible > 0 && (!texto || this.normalizar(`${producto.sku} ${producto.nombre}`).includes(texto));
+      return producto.idEmpresa === empresaOrigen
+        && disponible > 0
+        && (!texto || this.normalizar(`${producto.sku} ${producto.nombre}`).includes(texto));
     });
+  }
+
+  get almacenesDestino(): AlmacenInventarioRef[] {
+    const empresaOrigen = this.empresaOrigen;
+    return this.data.almacenes.filter(
+      almacen =>
+        almacen.idEmpresa === empresaOrigen
+        && almacen.id !== Number(this.formulario.origenId),
+    );
+  }
+
+  get usuariosEmpresa(): UsuarioInventarioRef[] {
+    return this.data.usuarios.filter(usuario => usuario.idEmpresa === this.empresaOrigen);
+  }
+
+  private get empresaOrigen(): number | undefined {
+    return this.data.almacenes.find(
+      almacen => almacen.id === Number(this.formulario.origenId),
+    )?.idEmpresa;
+  }
+
+  get pasoCantidadNueva(): number {
+    return this.data.productos.find(
+      (item) => item.id === this.productoSeleccionadoId,
+    )?.permiteDecimales ? .01 : 1;
   }
 
   cambiarOrigen(): void {
@@ -91,72 +136,205 @@ export class TransferenciasDialog {
     this.productoSeleccionadoId = 0;
     this.partidas = [];
     this.error = '';
-    if (Number(this.formulario.destinoId) === Number(this.formulario.origenId)) {
-      this.formulario.destinoId = this.data.almacenes.find(almacen => almacen.id !== Number(this.formulario.origenId))?.id ?? 0;
+    this.formulario.destinoId = this.almacenesDestino[0]?.id ?? 0;
+    if (!this.usuariosEmpresa.some(usuario => usuario.id === this.formulario.solicitanteId)) {
+      this.formulario.solicitanteId = this.usuariosEmpresa[0]?.id ?? null;
+    }
+    if (!this.usuariosEmpresa.some(usuario => usuario.id === this.formulario.autorizadorId)) {
+      this.formulario.autorizadorId = null;
+      this.formulario.fechaAutorizacion = '';
     }
   }
 
   seleccionarProducto(producto: ProductoInventarioRef): void {
     this.productoSeleccionadoId = producto.id;
     this.productoBusqueda = `${producto.sku} · ${producto.nombre}`;
-    this.cantidadNueva = 1;
+    this.cantidadNueva = producto.permiteDecimales ? .01 : 1;
   }
 
   agregarPartida(): void {
-    const producto = this.data.productos.find(item => item.id === this.productoSeleccionadoId);
-    const cantidad = Math.floor(Number(this.cantidadNueva) || 0);
-    if (!producto) { this.error = 'Busca y selecciona un producto del almacén origen.'; return; }
+    const producto = this.data.productos.find(
+      (item) => item.id === this.productoSeleccionadoId,
+    );
+    if (!producto) {
+      this.error = 'Busca y selecciona un producto del almacén origen.';
+      return;
+    }
+    if (!producto.permiteDecimales && !Number.isInteger(Number(this.cantidadNueva))) {
+      this.error = `La unidad ${producto.unidad} de ${producto.nombre} sólo acepta cantidades enteras.`;
+      return;
+    }
+    const cantidad = this.ajustarCantidad(this.cantidadNueva, producto.permiteDecimales);
     const disponible = this.stockDisponible(producto.id);
-    const existente = this.partidas.find(partida => partida.productoId === producto.id);
-    const total = cantidad + (existente?.cantidad || 0);
-    if (cantidad <= 0) { this.error = 'La cantidad debe ser mayor que cero.'; return; }
-    if (total > disponible) { this.error = `Solo hay ${disponible} ${producto.unidad} disponibles de ${producto.nombre}.`; return; }
-    if (existente) existente.cantidad = total;
-    else this.partidas.push({ productoId: producto.id, sku: producto.sku, producto: producto.nombre, unidad: producto.unidad, cantidad, disponible });
+    const existente = this.partidas.find((partida) => partida.productoId === producto.id);
+    const total = cantidad + (existente?.cantidadSolicitada || 0);
+    if (cantidad <= 0) {
+      this.error = 'La cantidad debe ser mayor que cero.';
+      return;
+    }
+    if (total > disponible) {
+      this.error = `Solo hay ${disponible} ${producto.unidad} disponibles de ${producto.nombre}.`;
+      return;
+    }
+    if (existente) {
+      existente.cantidadSolicitada = total;
+    } else {
+      this.partidas.push({
+        productoId: producto.id,
+        sku: producto.sku,
+        producto: producto.nombre,
+        unidad: producto.unidad,
+        permiteDecimales: producto.permiteDecimales,
+        cantidadSolicitada: cantidad,
+        cantidadEnviada: 0,
+        cantidadRecibida: 0,
+        disponible,
+      });
+    }
     this.productoBusqueda = '';
     this.productoSeleccionadoId = 0;
     this.cantidadNueva = 1;
     this.error = '';
   }
 
-  actualizarCantidad(partida: PartidaTransferencia): void {
-    partida.cantidad = Math.max(1, Math.floor(Number(partida.cantidad) || 1));
-    if (partida.cantidad > partida.disponible) {
-      partida.cantidad = partida.disponible;
+  actualizarPartida(partida: PartidaTransferenciaEdicion): void {
+    const cantidadesCapturadas = [
+      Number(partida.cantidadSolicitada),
+      Number(partida.cantidadEnviada),
+      Number(partida.cantidadRecibida),
+    ];
+    if (!partida.permiteDecimales
+      && cantidadesCapturadas.some(cantidad => !Number.isInteger(cantidad))) {
+      this.error = `La unidad ${partida.unidad} de ${partida.producto} sólo acepta cantidades enteras.`;
+      return;
+    }
+    partida.cantidadSolicitada = this.ajustarCantidad(
+      partida.cantidadSolicitada,
+      partida.permiteDecimales,
+    );
+    partida.cantidadEnviada = this.ajustarCantidad(
+      partida.cantidadEnviada,
+      partida.permiteDecimales,
+    );
+    partida.cantidadRecibida = this.ajustarCantidad(
+      partida.cantidadRecibida,
+      partida.permiteDecimales,
+    );
+    const comprometida = partida.cantidadEnviada > 0
+      ? partida.cantidadEnviada
+      : partida.cantidadSolicitada;
+    if (partida.cantidadSolicitada <= 0) {
+      this.error = `La cantidad solicitada de ${partida.producto} debe ser mayor que cero.`;
+    } else if (partida.cantidadEnviada < 0 || partida.cantidadEnviada > partida.cantidadSolicitada) {
+      this.error = `La cantidad enviada de ${partida.producto} no puede superar la solicitada.`;
+    } else if (partida.cantidadRecibida < 0 || partida.cantidadRecibida > partida.cantidadEnviada) {
+      this.error = `La cantidad recibida de ${partida.producto} no puede superar la enviada.`;
+    } else if (comprometida > partida.disponible) {
       this.error = `Solo hay ${partida.disponible} ${partida.unidad} disponibles de ${partida.producto}.`;
-    } else this.error = '';
+    } else {
+      this.error = '';
+    }
   }
 
-  quitarPartida(indice: number): void { this.partidas.splice(indice, 1); }
+  quitarPartida(indice: number): void {
+    this.partidas.splice(indice, 1);
+  }
 
   stockDisponible(productoId: number): number {
-    const stock = this.data.existencias
-      .filter(item => item.productoId === productoId && item.almacenId === Number(this.formulario.origenId))
-      .reduce((total, item) => total + item.stock, 0);
+    const stock = this.data.existencias.find(
+      (item) => item.productoId === productoId
+        && item.almacenId === Number(this.formulario.origenId),
+    )?.stock ?? 0;
     const reservado = this.data.transferencias
-      .filter(item => item.id !== this.data.transferencia?.id && item.productoId === productoId
-        && item.origenId === Number(this.formulario.origenId) && !this.esEstadoFinal(item.estado))
-      .reduce((total, item) => total + item.cantidad, 0);
+      .filter((item) => item.id !== this.data.transferencia?.id
+        && item.origenId === Number(this.formulario.origenId)
+        && comprometeStockTransferencia(item.estado))
+      .flatMap((item) => item.partidas)
+      .filter((item) => item.productoId === productoId)
+      .reduce((total, item) => {
+        const comprometida = item.cantidadEnviada > 0
+          ? item.cantidadEnviada
+          : item.cantidadSolicitada;
+        return total + Math.max(0, comprometida - item.cantidadRecibida);
+      }, 0);
     return Math.max(0, stock - reservado);
+  }
+
+  paso(partida: PartidaTransferenciaEdicion): number {
+    return partida.permiteDecimales ? .01 : 1;
   }
 
   guardar(): void {
     this.error = '';
-    if (!this.formulario.origenId || !this.formulario.destinoId || !this.formulario.fecha) { this.error = 'Completa los almacenes y la fecha.'; return; }
-    if (Number(this.formulario.origenId) === Number(this.formulario.destinoId)) { this.error = 'El almacén origen y destino deben ser diferentes.'; return; }
-    if (!this.partidas.length) { this.error = 'Agrega al menos un producto a la transferencia.'; return; }
-    const invalida = this.partidas.find(partida => partida.cantidad <= 0 || partida.cantidad > this.stockDisponible(partida.productoId));
-    if (invalida) { this.error = `Revisa la cantidad de ${invalida.producto}; hay ${this.stockDisponible(invalida.productoId)} disponibles.`; return; }
-    const formularios = this.partidas.map(partida => ({
+    if (!this.formulario.origenId || !this.formulario.destinoId || !this.formulario.fechaSolicitud) {
+      this.error = 'Completa los almacenes y la fecha de solicitud.';
+      return;
+    }
+    if (Number(this.formulario.origenId) === Number(this.formulario.destinoId)) {
+      this.error = 'El almacén origen y destino deben ser diferentes.';
+      return;
+    }
+    if (!this.almacenesDestino.some(
+      almacen => almacen.id === Number(this.formulario.destinoId),
+    )) {
+      this.error = 'Los almacenes deben pertenecer a la misma empresa.';
+      return;
+    }
+    if (this.formulario.solicitanteId == null) {
+      this.error = 'Selecciona al solicitante de la transferencia.';
+      return;
+    }
+    if ((this.formulario.fechaAutorizacion && this.formulario.autorizadorId == null)
+      || (!this.formulario.fechaAutorizacion && this.formulario.autorizadorId != null)) {
+      this.error = 'La fecha y el autorizador deben capturarse juntos.';
+      return;
+    }
+    if (this.formulario.fechaAutorizacion
+      && this.formulario.fechaAutorizacion < this.formulario.fechaSolicitud) {
+      this.error = 'La autorización no puede ser anterior a la solicitud.';
+      return;
+    }
+    if (this.formulario.fechaRecepcion
+      && this.formulario.fechaRecepcion
+        < (this.formulario.fechaAutorizacion || this.formulario.fechaSolicitud)) {
+      this.error = 'La recepción no puede ser anterior a la solicitud o autorización.';
+      return;
+    }
+    if (!this.partidas.length) {
+      this.error = 'Agrega al menos un producto a la transferencia.';
+      return;
+    }
+    for (const partida of this.partidas) {
+      this.actualizarPartida(partida);
+      if (this.error) return;
+    }
+    this.dialogRef.close({
       ...this.formulario,
-      productoId: partida.productoId,
-      cantidad: partida.cantidad,
-    }));
-    this.dialogRef.close(this.data.mode === 'add' ? formularios : formularios[0]);
+      fechaSolicitud: this.formulario.fechaSolicitud.slice(0, 10),
+      fechaAutorizacion: this.formulario.fechaAutorizacion.slice(0, 10),
+      fechaRecepcion: this.formulario.fechaRecepcion.slice(0, 10),
+      partidas: this.partidas.map((partida) => ({
+        productoId: partida.productoId,
+        cantidadSolicitada: partida.cantidadSolicitada,
+        cantidadEnviada: partida.cantidadEnviada,
+        cantidadRecibida: partida.cantidadRecibida,
+      })),
+    } satisfies TransferenciaFormulario);
   }
 
-  private unidad(productoId: number): string { return this.data.productos.find(producto => producto.id === productoId)?.unidad || 'unidades'; }
-  private fechaLocal(): string { const fecha = new Date(); fecha.setMinutes(fecha.getMinutes() - fecha.getTimezoneOffset()); return fecha.toISOString().slice(0, 16); }
-  private esEstadoFinal(estado: string): boolean { return ['recibida', 'cancelada', 'cerrada', 'devuelta'].includes(this.normalizar(estado)); }
-  private normalizar(valor: string): string { return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+  private ajustarCantidad(valor: number, permiteDecimales: boolean): number {
+    const numero = Number(valor);
+    if (!Number.isFinite(numero)) return 0;
+    return permiteDecimales ? Math.round(numero * 100) / 100 : Math.round(numero);
+  }
+
+  private fechaLocal(): string {
+    const fecha = new Date();
+    fecha.setMinutes(fecha.getMinutes() - fecha.getTimezoneOffset());
+    return fecha.toISOString().slice(0, 10);
+  }
+
+  private normalizar(valor: string): string {
+    return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
 }
