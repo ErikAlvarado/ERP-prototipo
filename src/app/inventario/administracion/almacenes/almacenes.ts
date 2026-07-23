@@ -6,7 +6,9 @@ import { MatTableDataSource } from '@angular/material/table';
 import { Observable } from 'rxjs';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
-import { AdministracionDatos, AlmacenAdministracion, EmpresaAdministracion } from '../administracion-datos';
+import {
+  AdministracionDatos, AlmacenAdministracion, EmpresaAdministracion, UsuarioAdministracion,
+} from '../administracion-datos';
 import { FiltrosAdministracionDialog, ValorFiltroAdministracion } from '../filtros-administracion-dialog/filtros-administracion-dialog';
 import { AlmacenesDialog } from './dialogs/almacenes-dialog/almacenes-dialog';
 
@@ -17,10 +19,11 @@ import { AlmacenesDialog } from './dialogs/almacenes-dialog/almacenes-dialog';
   styleUrls: ['../administracion-listas.css'],
 })
 export class Almacenes implements OnInit, AfterViewInit {
-  displayedColumns = ['clave', 'nombre', 'empresa', 'direccion', 'principal', 'estado', 'acciones'];
+  displayedColumns = ['id', 'nombre', 'empresa', 'direccion', 'principal', 'estado', 'acciones'];
   dataSource = new MatTableDataSource<AlmacenAdministracion>([]);
   obs!: Observable<AlmacenAdministracion[]>;
   empresas: EmpresaAdministracion[] = [];
+  usuarios: UsuarioAdministracion[] = [];
   currentSearch = '';
   currentEmpresa = '';
   currentStatus: boolean | null = null;
@@ -42,6 +45,7 @@ export class Almacenes implements OnInit, AfterViewInit {
     this.obs = this.dataSource.connect();
     this.datos.cargar().subscribe(estado => {
       this.empresas = estado.empresas;
+      this.usuarios = estado.usuarios;
       this.dataSource.data = [...estado.almacenes].sort((a, b) => Number(a.id) - Number(b.id));
       this.applyFilter();
     });
@@ -72,7 +76,7 @@ export class Almacenes implements OnInit, AfterViewInit {
         filtros: { empresa: this.currentEmpresa, principal: this.currentPrincipal, estado: this.currentStatus },
         campos: [
           { clave: 'empresa', etiqueta: 'Empresa', icono: 'business', valorVacio: '', opciones: this.empresas.map(empresa => ({ valor: empresa.id, etiqueta: empresa.nombre })) },
-          { clave: 'principal', etiqueta: 'Tipo de almacén', icono: 'star', valorVacio: null, opciones: [{ valor: true, etiqueta: 'Principal' }, { valor: false, etiqueta: 'Secundario' }] },
+          { clave: 'principal', etiqueta: 'Principal', icono: 'star', valorVacio: null, opciones: [{ valor: true, etiqueta: 'Sí' }, { valor: false, etiqueta: 'No' }] },
           { clave: 'estado', etiqueta: 'Estado', icono: 'toggle_on', valorVacio: null, opciones: [{ valor: true, etiqueta: 'Activos' }, { valor: false, etiqueta: 'Inactivos' }] },
         ],
       },
@@ -87,7 +91,9 @@ export class Almacenes implements OnInit, AfterViewInit {
 
   abrirDialogo(): void {
     this.dialog.open(AlmacenesDialog, {
-      width: '650px', panelClass: 'custom-dialog', data: { mode: 'add', empresas: this.empresas },
+      width: '650px', panelClass: 'custom-dialog', data: {
+        mode: 'add', empresas: this.empresas.filter(empresa => empresa.estado), almacenes: this.dataSource.data,
+      },
     }).afterClosed().subscribe((resultado?: AlmacenAdministracion) => {
       if (!resultado) return;
       const fecha = new Date().toISOString().slice(0, 10);
@@ -97,23 +103,33 @@ export class Almacenes implements OnInit, AfterViewInit {
 
   editar(almacen: AlmacenAdministracion): void {
     this.dialog.open(AlmacenesDialog, {
-      width: '650px', panelClass: 'custom-dialog', data: { mode: 'edit', almacen, empresas: this.empresas },
+      width: '650px', panelClass: 'custom-dialog', data: {
+        mode: 'edit', almacen, empresas: this.empresas, almacenes: this.dataSource.data,
+      },
     }).afterClosed().subscribe((resultado?: AlmacenAdministracion) => {
       if (!resultado) return;
       const actualizado = { ...resultado, id: almacen.id, fechaCreacion: almacen.fechaCreacion, fechaActualizacion: new Date().toISOString().slice(0, 10) };
-      this.guardar(this.dataSource.data.map(actual => actual.id === almacen.id ? actualizado : actual));
+      this.guardar(this.aplicarPrincipalUnico(actualizado,
+        this.dataSource.data.map(actual => actual.id === almacen.id ? actualizado : actual)));
     });
   }
 
-  eliminar(almacen: AlmacenAdministracion): void {
+  desactivar(almacen: AlmacenAdministracion): void {
+    if (!almacen.estado) return;
+    const usuariosAsignados = this.usuarios.filter(usuario => usuario.almacenId === almacen.id).length;
     this.dialog.open(ConfirmDialog, {
       width: '400px', data: {
-        title: 'Eliminar almacén',
-        message: `¿Deseas eliminar "${almacen.nombre}"? Los usuarios vinculados quedarán sin almacén predeterminado.`,
-        confirmText: 'Eliminar', cancelText: 'Cancelar',
+        title: 'Desactivar almacén',
+        message: usuariosAsignados
+          ? `Se desactivará “${almacen.nombre}” y se quitará como almacén predeterminado de ${usuariosAsignados} usuario(s).`
+          : `¿Deseas desactivar “${almacen.nombre}”?`,
+        confirmText: 'Desactivar', cancelText: 'Cancelar',
       },
     }).afterClosed().subscribe(confirmado => {
-      if (confirmado) this.guardar(this.dataSource.data.filter(actual => actual.id !== almacen.id));
+      if (confirmado) {
+        this.guardar(this.dataSource.data.map(actual =>
+          actual.id === almacen.id ? { ...actual, estado: false, principal: false } : actual));
+      }
     });
   }
 
@@ -128,5 +144,16 @@ export class Almacenes implements OnInit, AfterViewInit {
   private guardar(almacenes: AlmacenAdministracion[]): void {
     this.datos.guardarAlmacenes(almacenes);
     this.applyFilter();
+  }
+
+  private aplicarPrincipalUnico(
+    seleccionado: AlmacenAdministracion,
+    almacenes: AlmacenAdministracion[],
+  ): AlmacenAdministracion[] {
+    if (!seleccionado.principal || !seleccionado.estado) return almacenes;
+    return almacenes.map(almacen =>
+      almacen.id !== seleccionado.id && almacen.empresaId === seleccionado.empresaId && almacen.principal
+        ? { ...almacen, principal: false }
+        : almacen);
   }
 }

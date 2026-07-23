@@ -17,14 +17,14 @@ export const product_catalogRoutes: Routes = [
             import('./kits/kits').then(c => c.Kits)
     },
     {
+        path: 'precios',
+        loadComponent: () =>
+            import('./precios/precios').then(c => c.Precios)
+    },
+    {
         path: 'marcas',
         loadComponent: () =>
             import('./marcas/marcas').then(c => c.Marcas)
-    },
-    {
-        path: 'medidas',
-        loadComponent: () =>
-            import('./medidas/medidas').then(c => c.Medidas)
     },
     {
         path: 'categorias',

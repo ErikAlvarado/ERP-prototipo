@@ -2,6 +2,29 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.5.
 
+## Datos del prototipo
+
+La fuente de datos se encuentra en `public/assets/db/*.txt`. Los archivos usan
+columnas separadas por `|`.
+
+Para volver a aplicar de forma idempotente la migración que retira
+lotes/caducidades, inicializa el inventario y corrige las relaciones de muestra:
+
+```bash
+npm run migrate:data
+```
+
+Para comprobar encabezados, claves, relaciones, inventario, Kardex, precios,
+kits, transferencias y configuración multiempresa:
+
+```bash
+npm run validate:data
+```
+
+El acceso actual es sólo para demostración: permite seleccionar un perfil activo
+sin solicitar contraseña. Una implementación productiva necesita autenticación y
+autorización en backend.
+
 ## Development server
 
 To start a local development server, run:

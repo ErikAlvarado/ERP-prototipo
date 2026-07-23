@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 
+import { GestionInventario } from '../gestion-inventario';
 import { Existencias } from './existencias';
 
 describe('Existencias', () => {
@@ -9,6 +12,24 @@ describe('Existencias', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Existencias],
+      providers: [
+        provideRouter([]),
+        {
+          provide: GestionInventario,
+          useValue: {
+            cargar: () => of({
+              productos: [],
+              almacenes: [],
+              usuarios: [],
+              estadosTransferencia: [],
+              existencias: [],
+              movimientos: [],
+              ajustes: [],
+              transferencias: [],
+            }),
+          },
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Existencias);

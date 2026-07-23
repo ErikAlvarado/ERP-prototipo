@@ -5,15 +5,15 @@
       <mat-form-field appearance="outline" class="full-width"><mat-label>Nombre del producto</mat-label><input matInput [(ngModel)]="producto.producto" maxlength="160" required><mat-icon matPrefix>inventory_2</mat-icon></mat-form-field>
       <mat-form-field appearance="outline"><mat-label>SKU</mat-label><input matInput [(ngModel)]="producto.sku" maxlength="60" required><mat-icon matPrefix>qr_code</mat-icon></mat-form-field>
       <mat-form-field appearance="outline"><mat-label>Código de barras</mat-label><input matInput [(ngModel)]="producto.codigo" maxlength="80"><mat-icon matPrefix>barcode</mat-icon></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Empresa</mat-label><mat-select [(ngModel)]="producto.idEmpresa" (selectionChange)="cambiarEmpresa($event.value)">@for (opcion of data.opciones.empresas; track opcion.id) { <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option> }</mat-select><mat-icon matPrefix>business</mat-icon></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Empresa</mat-label><mat-select [(ngModel)]="producto.idEmpresa" (selectionChange)="cambiarEmpresa($event.value)" [disabled]="data.mode === 'edit'">@for (opcion of data.opciones.empresas; track opcion.id) { <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option> }</mat-select><mat-icon matPrefix>business</mat-icon></mat-form-field>
       <mat-form-field appearance="outline"><mat-label>Tipo</mat-label><mat-select [(ngModel)]="producto.tipo">@for (tipo of tiposDisponibles; track tipo) { <mat-option [value]="tipo">{{ tipo }}</mat-option> }</mat-select><mat-icon matPrefix>category</mat-icon></mat-form-field>
       <mat-form-field appearance="outline" class="full-width"><mat-label>Descripción</mat-label><textarea matInput [(ngModel)]="producto.descripcion" rows="3"></textarea><mat-icon matPrefix>description</mat-icon></mat-form-field>
     </div></section>
 
     <section class="form-section"><h3>Clasificación</h3><div class="form-grid three-columns">
-      <mat-form-field appearance="outline"><mat-label>Marca</mat-label><mat-select [(ngModel)]="producto.idMarca" (selectionChange)="cambiarMarca($event.value)">@for (opcion of data.opciones.marcas; track opcion.id) { <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option> }</mat-select></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Categoría</mat-label><mat-select [(ngModel)]="producto.idCategoria" (selectionChange)="cambiarCategoria($event.value)">@for (opcion of data.opciones.categorias; track opcion.id) { <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option> }</mat-select></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Unidad</mat-label><mat-select [(ngModel)]="producto.idUnidad" (selectionChange)="cambiarUnidad($event.value)">@for (opcion of data.opciones.unidades; track opcion.id) { <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option> }</mat-select></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Marca</mat-label><mat-select [(ngModel)]="producto.idMarca" (selectionChange)="cambiarMarca($event.value)">@for (opcion of marcasDisponibles; track opcion.id) { <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option> }</mat-select></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Categoría</mat-label><mat-select [(ngModel)]="producto.idCategoria" (selectionChange)="cambiarCategoria($event.value)">@for (opcion of categoriasDisponibles; track opcion.id) { <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option> }</mat-select></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Unidad</mat-label><mat-select [(ngModel)]="producto.idUnidad" (selectionChange)="cambiarUnidad($event.value)">@for (opcion of unidadesDisponibles; track opcion.id) { <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option> }</mat-select></mat-form-field>
     </div></section>
 
     <section class="form-section"><h3>Ubicación, estatus y datos fiscales</h3><div class="form-grid three-columns">
@@ -23,14 +23,59 @@
     </div></section>
 
     <section class="form-section"><h3>Configuración</h3><div class="checkbox-grid">
-      <mat-checkbox [(ngModel)]="producto.pos">Punto de venta</mat-checkbox><mat-checkbox [(ngModel)]="producto.linea">Catálogo en línea</mat-checkbox><mat-checkbox [(ngModel)]="producto.requiereReceta">Requiere receta</mat-checkbox><mat-checkbox [(ngModel)]="producto.usarExistencias">Controlar existencias</mat-checkbox><mat-checkbox [(ngModel)]="producto.usarLotes">Usar lotes y caducidades</mat-checkbox>
+      <mat-checkbox [(ngModel)]="producto.pos">Punto de venta</mat-checkbox><mat-checkbox [(ngModel)]="producto.linea">Catálogo en línea</mat-checkbox><mat-checkbox [(ngModel)]="producto.requiereReceta">Requiere receta</mat-checkbox><mat-checkbox [(ngModel)]="producto.usarExistencias" (change)="cambiarControlExistencias($event.checked)">Controlar existencias</mat-checkbox>
     </div></section>
 
-    <section class="form-section related-section"><div class="section-title-row"><h3>Precio relacionado</h3><small>productos_precios.txt</small></div><div class="form-grid three-columns">
-      <mat-form-field appearance="outline"><mat-label>Precio de venta</mat-label><span matTextPrefix>$&nbsp;</span><input matInput type="number" min="0" step="0.01" [(ngModel)]="producto.precio"></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Costo</mat-label><span matTextPrefix>$&nbsp;</span><input matInput type="number" min="0" step="0.01" [(ngModel)]="producto.costo"></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Margen actual</mat-label><input matInput [value]="producto.margen + '%'" readonly></mat-form-field>
-    </div></section>
+    @if (debeCapturarInventarioInicial) {
+      <section class="form-section">
+        <div class="section-title-row">
+          <h3>Inventario inicial</h3>
+          <small>Obligatorio para productos con control de existencias</small>
+        </div>
+        @if (inventarioInicial) {
+          <div class="form-grid three-columns">
+            <mat-form-field appearance="outline">
+              <mat-label>Almacén</mat-label>
+              <mat-select [(ngModel)]="inventarioInicial.idAlmacen" (selectionChange)="cambiarAlmacenInicial($event.value)">
+                @for (almacen of almacenesDisponibles; track almacen.id) {
+                  <mat-option [value]="almacen.id">{{ almacen.nombre }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Stock inicial</mat-label>
+              <input matInput type="number" min="0.01" [(ngModel)]="inventarioInicial.stock">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Anaquel</mat-label>
+              <input matInput [(ngModel)]="inventarioInicial.anaquel" maxlength="80">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Stock crítico</mat-label>
+              <input matInput type="number" min="0" [(ngModel)]="inventarioInicial.stockCritico">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Punto de reorden</mat-label>
+              <input matInput type="number" min="0" [(ngModel)]="inventarioInicial.stockReorden">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Stock máximo</mat-label>
+              <input matInput type="number" min="0.01" [(ngModel)]="inventarioInicial.stockMaximo">
+            </mat-form-field>
+          </div>
+        } @else {
+          <p class="form-error" role="alert">
+            <mat-icon>warehouse</mat-icon>
+            Esta empresa no tiene un almacén activo. Activa o crea uno antes de guardar el producto.
+          </p>
+        }
+      </section>
+    }
+
+    <section class="form-section related-section">
+      <div class="section-title-row"><h3>Precios por lista</h3><small>{{ producto.precios.length }} registro(s)</small></div>
+      <p class="related-help">Los costos, precios de venta y vigencias se administran desde la pantalla Precios. Así se conserva la relación de varias listas por producto.</p>
+    </section>
     @if (data.mode === 'edit') { <div class="audit-row"><span>ID: {{ producto.id }}</span><span>Creado: {{ producto.fechaCreacion || 'Sin fecha' }}</span><span>Actualizado: {{ producto.fechaActualizacion || 'Sin fecha' }}</span></div> }
     @if (error) { <p class="form-error" role="alert"><mat-icon>error_outline</mat-icon>{{ error }}</p> }
   </mat-dialog-content>

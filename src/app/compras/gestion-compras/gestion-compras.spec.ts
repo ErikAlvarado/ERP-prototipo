@@ -35,7 +35,9 @@ describe('GestionCompras', () => {
   });
 
   it('debe buscar compras por proveedor', () => {
+    component.periodoOrdenes.set('anio');
     component.buscarOrden('materiales del norte');
+
     expect(component.ordenesFiltradas().map((orden) => orden.folio)).toEqual(['OC-2025-0089']);
   });
 });

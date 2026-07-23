@@ -7,7 +7,7 @@
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Empresa</mat-label>
-      <mat-select [(ngModel)]="categoria.idEmpresa" (selectionChange)="cambiarEmpresa()" required>
+      <mat-select [(ngModel)]="categoria.idEmpresa" (selectionChange)="cambiarEmpresa()" [disabled]="data.mode === 'edit'" required>
         @for (empresa of data.empresas; track empresa.id) {
           <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option>
         }

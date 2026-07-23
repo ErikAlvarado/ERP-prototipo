@@ -1,132 +1,253 @@
+import { DecimalPipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { combineLatest } from 'rxjs';
 import { SHARED_IMPORTS } from '../../shared/imports/shared-imports';
-import { DatosDb } from '../../shared/services/datos-db';
-import { ContextoInventario, GestionInventario } from '../inventario/gestion-inventario';
+import {
+  CatalogoProductos,
+  ProductoCatalogo,
+} from '../../shared/services/catalogo-productos';
+import {
+  ContextoInventario,
+  GestionInventario,
+} from '../inventario/gestion-inventario';
 
-interface PrecioDb {
-  id_producto: string;
-  precio_costo: string;
-  precio_venta: string;
-  fecha_inicio: string;
+interface ProductoStock {
+  id: number;
+  sku: string;
+  name: string;
+  stock: number;
+  unidad: string;
 }
 
-interface ProductoResumen { name: string; stock: number; }
+interface MovimientoResumen {
+  id: string;
+  productoId: number;
+  name: string;
+  type: string;
+  qty: string;
+  fecha: string;
+}
 
 @Component({
   selector: 'app-dashboard',
-  imports: [...SHARED_IMPORTS],
+  imports: [...SHARED_IMPORTS, DecimalPipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
 export class Dashboard implements OnInit {
-  stockProducts: ProductoResumen[] = [];
-  recentMovements: Array<{ name: string; type: string; qty: string }> = [];
-  inventoryValue = { totalValue: '$0.00', totalCost: '$0.00', margin: '$0.00' };
-  reorderProducts: Array<{ name: string; duration: string; tone: string }> = [];
-  expiringProducts: Array<{ name: string; expiration: string }> = [];
-  reservedProducts: Array<{ name: string; reservedQty: number }> = [];
-  loading = true;
+  stockProducts: ProductoStock[] = [];
+  recentMovements: MovimientoResumen[] = [];
+  reorderProducts: Array<{
+    id: number;
+    name: string;
+    almacen: string;
+    stock: string;
+    tone: string;
+  }> = [];
+  outOfStockProducts: Array<{
+    id: number;
+    name: string;
+    sku: string;
+    status: string;
+  }> = [];
+  reservedProducts: Array<{
+    id: number;
+    name: string;
+    reservedQty: number;
+    unidad: string;
+  }> = [];
+  inventoryValue = {
+    totalValue: '$0.00',
+    totalCost: '$0.00',
+    margin: '$0.00',
+    marginPercent: '0%',
+  };
+  error = '';
 
-  constructor(private gestionInventario: GestionInventario, private db: DatosDb) {}
+  constructor(
+    private gestion: GestionInventario,
+    private catalogo: CatalogoProductos,
+  ) {}
 
   ngOnInit(): void {
-    forkJoin({
-      contexto: this.gestionInventario.cargar(),
-      precios: this.db.leer<PrecioDb>('productos_precios.txt'),
-    }).subscribe(({ contexto, precios }) => {
-      this.construirResumen(contexto, precios);
-      this.loading = false;
+    this.cargar();
+  }
+
+  cargar(): void {
+    this.error = '';
+    combineLatest({
+      contexto: this.gestion.cargar(),
+      productosCatalogo: this.catalogo.cargar(),
+    }).subscribe({
+      next: ({ contexto, productosCatalogo }) =>
+        this.construir(contexto, productosCatalogo),
+      error: () => this.error = 'No fue posible leer los archivos de la base de datos del inventario.',
     });
   }
 
-  private construirResumen(contexto: ContextoInventario, precios: PrecioDb[]): void {
-    const stockPorProducto = new Map<number, number>();
-    for (const item of contexto.existencias) {
-      stockPorProducto.set(item.productoId, (stockPorProducto.get(item.productoId) ?? 0) + item.stock);
+  private construir(
+    contexto: ContextoInventario,
+    productosCatalogo: ProductoCatalogo[],
+  ): void {
+    if (!contexto.productos.length) {
+      this.error = 'No se encontraron productos registrados.';
+      return;
+    }
+    const productos = new Map(contexto.productos.map((producto) => [producto.id, producto]));
+    const stock = new Map<number, number>();
+    for (const existencia of contexto.existencias) {
+      stock.set(
+        existencia.productoId,
+        (stock.get(existencia.productoId) || 0) + existencia.stock,
+      );
     }
 
     this.stockProducts = contexto.productos
-      .filter((producto) => stockPorProducto.has(producto.id))
-      .map((producto) => ({ name: producto.nombre, stock: stockPorProducto.get(producto.id) ?? 0 }))
+      .map((producto) => ({
+        id: producto.id,
+        sku: producto.sku,
+        name: producto.nombre,
+        stock: stock.get(producto.id) || 0,
+        unidad: producto.unidad,
+      }))
+      .filter((producto) => producto.stock > 0)
       .sort((a, b) => b.stock - a.stock)
-      .slice(0, 4);
+      .slice(0, 5);
 
-    this.recentMovements = contexto.movimientos.slice(0, 4).map((item) => ({
-      name: item.producto,
-      type: item.cantidad >= 0 ? 'Entrada' : 'Salida',
-      qty: `${item.cantidad >= 0 ? '+' : ''}${this.formatearCantidad(item.cantidad)}`,
-    }));
+    this.recentMovements = [...contexto.movimientos]
+      .sort((a, b) =>
+        this.fechaMs(b.fecha) - this.fechaMs(a.fecha) || this.numeroId(b.id) - this.numeroId(a.id))
+      .slice(0, 5)
+      .map((movimiento) => ({
+        id: movimiento.id,
+        productoId: movimiento.productoId,
+        name: movimiento.producto,
+        type: movimiento.tipo,
+        qty: `${movimiento.cantidad >= 0 ? '+' : ''}${this.cantidad(movimiento.cantidad)}`,
+        fecha: this.formatearFecha(movimiento.fecha),
+      }));
 
-    const preciosActuales = this.preciosActuales(precios);
-    let totalValue = 0;
-    let totalCost = 0;
-    for (const [productoId, stock] of stockPorProducto) {
-      const precio = preciosActuales.get(productoId);
-      totalValue += stock * (Number(precio?.precio_venta) || 0);
-      totalCost += stock * (Number(precio?.precio_costo) || 0);
+    const precios = new Map(
+      productosCatalogo
+        .filter(producto => producto.estado)
+        .map(producto => [producto.id, { venta: producto.precio, costo: producto.costo }]),
+    );
+    let venta = 0;
+    let costo = 0;
+    for (const producto of contexto.productos) {
+      const existencia = stock.get(producto.id) || 0;
+      const precio = precios.get(producto.id);
+      venta += existencia * this.numero(precio?.venta);
+      costo += existencia * this.numero(precio?.costo);
     }
+    const utilidad = venta - costo;
     this.inventoryValue = {
-      totalValue: this.moneda(totalValue),
-      totalCost: this.moneda(totalCost),
-      margin: this.moneda(totalValue - totalCost),
+      totalValue: this.moneda(venta),
+      totalCost: this.moneda(costo),
+      margin: this.moneda(utilidad),
+      marginPercent: costo ? `${((utilidad / costo) * 100).toFixed(1)}%` : '0%',
     };
 
     this.reorderProducts = contexto.existencias
-      .filter((item) => item.reorden > 0 && item.stock <= item.reorden)
-      .sort((a, b) => (a.stock / a.reorden) - (b.stock / b.reorden))
-      .slice(0, 4)
-      .map((item) => ({
-        name: item.producto,
-        duration: item.stock <= 0 ? 'Agotado' : `${this.formatearCantidad(item.stock)} / ${this.formatearCantidad(item.reorden)} uds`,
-        tone: item.stock <= item.critico ? 'danger' : 'warning',
+      .filter((existencia) =>
+        existencia.inicializada
+        && existencia.reorden > 0
+        && existencia.stock <= existencia.reorden)
+      .sort((a, b) =>
+        (a.stock / Math.max(a.reorden, 1)) - (b.stock / Math.max(b.reorden, 1)))
+      .slice(0, 5)
+      .map((existencia) => ({
+        id: existencia.productoId,
+        name: existencia.producto,
+        almacen: existencia.almacen,
+        stock: `${this.cantidad(existencia.stock)} / ${this.cantidad(existencia.reorden)} ${existencia.unidad}`,
+        tone: existencia.stock <= existencia.critico ? 'danger' : 'warning',
       }));
 
-    const hoy = new Date();
-    const limite = new Date(hoy);
-    limite.setDate(limite.getDate() + 90);
-    this.expiringProducts = contexto.existencias
-      .map((item) => ({ item, fecha: this.fechaValida(item.caducidad) }))
-      .filter(({ fecha }) => fecha !== null && fecha >= hoy && fecha <= limite)
-      .sort((a, b) => a.fecha!.getTime() - b.fecha!.getTime())
-      .slice(0, 4)
-      .map(({ item, fecha }) => ({ name: item.producto, expiration: this.fecha(fecha!) }));
+    this.outOfStockProducts = contexto.productos
+      .filter((producto) => (stock.get(producto.id) || 0) <= 0)
+      .map((producto) => {
+        const existencias = contexto.existencias.filter(
+          (item) => item.productoId === producto.id,
+        );
+        return {
+          id: producto.id,
+          name: producto.nombre,
+          sku: producto.sku,
+          status: existencias.some((item) => item.inicializada) ? 'Agotado' : 'Sin inicializar',
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, 5);
 
-    const apartados = new Map<string, number>();
-    for (const transferencia of contexto.transferencias.filter((item) => item.estado !== 'Recibida' && item.estado !== 'Cancelada')) {
-      apartados.set(transferencia.producto, (apartados.get(transferencia.producto) ?? 0) + transferencia.cantidad);
+    const comprometido = new Map<number, number>();
+    for (const transferencia of contexto.transferencias.filter(
+      (item) => this.gestion.comprometeStockTransferencia(item.estado),
+    )) {
+      for (const partida of transferencia.partidas) {
+        const cantidad = this.gestion.cantidadComprometida(partida);
+        comprometido.set(
+          partida.productoId,
+          (comprometido.get(partida.productoId) || 0) + cantidad,
+        );
+      }
     }
-    this.reservedProducts = [...apartados]
-      .map(([name, reservedQty]) => ({ name, reservedQty }))
+    this.reservedProducts = [...comprometido]
+      .map(([id, reservedQty]) => {
+        const producto = productos.get(id);
+        return {
+          id,
+          name: producto?.nombre || `Producto #${id}`,
+          reservedQty,
+          unidad: producto?.unidad || 'uds',
+        };
+      })
+      .filter((item) => item.reservedQty > 0)
       .sort((a, b) => b.reservedQty - a.reservedQty)
-      .slice(0, 4);
+      .slice(0, 5);
   }
 
-  private preciosActuales(precios: PrecioDb[]): Map<number, PrecioDb> {
-    const resultado = new Map<number, PrecioDb>();
-    for (const precio of precios) {
-      const id = Number(precio.id_producto);
-      const actual = resultado.get(id);
-      if (!actual || precio.fecha_inicio >= actual.fecha_inicio) resultado.set(id, precio);
-    }
-    return resultado;
+  private numero(valor: string | number | undefined): number {
+    const numero = Number(valor);
+    return Number.isFinite(numero) ? numero : 0;
   }
 
-  private fechaValida(valor: string): Date | null {
-    if (!valor || valor === '—' || valor.includes('â€')) return null;
-    const fecha = new Date(`${valor.slice(0, 10)}T00:00:00`);
-    return Number.isNaN(fecha.getTime()) ? null : fecha;
-  }
-
-  private formatearCantidad(valor: number): string {
+  private cantidad(valor: number): string {
     return new Intl.NumberFormat('es-MX', { maximumFractionDigits: 2 }).format(valor);
   }
 
   private moneda(valor: number): string {
-    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(valor);
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+    }).format(valor);
   }
 
-  private fecha(valor: Date): string {
-    return new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }).format(valor);
+  private fechaLocal(): string {
+    const fecha = new Date();
+    fecha.setMinutes(fecha.getMinutes() - fecha.getTimezoneOffset());
+    return fecha.toISOString().slice(0, 10);
+  }
+
+  private fechaMs(valor: string): number {
+    if (!valor) return 0;
+    const fecha = new Date(`${valor.slice(0, 10)}T00:00:00`);
+    return Number.isNaN(fecha.getTime()) ? 0 : fecha.getTime();
+  }
+
+  private formatearFecha(valor: string): string {
+    const fecha = new Date(`${valor.slice(0, 10)}T00:00:00`);
+    return Number.isNaN(fecha.getTime())
+      ? valor
+      : new Intl.DateTimeFormat('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }).format(fecha);
+  }
+
+  private numeroId(id: string): number {
+    const numeros = id.match(/\d+/g);
+    return numeros?.length ? Number(numeros[numeros.length - 1]) : 0;
   }
 }

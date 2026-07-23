@@ -20,7 +20,7 @@ import { UsuariosDialog } from './dialogs/usuarios-dialog/usuarios-dialog';
   styleUrls: ['../administracion-listas.css'],
 })
 export class Usuarios implements OnInit, AfterViewInit {
-  displayedColumns = ['clave', 'nombre', 'correo', 'empresa', 'roles', 'almacen', 'estado', 'acciones'];
+  displayedColumns = ['id', 'nombre', 'correo', 'empresa', 'roles', 'almacen', 'estado', 'acciones'];
   dataSource = new MatTableDataSource<UsuarioAdministracion>([]);
   obs!: Observable<UsuarioAdministracion[]>;
   empresas: EmpresaAdministracion[] = [];
@@ -100,8 +100,9 @@ export class Usuarios implements OnInit, AfterViewInit {
   abrirDialogo(): void {
     this.dialog.open(UsuariosDialog, {
       width: '760px', panelClass: 'custom-dialog', data: {
-        mode: 'add', empresas: this.empresas, roles: this.roles, almacenes: this.almacenes,
-        emails: this.dataSource.data.map(usuario => usuario.email),
+        mode: 'add', empresas: this.empresas.filter(empresa => empresa.estado),
+        roles: this.roles, almacenes: this.almacenes,
+        usuarios: this.dataSource.data,
       },
     }).afterClosed().subscribe((resultado?: UsuarioAdministracion) => {
       if (!resultado) return;
@@ -114,7 +115,7 @@ export class Usuarios implements OnInit, AfterViewInit {
     this.dialog.open(UsuariosDialog, {
       width: '760px', panelClass: 'custom-dialog', data: {
         mode: 'edit', usuario, empresas: this.empresas, roles: this.roles, almacenes: this.almacenes,
-        emails: this.dataSource.data.filter(actual => actual.id !== usuario.id).map(actual => actual.email),
+        usuarios: this.dataSource.data,
       },
     }).afterClosed().subscribe((resultado?: UsuarioAdministracion) => {
       if (!resultado) return;
@@ -123,14 +124,19 @@ export class Usuarios implements OnInit, AfterViewInit {
     });
   }
 
-  eliminar(usuario: UsuarioAdministracion): void {
+  desactivar(usuario: UsuarioAdministracion): void {
+    if (!usuario.estado) return;
     this.dialog.open(ConfirmDialog, {
       width: '400px', data: {
-        title: 'Eliminar usuario', message: `¿Deseas eliminar a "${this.nombreCompleto(usuario)}"?`,
-        confirmText: 'Eliminar', cancelText: 'Cancelar',
+        title: 'Desactivar usuario',
+        message: `¿Deseas desactivar a “${this.nombreCompleto(usuario)}”? Se conservarán sus roles, fechas y trazabilidad.`,
+        confirmText: 'Desactivar', cancelText: 'Cancelar',
       },
     }).afterClosed().subscribe(confirmado => {
-      if (confirmado) this.guardar(this.dataSource.data.filter(actual => actual.id !== usuario.id));
+      if (confirmado) {
+        this.guardar(this.dataSource.data.map(actual =>
+          actual.id === usuario.id ? { ...actual, estado: false } : actual));
+      }
     });
   }
 

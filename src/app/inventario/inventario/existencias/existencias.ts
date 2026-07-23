@@ -26,7 +26,7 @@ import {
 })
 export class Existencias implements OnInit, AfterViewInit {
   displayedColumns = [
-    'producto', 'almacen', 'lote', 'caducidad', 'stock', 'estado', 'reorden', 'critico',
+    'producto', 'almacen', 'stock', 'estado', 'reorden', 'critico',
     'maximo', 'anaquel', 'actualizacion', 'acciones',
   ];
   dataSource = new MatTableDataSource<ExistenciaInventario>([]);
@@ -38,8 +38,6 @@ export class Existencias implements OnInit, AfterViewInit {
     productoId: '',
     almacenId: '',
     estado: '',
-    lote: '',
-    caducidad: '',
     stockMinimo: null,
     stockMaximo: null,
   };
@@ -59,19 +57,14 @@ export class Existencias implements OnInit, AfterViewInit {
         productoId: string;
         almacenId: string;
         estado: string;
-        lote: string;
-        caducidad: string;
         stockMinimo: number | null;
         stockMaximo: number | null;
       };
-      const tieneLote = this.tieneValor(item.lote);
-      return `${item.id} ${item.sku} ${item.producto} ${item.almacen} ${item.anaquel} ${item.lote} ${item.caducidad}`
+      return `${item.id} ${item.sku} ${item.producto} ${item.almacen} ${item.anaquel}`
         .toLowerCase().includes(f.search)
         && (!f.productoId || item.productoId === Number(f.productoId))
         && (!f.almacenId || item.almacenId === Number(f.almacenId))
         && (!f.estado || this.nivel(item) === f.estado)
-        && (!f.lote || (f.lote === 'Con lote' ? tieneLote : !tieneLote))
-        && (!f.caducidad || this.estadoCaducidad(item) === f.caducidad)
         && (f.stockMinimo == null || item.stock >= Number(f.stockMinimo))
         && (f.stockMaximo == null || item.stock <= Number(f.stockMaximo));
     };
@@ -130,18 +123,10 @@ export class Existencias implements OnInit, AfterViewInit {
       },
       {
         key: 'estado', label: 'Nivel de existencia', icon: 'monitoring', type: 'select', emptyLabel: 'Todos los niveles',
-        options: ['Normal', 'Bajo', 'Crítico', 'Agotado'].map((value) => ({ value, label: value })),
+        options: ['Normal', 'Bajo', 'Crítico', 'Agotado', 'Sin inicializar'].map((value) => ({ value, label: value })),
       },
-      {
-        key: 'lote', label: 'Lote', icon: 'qr_code_2', type: 'select', emptyLabel: 'Con y sin lote',
-        options: [{ value: 'Con lote', label: 'Con lote' }, { value: 'Sin lote', label: 'Sin lote' }],
-      },
-      {
-        key: 'caducidad', label: 'Caducidad', icon: 'event_busy', type: 'select', emptyLabel: 'Cualquier caducidad',
-        options: ['Vigente', 'Por vencer', 'Vencida', 'Sin caducidad'].map((value) => ({ value, label: value })),
-      },
-      { key: 'stockMinimo', label: 'Existencia mínima', icon: 'south', type: 'number', defaultValue: null, min: 0, step: 1 },
-      { key: 'stockMaximo', label: 'Existencia máxima', icon: 'north', type: 'number', defaultValue: null, min: 0, step: 1 },
+      { key: 'stockMinimo', label: 'Existencia mínima', icon: 'south', type: 'number', defaultValue: null, min: 0, step: .01 },
+      { key: 'stockMaximo', label: 'Existencia máxima', icon: 'north', type: 'number', defaultValue: null, min: 0, step: .01 },
     ];
     this.dialog.open(FiltrosInventarioDialog, {
       width: '680px',
@@ -161,13 +146,14 @@ export class Existencias implements OnInit, AfterViewInit {
     if (orden === 'Menor existencia') datos.sort((a, b) => a.stock - b.stock);
     else if (orden === 'Mayor existencia') datos.sort((a, b) => b.stock - a.stock);
     else if (orden === 'Producto A-Z') datos.sort((a, b) => a.producto.localeCompare(b.producto) || a.almacen.localeCompare(b.almacen));
-    else if (orden === 'Más recientes') datos.sort((a, b) => Number(b.id) - Number(a.id));
-    else datos.sort((a, b) => Number(a.id) - Number(b.id));
+    else if (orden === 'Más recientes') datos.sort((a, b) => this.fechaMs(b.actualizacion) - this.fechaMs(a.actualizacion));
+    else datos.sort((a, b) => this.fechaMs(a.actualizacion) - this.fechaMs(b.actualizacion));
     this.dataSource.data = datos;
     this.applyFilter();
   }
 
   nivel(item: ExistenciaInventario): string {
+    if (!item.inicializada) return 'Sin inicializar';
     if (item.stock <= 0) return 'Agotado';
     if (item.stock <= item.critico) return 'Crítico';
     if (item.stock <= item.reorden) return 'Bajo';
@@ -176,18 +162,6 @@ export class Existencias implements OnInit, AfterViewInit {
 
   claseNivel(item: ExistenciaInventario): string {
     return this.nivel(item).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  }
-
-  estadoCaducidad(item: ExistenciaInventario): string {
-    if (!this.tieneValor(item.caducidad)) return 'Sin caducidad';
-    const fecha = new Date(`${item.caducidad.slice(0, 10)}T00:00:00`);
-    if (Number.isNaN(fecha.getTime())) return 'Sin caducidad';
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    if (fecha < hoy) return 'Vencida';
-    const limite = new Date(hoy);
-    limite.setDate(limite.getDate() + 30);
-    return fecha <= limite ? 'Por vencer' : 'Vigente';
   }
 
   nuevoAjuste(item: ExistenciaInventario): void {
@@ -202,8 +176,9 @@ export class Existencias implements OnInit, AfterViewInit {
     });
   }
 
-  private tieneValor(value: string): boolean {
-    const normalized = (value || '').trim();
-    return !!normalized && normalized !== '—' && normalized !== '-';
+  private fechaMs(valor: string): number {
+    if (!valor || valor === '—') return 0;
+    const fecha = new Date(`${valor.slice(0, 10)}T00:00:00`);
+    return Number.isNaN(fecha.getTime()) ? 0 : fecha.getTime();
   }
 }

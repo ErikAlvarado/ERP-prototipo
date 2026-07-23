@@ -1,4 +1,5 @@
-.kits-table { min-width: 1050px; }
+.kits-table { min-width: 1220px; }
 .description { display: block; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mat-mdc-cell .muted { display: block; }
 .price { color: #155eef; font-weight: 600; }
 .negative { color: #b42318; }

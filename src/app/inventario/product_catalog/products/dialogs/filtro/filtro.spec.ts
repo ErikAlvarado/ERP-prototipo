@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 import { Filtro } from './filtro';
 
@@ -9,6 +10,34 @@ describe('Filtro', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Filtro],
+      providers: [
+        { provide: MatDialogRef, useValue: { close: () => undefined } },
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {
+            filtros: {
+              empresa: '',
+              categoria: '',
+              marca: '',
+              unidad: '',
+              tipo: '',
+              ubicacion: '',
+              claveSat: '',
+              conCodigo: null,
+              pos: null,
+              visible: null,
+              estado: null,
+              requiereReceta: null,
+              usarExistencias: null,
+            },
+            empresas: [],
+            categorias: [],
+            marcas: [],
+            unidades: [],
+            tipos: [],
+          },
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Filtro);

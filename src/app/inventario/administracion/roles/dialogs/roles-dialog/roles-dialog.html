@@ -2,12 +2,12 @@
 <mat-dialog-content>
   <div class="formulario">
     <mat-form-field appearance="outline">
-      <mat-label>Empresa</mat-label><mat-select [(ngModel)]="rol.empresaId" required>@for (empresa of data.empresas; track empresa.id) { <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option> }</mat-select>
+      <mat-label>Empresa</mat-label><mat-select [(ngModel)]="rol.empresaId" required [disabled]="data.mode === 'edit'">@for (empresa of data.empresas; track empresa.id) { <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option> }</mat-select>
       @if (!data.empresas.length) { <mat-hint>Primero registra una empresa</mat-hint> }
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Nombre del rol</mat-label><input matInput [(ngModel)]="rol.nombre" required maxlength="80">
-      @if (nombreDuplicado) { <mat-error>Este rol ya está registrado</mat-error> }
+      @if (nombreDuplicado) { <mat-error>Este rol ya está registrado en la empresa</mat-error> }
     </mat-form-field>
     <mat-form-field appearance="outline" class="full-width"><mat-label>Descripción</mat-label><textarea matInput rows="3" [(ngModel)]="rol.descripcion" maxlength="250"></textarea></mat-form-field>
     <mat-form-field appearance="outline" class="full-width">

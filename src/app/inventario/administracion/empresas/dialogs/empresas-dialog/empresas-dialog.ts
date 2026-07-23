@@ -25,6 +25,7 @@ export class EmpresasDialog {
     this.empresa = data.empresa ? { ...data.empresa } : {
       id: '', nombre: '', razonSocial: '', rfc: '', direccion: '', telefono: '', email: '',
       estado: true, fechaCreacion: '', fechaActualizacion: '',
+      creadoPorUsuarioId: '', actualizadoPorUsuarioId: '',
     };
   }
 
@@ -32,8 +33,18 @@ export class EmpresasDialog {
     return (this.data.rfcs || []).some(rfc => rfc.toUpperCase() === this.empresa.rfc.trim().toUpperCase());
   }
 
+  get rfcValido(): boolean {
+    return /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/i.test(this.empresa.rfc.trim());
+  }
+
+  get emailValido(): boolean {
+    return !this.empresa.email.trim() ||
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.empresa.email.trim());
+  }
+
   get puedeGuardar(): boolean {
-    return !!this.empresa.nombre.trim() && !!this.empresa.razonSocial.trim() && !!this.empresa.rfc.trim() && !this.rfcDuplicado;
+    return !!this.empresa.nombre.trim() && !!this.empresa.razonSocial.trim() &&
+      this.rfcValido && !this.rfcDuplicado && this.emailValido;
   }
 
   guardar(): void {

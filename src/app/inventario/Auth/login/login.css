@@ -39,3 +39,14 @@ mat-card-title {
   width: 100%;
 }
 .error-sesion { margin: 0 0 12px; color: #c62828; font-size: 13px; }
+.prototype-notice {
+  margin: 0 0 8px;
+  padding: 12px 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  color: #1e3a8a;
+  background: #eff6ff;
+  font-size: 13px;
+  line-height: 1.5;
+}
+mat-progress-bar { width: 100%; }

@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
@@ -23,12 +23,32 @@ import {
 
 @Component({
   selector: 'app-transferencias',
-  imports: [...SHARED_IMPORTS, AsyncPipe, DatePipe, MatPaginatorModule, MatMenuModule, MatSnackBarModule],
+  imports: [
+    ...SHARED_IMPORTS,
+    AsyncPipe,
+    DatePipe,
+    DecimalPipe,
+    MatPaginatorModule,
+    MatMenuModule,
+    MatSnackBarModule,
+  ],
   templateUrl: './transferencias.html',
   styleUrl: './transferencias.css',
 })
 export class Transferencias implements OnInit, AfterViewInit {
-  displayedColumns = ['folio', 'producto', 'origen', 'destino', 'cantidad', 'fecha', 'usuario', 'estado', 'observaciones', 'acciones'];
+  displayedColumns = [
+    'folio',
+    'partidas',
+    'origen',
+    'destino',
+    'fechaSolicitud',
+    'fechaAutorizacion',
+    'fechaRecepcion',
+    'responsables',
+    'estado',
+    'observaciones',
+    'acciones',
+  ];
   dataSource = new MatTableDataSource<TransferenciaInventario>([]);
   obs!: Observable<TransferenciaInventario[]>;
   contexto?: ContextoInventario;
@@ -40,7 +60,8 @@ export class Transferencias implements OnInit, AfterViewInit {
     origenId: '',
     destinoId: '',
     estado: '',
-    usuarioId: '',
+    solicitanteId: '',
+    autorizadorId: '',
     fechaDesde: '',
     fechaHasta: '',
     cantidadMinima: null,
@@ -64,24 +85,31 @@ export class Transferencias implements OnInit, AfterViewInit {
         origenId: string;
         destinoId: string;
         estado: string;
-        usuarioId: string;
+        solicitanteId: string;
+        autorizadorId: string;
         fechaDesde: string;
         fechaHasta: string;
         cantidadMinima: number | null;
         cantidadMaxima: number | null;
       };
-      return `${item.id} ${item.folio} ${item.sku} ${item.producto} ${item.origen} ${item.destino} ${item.usuario} ${item.observaciones}`
+      const textoPartidas = item.partidas
+        .map((partida) => `${partida.sku} ${partida.producto}`)
+        .join(' ');
+      const cantidadesCoinciden = item.partidas.some((partida) =>
+        (f.cantidadMinima == null || partida.cantidadSolicitada >= Number(f.cantidadMinima))
+        && (f.cantidadMaxima == null || partida.cantidadSolicitada <= Number(f.cantidadMaxima)));
+      return `${item.id} ${item.folio} ${textoPartidas} ${item.origen} ${item.destino} ${item.solicitante} ${item.autorizador} ${item.observaciones}`
         .toLowerCase().includes(f.search)
-        && (!f.productoId || item.productoId === Number(f.productoId))
+        && (!f.productoId || item.partidas.some((partida) => partida.productoId === Number(f.productoId)))
         && (!f.almacenId || item.origenId === Number(f.almacenId) || item.destinoId === Number(f.almacenId))
         && (!f.origenId || item.origenId === Number(f.origenId))
         && (!f.destinoId || item.destinoId === Number(f.destinoId))
         && (!f.estado || item.estado === f.estado)
-        && (!f.usuarioId || item.usuarioId === Number(f.usuarioId))
-        && (!f.fechaDesde || item.fecha.slice(0, 10) >= f.fechaDesde)
-        && (!f.fechaHasta || item.fecha.slice(0, 10) <= f.fechaHasta)
-        && (f.cantidadMinima == null || item.cantidad >= Number(f.cantidadMinima))
-        && (f.cantidadMaxima == null || item.cantidad <= Number(f.cantidadMaxima));
+        && (!f.solicitanteId || item.solicitanteId === Number(f.solicitanteId))
+        && (!f.autorizadorId || item.autorizadorId === Number(f.autorizadorId))
+        && (!f.fechaDesde || item.fechaSolicitud >= f.fechaDesde)
+        && (!f.fechaHasta || item.fechaSolicitud <= f.fechaHasta)
+        && cantidadesCoinciden;
     };
     this.obs = this.dataSource.connect();
     this.cargar();
@@ -92,7 +120,9 @@ export class Transferencias implements OnInit, AfterViewInit {
   }
 
   get nombreAlmacen(): string {
-    return this.contexto?.almacenes.find((item) => item.id === Number(this.filtros['almacenId']))?.nombre || 'Almacén';
+    return this.contexto?.almacenes.find(
+      (item) => item.id === Number(this.filtros['almacenId']),
+    )?.nombre || 'Almacén';
   }
 
   get currentStatus(): string {
@@ -128,27 +158,94 @@ export class Transferencias implements OnInit, AfterViewInit {
 
   abrirFiltros(): void {
     if (!this.contexto) return;
-    const almacenes = this.contexto.almacenes.map((item) => ({ value: String(item.id), label: item.nombre }));
+    const almacenes = this.contexto.almacenes.map((item) => ({
+      value: String(item.id),
+      label: item.nombre,
+    }));
+    const usuarios = this.contexto.usuarios.map((item) => ({
+      value: String(item.id),
+      label: item.nombre,
+    }));
     const fields: CampoFiltroInventario[] = [
       {
-        key: 'productoId', label: 'Producto', icon: 'inventory_2', type: 'select', emptyLabel: 'Todos los productos',
-        options: this.contexto.productos.map((item) => ({ value: String(item.id), label: `${item.sku} · ${item.nombre}` })),
+        key: 'productoId',
+        label: 'Producto',
+        icon: 'inventory_2',
+        type: 'select',
+        emptyLabel: 'Todos los productos',
+        options: this.contexto.productos.map((item) => ({
+          value: String(item.id),
+          label: `${item.sku} · ${item.nombre}`,
+        })),
       },
-      { key: 'almacenId', label: 'Almacén relacionado', icon: 'warehouse', type: 'select', emptyLabel: 'Cualquier almacén', options: almacenes },
-      { key: 'origenId', label: 'Almacén origen', icon: 'outbox', type: 'select', emptyLabel: 'Cualquier origen', options: almacenes },
-      { key: 'destinoId', label: 'Almacén destino', icon: 'move_to_inbox', type: 'select', emptyLabel: 'Cualquier destino', options: almacenes },
       {
-        key: 'estado', label: 'Estado', icon: 'flag', type: 'select', emptyLabel: 'Todos los estados',
+        key: 'almacenId',
+        label: 'Almacén relacionado',
+        icon: 'warehouse',
+        type: 'select',
+        emptyLabel: 'Cualquier almacén',
+        options: almacenes,
+      },
+      {
+        key: 'origenId',
+        label: 'Almacén origen',
+        icon: 'outbox',
+        type: 'select',
+        emptyLabel: 'Cualquier origen',
+        options: almacenes,
+      },
+      {
+        key: 'destinoId',
+        label: 'Almacén destino',
+        icon: 'move_to_inbox',
+        type: 'select',
+        emptyLabel: 'Cualquier destino',
+        options: almacenes,
+      },
+      {
+        key: 'estado',
+        label: 'Estado',
+        icon: 'flag',
+        type: 'select',
+        emptyLabel: 'Todos los estados',
         options: this.estados.map((value) => ({ value, label: value })),
       },
       {
-        key: 'usuarioId', label: 'Responsable', icon: 'person', type: 'select', emptyLabel: 'Todos los responsables',
-        options: this.contexto.usuarios.map((item) => ({ value: String(item.id), label: item.nombre })),
+        key: 'solicitanteId',
+        label: 'Solicitante',
+        icon: 'person',
+        type: 'select',
+        emptyLabel: 'Todos los solicitantes',
+        options: usuarios,
       },
-      { key: 'fechaDesde', label: 'Fecha desde', icon: 'calendar_today', type: 'date' },
-      { key: 'fechaHasta', label: 'Fecha hasta', icon: 'event', type: 'date' },
-      { key: 'cantidadMinima', label: 'Cantidad mínima', icon: 'south', type: 'number', defaultValue: null, min: 0, step: 1 },
-      { key: 'cantidadMaxima', label: 'Cantidad máxima', icon: 'north', type: 'number', defaultValue: null, min: 0, step: 1 },
+      {
+        key: 'autorizadorId',
+        label: 'Autorizador',
+        icon: 'verified_user',
+        type: 'select',
+        emptyLabel: 'Todos los autorizadores',
+        options: usuarios,
+      },
+      { key: 'fechaDesde', label: 'Solicitud desde', icon: 'calendar_today', type: 'date' },
+      { key: 'fechaHasta', label: 'Solicitud hasta', icon: 'event', type: 'date' },
+      {
+        key: 'cantidadMinima',
+        label: 'Cantidad solicitada mínima',
+        icon: 'south',
+        type: 'number',
+        defaultValue: null,
+        min: 0,
+        step: .01,
+      },
+      {
+        key: 'cantidadMaxima',
+        label: 'Cantidad solicitada máxima',
+        icon: 'north',
+        type: 'number',
+        defaultValue: null,
+        min: 0,
+        step: .01,
+      },
     ];
     this.dialog.open(FiltrosInventarioDialog, {
       width: '680px',
@@ -166,8 +263,11 @@ export class Transferencias implements OnInit, AfterViewInit {
     this.currentSort = orden;
     const datos = [...this.dataSource.data];
     if (orden === 'Folio') datos.sort((a, b) => a.folio.localeCompare(b.folio));
-    else if (orden === 'Más recientes') datos.sort((a, b) => b.id - a.id);
-    else datos.sort((a, b) => a.id - b.id);
+    else if (orden === 'Más recientes') {
+      datos.sort((a, b) => b.fechaSolicitud.localeCompare(a.fechaSolicitud) || b.id - a.id);
+    } else {
+      datos.sort((a, b) => a.fechaSolicitud.localeCompare(b.fechaSolicitud) || a.id - b.id);
+    }
     this.dataSource.data = datos;
     this.applyFilter();
   }
@@ -186,18 +286,33 @@ export class Transferencias implements OnInit, AfterViewInit {
   }
 
   recibir(transferencia: TransferenciaInventario): void {
-    if (!this.contexto || transferencia.estado === 'Recibida' || transferencia.estado === 'Cancelada') return;
-    const stockOrigen = this.contexto.existencias.find(
-      (item) => item.productoId === transferencia.productoId && item.almacenId === transferencia.origenId,
-    )?.stock ?? 0;
-    if (stockOrigen < transferencia.cantidad) {
-      this.snackBar.open(`No hay stock suficiente en ${transferencia.origen}. Disponible: ${stockOrigen}.`, 'Cerrar', { duration: 5000 });
+    if (!this.contexto || this.gestion.esEstadoFinalTransferencia(transferencia.estado)) return;
+    const insuficiente = transferencia.partidas.find((partida) => {
+      const cantidad = partida.cantidadEnviada > 0
+        ? partida.cantidadEnviada
+        : partida.cantidadSolicitada;
+      const stock = this.contexto!.existencias.find(
+        (item) => item.productoId === partida.productoId
+          && item.almacenId === transferencia.origenId,
+      )?.stock ?? 0;
+      return stock < cantidad;
+    });
+    if (insuficiente) {
+      const stock = this.contexto.existencias.find(
+        (item) => item.productoId === insuficiente.productoId
+          && item.almacenId === transferencia.origenId,
+      )?.stock ?? 0;
+      this.snackBar.open(
+        `No hay stock suficiente de ${insuficiente.producto} en ${transferencia.origen}. Disponible: ${stock} ${insuficiente.unidad}.`,
+        'Cerrar',
+        { duration: 6000 },
+      );
       return;
     }
     this.confirmar(
       'Recibir transferencia',
-      `Se descontarán ${transferencia.cantidad} unidades de "${transferencia.origen}" y se agregarán a "${transferencia.destino}".`,
-      'Marcar recibida',
+      `Se moverán las ${transferencia.partidas.length} partidas de "${transferencia.origen}" a "${transferencia.destino}" y quedarán registradas en Kardex.`,
+      'Completar recepción',
       () => {
         if (!this.contexto) return;
         try {
@@ -211,7 +326,7 @@ export class Transferencias implements OnInit, AfterViewInit {
   }
 
   cancelar(transferencia: TransferenciaInventario): void {
-    if (!this.contexto || transferencia.estado === 'Recibida' || transferencia.estado === 'Cancelada') return;
+    if (!this.contexto || this.gestion.esEstadoFinalTransferencia(transferencia.estado)) return;
     this.confirmar(
       'Cancelar transferencia',
       `¿Deseas cancelar la transferencia ${transferencia.folio}? No se modificarán las existencias.`,
@@ -238,17 +353,25 @@ export class Transferencias implements OnInit, AfterViewInit {
   }
 
   esEditable(transferencia: TransferenciaInventario): boolean {
-    return transferencia.estado === 'Borrador' || transferencia.estado === 'Pendiente';
+    const estado = this.normalizar(transferencia.estado);
+    return estado === 'borrador' || estado === 'pendiente';
+  }
+
+  puedeRecibirse(transferencia: TransferenciaInventario): boolean {
+    return !this.gestion.esEstadoFinalTransferencia(transferencia.estado);
   }
 
   claseEstado(estado: string): string {
-    return estado.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+    return this.normalizar(estado).replace(/\s+/g, '-');
   }
 
-  private abrirDialogo(mode: 'add' | 'edit' | 'view', transferencia?: TransferenciaInventario): void {
+  private abrirDialogo(
+    mode: 'add' | 'edit' | 'view',
+    transferencia?: TransferenciaInventario,
+  ): void {
     if (!this.contexto) return;
     this.dialog.open(TransferenciasDialog, {
-      width: '720px',
+      width: '900px',
       maxWidth: '96vw',
       panelClass: 'custom-dialog',
       data: {
@@ -261,15 +384,10 @@ export class Transferencias implements OnInit, AfterViewInit {
         existencias: this.contexto.existencias,
         transferencias: this.contexto.transferencias,
       },
-    }).afterClosed().subscribe((resultado?: TransferenciaFormulario | TransferenciaFormulario[]) => {
+    }).afterClosed().subscribe((resultado?: TransferenciaFormulario) => {
       if (!resultado || mode === 'view' || !this.contexto) return;
       try {
-        const formularios = Array.isArray(resultado) ? resultado : [resultado];
-        formularios.forEach((formulario, indice) => this.gestion.guardarTransferencia(
-          formulario,
-          this.contexto!,
-          indice === 0 ? transferencia : undefined,
-        ));
+        this.gestion.guardarTransferencia(resultado, this.contexto, transferencia);
         this.cargar();
       } catch (error) {
         this.mostrarError(error);
@@ -287,15 +405,28 @@ export class Transferencias implements OnInit, AfterViewInit {
   }
 
   private cargar(): void {
-    this.gestion.cargar().subscribe((contexto) => {
-      this.contexto = contexto;
-      this.dataSource.data = contexto.transferencias;
-      this.applyFilter();
+    this.gestion.cargar().subscribe({
+      next: (contexto) => {
+        this.contexto = contexto;
+        this.dataSource.data = contexto.transferencias;
+        this.ordenar(this.currentSort);
+      },
+      error: () => this.snackBar.open(
+        'No fue posible leer los datos del inventario.',
+        'Cerrar',
+        { duration: 6000 },
+      ),
     });
   }
 
   private mostrarError(error: unknown): void {
-    const mensaje = error instanceof Error ? error.message : 'No fue posible completar la operación de inventario.';
+    const mensaje = error instanceof Error
+      ? error.message
+      : 'No fue posible completar la operación de inventario.';
     this.snackBar.open(mensaje, 'Cerrar', { duration: 6000 });
+  }
+
+  private normalizar(valor: string): string {
+    return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
 }

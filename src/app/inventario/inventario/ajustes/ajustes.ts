@@ -139,8 +139,8 @@ export class Ajustes implements OnInit, AfterViewInit {
       },
       { key: 'fechaDesde', label: 'Fecha desde', icon: 'calendar_today', type: 'date' },
       { key: 'fechaHasta', label: 'Fecha hasta', icon: 'event', type: 'date' },
-      { key: 'ajusteMinimo', label: 'Ajuste mínimo', icon: 'remove', type: 'number', defaultValue: null, step: 1 },
-      { key: 'ajusteMaximo', label: 'Ajuste máximo', icon: 'add', type: 'number', defaultValue: null, step: 1 },
+      { key: 'ajusteMinimo', label: 'Ajuste mínimo', icon: 'remove', type: 'number', defaultValue: null, step: .01 },
+      { key: 'ajusteMaximo', label: 'Ajuste máximo', icon: 'add', type: 'number', defaultValue: null, step: .01 },
     ];
     this.dialog.open(FiltrosInventarioDialog, {
       width: '680px',
@@ -158,8 +158,11 @@ export class Ajustes implements OnInit, AfterViewInit {
     this.currentSort = orden;
     const datos = [...this.dataSource.data];
     if (orden === 'Producto A-Z') datos.sort((a, b) => a.producto.localeCompare(b.producto));
-    else if (orden === 'Más recientes') datos.sort((a, b) => this.numeroId(b.id) - this.numeroId(a.id));
-    else datos.sort((a, b) => this.numeroId(a.id) - this.numeroId(b.id));
+    else if (orden === 'Más recientes') {
+      datos.sort((a, b) => this.fechaMs(b.fecha) - this.fechaMs(a.fecha) || this.numeroId(b.id) - this.numeroId(a.id));
+    } else {
+      datos.sort((a, b) => this.fechaMs(a.fecha) - this.fechaMs(b.fecha) || this.numeroId(a.id) - this.numeroId(b.id));
+    }
     this.dataSource.data = datos;
     this.applyFilter();
   }
@@ -234,5 +237,11 @@ export class Ajustes implements OnInit, AfterViewInit {
   private numeroId(id: string): number {
     const numeros = id.match(/\d+/g);
     return numeros?.length ? Number(numeros[numeros.length - 1]) : Number.MAX_SAFE_INTEGER;
+  }
+
+  private fechaMs(valor: string): number {
+    if (!valor || valor === '—') return 0;
+    const fecha = new Date(`${valor.slice(0, 10)}T00:00:00`);
+    return Number.isNaN(fecha.getTime()) ? 0 : fecha.getTime();
   }
 }

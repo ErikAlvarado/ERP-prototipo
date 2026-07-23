@@ -36,7 +36,7 @@ export class Sidebar {
     route: '/dashboard'
   },
   {
-    title: 'Catálogo de Productos',
+    title: 'Catálogo de productos',
     icon: 'deployed_code',
     expanded: false,
     children: [
@@ -61,9 +61,9 @@ export class Sidebar {
         route: '/marcas'
       },
       {
-        title: 'Medidas',
-        icon: 'straighten',
-        route: '/medidas'
+        title: 'Precios',
+        icon: 'sell',
+        route: '/precios'
       },
       {
         title: 'Unidades',
@@ -115,7 +115,7 @@ export class Sidebar {
         route: '/compras/proveedores'
       },
       {
-        title: 'Gestion de Compras',
+        title: 'Gestión de compras',
         icon: 'shopping_cart_checkout',
         route: '/compras/gestion-compras'
       },
@@ -125,7 +125,7 @@ export class Sidebar {
         route: '/compras/consultas'
       },
       {
-        title: 'Catalogo',
+        title: 'Catálogo',
         icon: 'inventory_2',
         route: '/compras/catalogo'
       },
@@ -137,7 +137,7 @@ export class Sidebar {
     ]
   },
   {
-    title: 'Administracion',
+    title: 'Administración',
     icon: 'settings',
     expanded: false,
     children: [

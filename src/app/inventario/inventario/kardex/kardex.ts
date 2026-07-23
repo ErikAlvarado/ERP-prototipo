@@ -28,8 +28,8 @@ import {
 })
 export class Kardex implements OnInit, AfterViewInit {
   displayedColumns = [
-    'id', 'fecha', 'producto', 'almacen', 'tipo', 'lote', 'caducidad',
-    'cantidad', 'existencia', 'costo', 'referencia', 'usuario', 'acciones',
+    'id', 'fecha', 'producto', 'almacen', 'tipo', 'cantidad',
+    'existencia', 'costo', 'referencia', 'usuario', 'acciones',
   ];
   dataSource = new MatTableDataSource<MovimientoInventario>([]);
   obs!: Observable<MovimientoInventario[]>;
@@ -43,7 +43,6 @@ export class Kardex implements OnInit, AfterViewInit {
     usuarioId: '',
     fechaDesde: '',
     fechaHasta: '',
-    lote: '',
     costoMinimo: null,
     costoMaximo: null,
   };
@@ -67,12 +66,10 @@ export class Kardex implements OnInit, AfterViewInit {
         usuarioId: string;
         fechaDesde: string;
         fechaHasta: string;
-        lote: string;
         costoMinimo: number | null;
         costoMaximo: number | null;
       };
-      const tieneLote = this.tieneValor(item.lote);
-      return `${item.id} ${item.sku} ${item.producto} ${item.almacen} ${item.lote} ${item.caducidad} ${item.referencia} ${item.observaciones} ${item.usuario}`
+      return `${item.id} ${item.sku} ${item.producto} ${item.almacen} ${item.referencia} ${item.observaciones} ${item.usuario}`
         .toLowerCase().includes(f.search)
         && (!f.productoId || item.productoId === Number(f.productoId))
         && (!f.almacenId || item.almacenId === Number(f.almacenId))
@@ -80,9 +77,8 @@ export class Kardex implements OnInit, AfterViewInit {
         && (!f.usuarioId || item.usuarioId === Number(f.usuarioId))
         && (!f.fechaDesde || item.fecha.slice(0, 10) >= f.fechaDesde)
         && (!f.fechaHasta || item.fecha.slice(0, 10) <= f.fechaHasta)
-        && (!f.lote || (f.lote === 'Con lote' ? tieneLote : !tieneLote))
-        && (f.costoMinimo == null || item.costoUnitario >= Number(f.costoMinimo))
-        && (f.costoMaximo == null || item.costoUnitario <= Number(f.costoMaximo));
+        && (f.costoMinimo == null || (item.costoUnitario != null && item.costoUnitario >= Number(f.costoMinimo)))
+        && (f.costoMaximo == null || (item.costoUnitario != null && item.costoUnitario <= Number(f.costoMaximo)));
     };
     this.obs = this.dataSource.connect();
     this.gestion.cargar().subscribe((contexto) => {
@@ -155,10 +151,6 @@ export class Kardex implements OnInit, AfterViewInit {
       },
       { key: 'fechaDesde', label: 'Fecha desde', icon: 'calendar_today', type: 'date' },
       { key: 'fechaHasta', label: 'Fecha hasta', icon: 'event', type: 'date' },
-      {
-        key: 'lote', label: 'Lote', icon: 'qr_code_2', type: 'select', emptyLabel: 'Con y sin lote',
-        options: [{ value: 'Con lote', label: 'Con lote' }, { value: 'Sin lote', label: 'Sin lote' }],
-      },
       { key: 'costoMinimo', label: 'Costo mínimo', icon: 'payments', type: 'number', defaultValue: null, min: 0, step: .01 },
       { key: 'costoMaximo', label: 'Costo máximo', icon: 'paid', type: 'number', defaultValue: null, min: 0, step: .01 },
     ];
@@ -178,8 +170,11 @@ export class Kardex implements OnInit, AfterViewInit {
     this.currentSort = orden;
     const datos = [...this.dataSource.data];
     if (orden === 'Producto A-Z') datos.sort((a, b) => a.producto.localeCompare(b.producto));
-    else if (orden === 'Más recientes') datos.sort((a, b) => this.numeroId(b.id) - this.numeroId(a.id));
-    else datos.sort((a, b) => this.numeroId(a.id) - this.numeroId(b.id));
+    else if (orden === 'Más recientes') {
+      datos.sort((a, b) => this.fechaMs(b.fecha) - this.fechaMs(a.fecha) || this.numeroId(b.id) - this.numeroId(a.id));
+    } else {
+      datos.sort((a, b) => this.fechaMs(a.fecha) - this.fechaMs(b.fecha) || this.numeroId(a.id) - this.numeroId(b.id));
+    }
     this.dataSource.data = datos;
     this.applyFilter();
   }
@@ -201,29 +196,28 @@ export class Kardex implements OnInit, AfterViewInit {
       item.producto,
       item.almacen,
       item.tipo,
-      item.lote,
-      item.caducidad,
       item.cantidad,
       item.existencia,
-      item.costoUnitario,
+      item.costoUnitario ?? '',
       item.referencia,
       item.observaciones,
       item.usuario,
     ]);
     this.archivos.descargarCsv(
       `kardex-${new Date().toISOString().slice(0, 10)}.csv`,
-      ['ID', 'Fecha', 'SKU', 'Producto', 'Almacén', 'Tipo', 'Lote', 'Caducidad', 'Cantidad', 'Existencia', 'Costo unitario', 'Referencia', 'Observaciones', 'Usuario'],
+      ['ID', 'Fecha', 'SKU', 'Producto', 'Almacén', 'Tipo', 'Cantidad', 'Existencia', 'Costo unitario', 'Referencia', 'Observaciones', 'Usuario'],
       filas,
     );
-  }
-
-  private tieneValor(value: string): boolean {
-    const normalized = (value || '').trim();
-    return !!normalized && normalized !== '—' && normalized !== '-';
   }
 
   private numeroId(id: string): number {
     const numeros = id.match(/\d+/g);
     return numeros?.length ? Number(numeros[numeros.length - 1]) : Number.MAX_SAFE_INTEGER;
+  }
+
+  private fechaMs(valor: string): number {
+    if (!valor || valor === '—') return 0;
+    const fecha = new Date(`${valor.slice(0, 10)}T00:00:00`);
+    return Number.isNaN(fecha.getTime()) ? 0 : fecha.getTime();
   }
 }

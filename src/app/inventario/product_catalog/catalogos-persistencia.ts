@@ -19,17 +19,23 @@ export class CatalogosPersistencia {
     const eliminados = new Set(estado.eliminados || []);
     const locales = new Map((estado.registros || []).map(registro => [registro.id, registro]));
     const idsFuente = new Set(fuente.map(registro => registro.id));
+    const admiteBajaLogica = fuente.some(registro => this.tieneEstado(registro));
 
     const registros = fuente
-      .filter(registro => !eliminados.has(registro.id))
-      .map(registro => locales.get(registro.id) || registro);
+      .filter(registro => !eliminados.has(registro.id) || admiteBajaLogica)
+      .map(registro => {
+        const combinado = locales.get(registro.id) || registro;
+        return eliminados.has(registro.id) && this.tieneEstado(combinado)
+          ? { ...combinado, estado: false }
+          : combinado;
+      });
 
     for (const registro of estado.registros || []) {
       if (!idsFuente.has(registro.id) && !eliminados.has(registro.id)) registros.push(registro);
     }
 
     registros.sort((a, b) => this.numeroId(a.id) - this.numeroId(b.id));
-    return { registros, eliminados: [...eliminados] };
+    return { registros, eliminados: admiteBajaLogica ? [] : [...eliminados] };
   }
 
   guardar<T extends RegistroCatalogo>(clave: string, registros: T[], eliminados: string[]): void {
@@ -37,7 +43,9 @@ export class CatalogosPersistencia {
   }
 
   nuevoId(): string {
-    return `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    // Catalog foreign keys are numeric in the TXT schema. A timestamp keeps
+    // local additions unique while remaining a valid numeric FK for products.
+    return String(Date.now());
   }
 
   private numeroId(id: string): number {
@@ -45,5 +53,9 @@ export class CatalogosPersistencia {
     if (Number.isFinite(directo)) return directo;
     const numeros = id.match(/\d+/g);
     return numeros?.length ? Number(numeros[numeros.length - 1]) : Number.MAX_SAFE_INTEGER;
+  }
+
+  private tieneEstado(registro: RegistroCatalogo): registro is RegistroCatalogo & { estado: boolean } {
+    return typeof (registro as RegistroCatalogo & { estado?: unknown }).estado === 'boolean';
   }
 }

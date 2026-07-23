@@ -1,71 +1,256 @@
 <div class="dialog-container">
   <div class="dialog-header">
-    <div><span>{{ soloLectura ? 'Detalle' : 'Movimiento entre almacenes' }}</span><h2>{{ titulo }}</h2></div>
+    <div>
+      <span>{{ soloLectura ? 'Detalle' : 'Movimiento entre almacenes' }}</span>
+      <h2>{{ titulo }}</h2>
+    </div>
     <button mat-icon-button mat-dialog-close aria-label="Cerrar"><mat-icon>close</mat-icon></button>
   </div>
 
   <mat-dialog-content class="dialog-content">
     <section class="card-section">
-      <span class="section-label">Ruta de la transferencia</span>
+      <span class="section-label">Ruta y estado</span>
       <div class="grid-layout">
         <mat-form-field appearance="outline">
           <mat-label>Almacén origen</mat-label>
-          <mat-select [(ngModel)]="formulario.origenId" (selectionChange)="cambiarOrigen()" [disabled]="soloLectura">
-            @for (almacen of data.almacenes; track almacen.id) { <mat-option [value]="almacen.id">{{ almacen.nombre }}</mat-option> }
-          </mat-select><mat-icon matPrefix>outbox</mat-icon>
+          <mat-select
+            [(ngModel)]="formulario.origenId"
+            (selectionChange)="cambiarOrigen()"
+            [disabled]="soloLectura">
+            @for (almacen of data.almacenes; track almacen.id) {
+              <mat-option [value]="almacen.id">{{ almacen.nombre }}</mat-option>
+            }
+          </mat-select>
+          <mat-icon matPrefix>outbox</mat-icon>
         </mat-form-field>
+
         <mat-form-field appearance="outline">
           <mat-label>Almacén destino</mat-label>
           <mat-select [(ngModel)]="formulario.destinoId" [disabled]="soloLectura">
-            @for (almacen of data.almacenes; track almacen.id) { <mat-option [value]="almacen.id" [disabled]="almacen.id === formulario.origenId">{{ almacen.nombre }}</mat-option> }
-          </mat-select><mat-icon matPrefix>move_to_inbox</mat-icon>
+            @for (almacen of almacenesDestino; track almacen.id) {
+              <mat-option [value]="almacen.id">
+                {{ almacen.nombre }}
+              </mat-option>
+            }
+          </mat-select>
+          <mat-icon matPrefix>move_to_inbox</mat-icon>
         </mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Fecha</mat-label><input matInput type="datetime-local" [(ngModel)]="formulario.fecha" [disabled]="soloLectura"><mat-icon matPrefix>event</mat-icon></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Responsable</mat-label><mat-select [(ngModel)]="formulario.usuarioId" [disabled]="soloLectura"><mat-option [value]="null">Sin usuario</mat-option>@for (usuario of data.usuarios; track usuario.id) { <mat-option [value]="usuario.id">{{ usuario.nombre }}</mat-option> }</mat-select><mat-icon matPrefix>person</mat-icon></mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Estado</mat-label>
+          <input matInput [value]="formulario.estado" disabled>
+          <mat-icon matPrefix>flag</mat-icon>
+        </mat-form-field>
+      </div>
+    </section>
+
+    <section class="card-section">
+      <span class="section-label">Fechas</span>
+      <div class="three-columns">
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha de solicitud</mat-label>
+          <input
+            matInput
+            type="date"
+            [(ngModel)]="formulario.fechaSolicitud"
+            [disabled]="soloLectura">
+          <mat-icon matPrefix>calendar_today</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha de autorización</mat-label>
+          <input
+            matInput
+            type="date"
+            [(ngModel)]="formulario.fechaAutorizacion"
+            [disabled]="soloLectura">
+          <mat-icon matPrefix>event_available</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha de recepción</mat-label>
+          <input
+            matInput
+            type="date"
+            [(ngModel)]="formulario.fechaRecepcion"
+            disabled>
+          <mat-icon matPrefix>inventory</mat-icon>
+        </mat-form-field>
+      </div>
+    </section>
+
+    <section class="card-section">
+      <span class="section-label">Responsables</span>
+      <div class="grid-layout">
+        <mat-form-field appearance="outline">
+          <mat-label>Solicitante</mat-label>
+          <mat-select [(ngModel)]="formulario.solicitanteId" [disabled]="soloLectura">
+            @for (usuario of usuariosEmpresa; track usuario.id) {
+              <mat-option [value]="usuario.id">{{ usuario.nombre }}</mat-option>
+            }
+          </mat-select>
+          <mat-icon matPrefix>person</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Autorizador</mat-label>
+          <mat-select [(ngModel)]="formulario.autorizadorId" [disabled]="soloLectura">
+            <mat-option [value]="null">Sin autorizar</mat-option>
+            @for (usuario of usuariosEmpresa; track usuario.id) {
+              <mat-option [value]="usuario.id">{{ usuario.nombre }}</mat-option>
+            }
+          </mat-select>
+          <mat-icon matPrefix>verified_user</mat-icon>
+        </mat-form-field>
       </div>
     </section>
 
     @if (!soloLectura) {
       <section class="card-section">
-        <span class="section-label">Agregar productos del almacén origen</span>
+        <span class="section-label">Agregar producto del almacén origen</span>
         <div class="product-picker">
           <mat-form-field appearance="outline" class="product-search">
             <mat-label>Buscar por SKU o producto</mat-label>
-            <input matInput [(ngModel)]="productoBusqueda" [matAutocomplete]="productosAuto" (input)="productoSeleccionadoId = 0">
+            <input
+              matInput
+              [(ngModel)]="productoBusqueda"
+              [matAutocomplete]="productosAuto"
+              (input)="productoSeleccionadoId = 0">
             <mat-icon matPrefix>search</mat-icon>
             <mat-autocomplete #productosAuto="matAutocomplete">
               @for (producto of productosOrigen; track producto.id) {
-                <mat-option [value]="producto.sku + ' · ' + producto.nombre" (onSelectionChange)="$event.isUserInput && seleccionarProducto(producto)">
-                  {{ producto.sku }} · {{ producto.nombre }} — {{ stockDisponible(producto.id) }} {{ producto.unidad }}
+                <mat-option
+                  [value]="producto.sku + ' · ' + producto.nombre"
+                  (onSelectionChange)="$event.isUserInput && seleccionarProducto(producto)">
+                  {{ producto.sku }} · {{ producto.nombre }} —
+                  {{ stockDisponible(producto.id) | number:'1.0-2' }} {{ producto.unidad }}
                 </mat-option>
               }
             </mat-autocomplete>
-            <mat-hint>Solo aparecen productos con stock en el origen seleccionado</mat-hint>
+            <mat-hint>Solo aparecen productos con stock disponible</mat-hint>
           </mat-form-field>
-          <mat-form-field appearance="outline" class="quantity-field"><mat-label>Cantidad</mat-label><input matInput type="number" min="1" [(ngModel)]="cantidadNueva"></mat-form-field>
-          <button mat-raised-button color="primary" type="button" (click)="agregarPartida()"><mat-icon>playlist_add</mat-icon>Agregar</button>
+
+          <mat-form-field appearance="outline" class="quantity-field">
+            <mat-label>Cantidad solicitada</mat-label>
+            <input
+              matInput
+              type="number"
+              [min]="pasoCantidadNueva"
+              [step]="pasoCantidadNueva"
+              [(ngModel)]="cantidadNueva">
+          </mat-form-field>
+
+          <button mat-raised-button color="primary" type="button" (click)="agregarPartida()">
+            <mat-icon>playlist_add</mat-icon>Agregar
+          </button>
         </div>
       </section>
     }
 
     <section class="card-section">
-      <span class="section-label">Productos de la transferencia ({{ partidas.length }})</span>
+      <span class="section-label">Partidas de la transferencia ({{ partidas.length }})</span>
       @if (partidas.length) {
+        <div class="quantity-legend">
+          <span>Producto</span>
+          <span>Solicitada</span>
+          <span>Enviada</span>
+          <span>Recibida</span>
+          <span></span>
+        </div>
         <div class="transfer-lines">
           @for (partida of partidas; track partida.productoId; let i = $index) {
             <div class="transfer-line">
-              <div><strong>{{ partida.producto }}</strong><span>{{ partida.sku }} · Disponible: {{ partida.disponible }} {{ partida.unidad }}</span></div>
-              <mat-form-field appearance="outline"><mat-label>Cantidad</mat-label><input matInput type="number" min="1" [max]="partida.disponible" [(ngModel)]="partida.cantidad" (change)="actualizarCantidad(partida)" [disabled]="soloLectura"></mat-form-field>
-              @if (!soloLectura) { <button mat-icon-button color="warn" (click)="quitarPartida(i)" aria-label="Quitar producto"><mat-icon>delete</mat-icon></button> }
+              <div>
+                <strong>{{ partida.producto }}</strong>
+                <span>
+                  {{ partida.sku }} · Disponible:
+                  {{ partida.disponible | number:'1.0-2' }} {{ partida.unidad }}
+                </span>
+              </div>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Solicitada</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  [min]="paso(partida)"
+                  [max]="partida.disponible"
+                  [step]="paso(partida)"
+                  [(ngModel)]="partida.cantidadSolicitada"
+                  (change)="actualizarPartida(partida)"
+                  [disabled]="soloLectura">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Enviada</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  [max]="partida.cantidadSolicitada"
+                  [step]="paso(partida)"
+                  [(ngModel)]="partida.cantidadEnviada"
+                  (change)="actualizarPartida(partida)"
+                  [disabled]="soloLectura">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Recibida</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  [value]="partida.cantidadRecibida"
+                  disabled>
+              </mat-form-field>
+
+              @if (!soloLectura) {
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="quitarPartida(i)"
+                  aria-label="Quitar producto">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
             </div>
           }
         </div>
-      } @else { <div class="form-warning"><mat-icon>inventory_2</mat-icon>Agrega productos a la transferencia.</div> }
+      } @else {
+        <div class="form-warning">
+          <mat-icon>inventory_2</mat-icon>Agrega productos a la transferencia.
+        </div>
+      }
     </section>
 
-    <mat-form-field appearance="outline"><mat-label>Observaciones</mat-label><textarea matInput rows="3" [(ngModel)]="formulario.observaciones" [disabled]="soloLectura"></textarea><mat-icon matPrefix>notes</mat-icon></mat-form-field>
-    @if (error) { <div class="form-error"><mat-icon>error</mat-icon>{{ error }}</div> }
+    <mat-form-field appearance="outline">
+      <mat-label>Observaciones</mat-label>
+      <textarea
+        matInput
+        rows="3"
+        [(ngModel)]="formulario.observaciones"
+        [disabled]="soloLectura">
+      </textarea>
+      <mat-icon matPrefix>notes</mat-icon>
+    </mat-form-field>
+
+    @if (error) {
+      <div class="form-error"><mat-icon>error</mat-icon>{{ error }}</div>
+    }
   </mat-dialog-content>
 
-  <mat-dialog-actions class="dialog-footer"><div class="footer-actions"><button mat-raised-button mat-dialog-close>{{ soloLectura ? 'Cerrar' : 'Cancelar' }}</button>@if (!soloLectura) { <button mat-raised-button color="primary" (click)="guardar()" [disabled]="data.almacenes.length < 2"><mat-icon>swap_horiz</mat-icon>{{ data.mode === 'edit' ? 'Guardar cambios' : 'Crear transferencias' }}</button> }</div></mat-dialog-actions>
+  <mat-dialog-actions class="dialog-footer">
+    <div class="footer-actions">
+      <button mat-raised-button mat-dialog-close>{{ soloLectura ? 'Cerrar' : 'Cancelar' }}</button>
+      @if (!soloLectura) {
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="guardar()"
+          [disabled]="data.almacenes.length < 2">
+          <mat-icon>swap_horiz</mat-icon>
+          {{ data.mode === 'edit' ? 'Guardar cambios' : 'Crear transferencia' }}
+        </button>
+      }
+    </div>
+  </mat-dialog-actions>
 </div>

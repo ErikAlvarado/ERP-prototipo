@@ -1,33 +1,14 @@
 <div class="container">
   <mat-card class="card">
-    <mat-card-header><mat-card-title>Crear cuenta</mat-card-title></mat-card-header>
+    <mat-card-header><mat-card-title>Autorregistro deshabilitado</mat-card-title></mat-card-header>
     <mat-card-content>
-      <form class="cont-form" [formGroup]="formulario" (ngSubmit)="registrar()">
-        <mat-form-field class="full-width" appearance="outline">
-          <mat-label>Nombre completo</mat-label>
-          <input matInput formControlName="nombre" autocomplete="name" />
-          <mat-error>Escribe tu nombre completo</mat-error>
-        </mat-form-field>
-        <mat-form-field class="full-width" appearance="outline">
-          <mat-label>Correo electronico</mat-label>
-          <input type="email" matInput formControlName="correo" autocomplete="email" />
-          <mat-error>Escribe un correo valido</mat-error>
-        </mat-form-field>
-        <mat-form-field class="full-width" appearance="outline">
-          <mat-label>Contrasena</mat-label>
-          <input matInput [type]="hidePassword() ? 'password' : 'text'" formControlName="password" autocomplete="new-password" />
-          <button matIconButton matSuffix type="button" (click)="togglePasswordVisibility($event)"><mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon></button>
-          <mat-error>Usa al menos 6 caracteres</mat-error>
-        </mat-form-field>
-        <mat-form-field class="full-width" appearance="outline">
-          <mat-label>Confirmar contrasena</mat-label>
-          <input matInput [type]="hideConfirmPassword() ? 'password' : 'text'" formControlName="confirmacion" autocomplete="new-password" />
-          <button matIconButton matSuffix type="button" (click)="toggleConfirmPasswordVisibility($event)"><mat-icon>{{ hideConfirmPassword() ? 'visibility_off' : 'visibility' }}</mat-icon></button>
-        </mat-form-field>
-        @if (error()) { <p class="error-sesion" role="alert">{{ error() }}</p> }
-        <button mat-raised-button color="primary" class="full-width" type="submit">Registrarse</button>
-        <p>¿Ya tienes una cuenta? <a routerLink="/login">Inicia sesion</a></p>
-      </form>
+      <div class="cont-form">
+        <p class="registration-notice">
+          Las cuentas deben crearse desde Administración / Usuarios. El prototipo no guarda
+          contraseñas porque todavía no existe un backend seguro para generar y verificar hashes.
+        </p>
+        <a mat-raised-button color="primary" class="full-width" routerLink="/login">Volver al acceso</a>
+      </div>
     </mat-card-content>
   </mat-card>
 </div>

@@ -23,11 +23,6 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              },
-              {
-                "glob": "*.txt",
-                "input": "src/app/inventario/db",
-                "output": "assets/db"
               }
             ],
             "styles": ["src/material-theme.scss", "src/styles.css"]

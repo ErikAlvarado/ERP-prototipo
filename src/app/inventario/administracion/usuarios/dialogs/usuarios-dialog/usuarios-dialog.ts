@@ -11,7 +11,7 @@ export interface UsuarioDialogData {
   empresas: EmpresaAdministracion[];
   roles: RolAdministracion[];
   almacenes: AlmacenAdministracion[];
-  emails?: string[];
+  usuarios: UsuarioAdministracion[];
 }
 
 @Component({
@@ -22,7 +22,6 @@ export interface UsuarioDialogData {
 })
 export class UsuariosDialog {
   usuario: UsuarioAdministracion;
-  password = '';
 
   constructor(
     private dialogRef: MatDialogRef<UsuariosDialog>,
@@ -34,28 +33,35 @@ export class UsuariosDialog {
       email: '', telefono: '', estado: true, ultimoAcceso: '', intentosFallidos: 0,
       fechaBloqueo: '', almacenId: data.almacenes.find(almacen => almacen.empresaId === empresaId)?.id || '',
       rolIds: [], fechaCreacion: '', fechaActualizacion: '',
+      creadoPorUsuarioId: '', actualizadoPorUsuarioId: '',
     };
   }
 
   get rolesDisponibles(): RolAdministracion[] {
-    return this.data.roles.filter(rol => rol.empresaId === this.usuario.empresaId);
+    return this.data.roles.filter(rol =>
+      rol.empresaId === this.usuario.empresaId &&
+      (rol.estado || this.usuario.rolIds.includes(rol.id)));
   }
 
   get almacenesDisponibles(): AlmacenAdministracion[] {
-    return this.data.almacenes.filter(almacen => almacen.empresaId === this.usuario.empresaId);
+    return this.data.almacenes.filter(almacen =>
+      almacen.empresaId === this.usuario.empresaId &&
+      (almacen.estado || almacen.id === this.usuario.almacenId));
   }
 
   get emailDuplicado(): boolean {
-    return (this.data.emails || []).some(email => email.toLowerCase() === this.usuario.email.trim().toLowerCase());
+    const email = this.usuario.email.trim().toLocaleLowerCase();
+    return this.data.usuarios.some(usuario =>
+      usuario.id !== this.usuario.id &&
+      usuario.empresaId === this.usuario.empresaId &&
+      usuario.email.trim().toLocaleLowerCase() === email);
   }
 
   get emailValido(): boolean { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.usuario.email.trim()); }
 
-  get passwordValido(): boolean { return this.data.mode === 'edit' ? !this.password || this.password.length >= 8 : this.password.length >= 8; }
-
   get puedeGuardar(): boolean {
     return !!this.usuario.empresaId && !!this.usuario.nombres.trim() && !!this.usuario.apellidoPaterno.trim() &&
-      this.emailValido && !this.emailDuplicado && this.passwordValido;
+      this.emailValido && !this.emailDuplicado;
   }
 
   cambiarEmpresa(): void {

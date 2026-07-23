@@ -15,7 +15,7 @@ export class Header {
   private readonly autenticacion = inject(Autenticacion);
   readonly sesion = this.autenticacion.sesion;
   
-  moduleTitle = signal<string>('Inventory');
+  moduleTitle = signal<string>('Inventario');
 
   private routeTitleMap: Record<string, string> = {
     // Dashboard principal
@@ -24,9 +24,9 @@ export class Header {
     // Catálogo de Productos
     '/products': 'Catálogo / Productos',
     '/kits': 'Catálogo / Kits',
+    '/precios': 'Catálogo / Precios',
     '/categorias': 'Catálogo / Categorías',
     '/marcas': 'Catálogo / Marcas',
-    '/medidas': 'Catálogo / Medidas',
     '/unidades': 'Catálogo / Unidades',
 
     // Inventario
@@ -87,12 +87,7 @@ export class Header {
       }
     }
 
-    // Título por defecto si no encuentra coincidencia
-    this.moduleTitle.set('Inventory');
-    const baseUrl = '/' + url.split('/')[1]; 
-    const title = this.routeTitleMap[baseUrl] || 'Inventory';
-    this.moduleTitle.set(title);
-
+    this.moduleTitle.set('Inventario');
   }
 
   iniciales(nombre: string): string {

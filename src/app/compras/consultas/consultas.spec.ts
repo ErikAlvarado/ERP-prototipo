@@ -28,7 +28,9 @@ describe('Consultas', () => {
   });
 
   it('precalcula los pedidos activos y la clase de estado', () => {
-    expect(component.pedidosActivos).toHaveLength(5);
+    component.periodo.set('anio');
+
+    expect(component.pedidosActivos()).toHaveLength(5);
     expect(component.ordenes[1].estadoClase).toBe('en-tránsito');
   });
 });

@@ -16,7 +16,6 @@ export interface FiltrosProducto {
   estado: boolean | null;
   requiereReceta: boolean | null;
   usarExistencias: boolean | null;
-  usarLotes: boolean | null;
 }
 
 export interface DatosFiltroProducto {
@@ -42,7 +41,6 @@ const FILTROS_VACIOS: FiltrosProducto = {
   estado: null,
   requiereReceta: null,
   usarExistencias: null,
-  usarLotes: null,
 };
 
 @Component({
@@ -62,7 +60,7 @@ export class Filtro {
   }
 
   seleccionar(
-    campo: 'conCodigo' | 'pos' | 'visible' | 'estado' | 'requiereReceta' | 'usarExistencias' | 'usarLotes',
+    campo: 'conCodigo' | 'pos' | 'visible' | 'estado' | 'requiereReceta' | 'usarExistencias',
     valor: boolean,
   ): void {
     this.filtros = { ...this.filtros, [campo]: this.filtros[campo] === valor ? null : valor };
