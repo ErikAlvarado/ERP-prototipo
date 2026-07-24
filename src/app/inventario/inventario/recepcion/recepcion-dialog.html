@@ -1,17 +1,101 @@
 <h2 mat-dialog-title>Nueva recepción</h2>
 <mat-dialog-content [formGroup]="form">
-  <p class="dialog-description">Captura los datos generales de la mercancía que llegará al almacén.</p>
+  <p class="dialog-description">Selecciona el proveedor y agrega todos los productos que contiene la recepción.</p>
+
   <div class="form-grid">
-    <mat-form-field appearance="outline"><mat-label>Orden de compra</mat-label><mat-icon matPrefix>receipt_long</mat-icon><input matInput formControlName="orden" placeholder="OC-2026-0000"></mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>Proveedor</mat-label><mat-icon matPrefix>local_shipping</mat-icon><input matInput formControlName="proveedor"></mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>Almacén destino</mat-label><mat-select formControlName="almacen">@for (almacen of almacenes; track almacen) { <mat-option [value]="almacen">{{ almacen }}</mat-option> }</mat-select></mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>Fecha esperada</mat-label><input matInput type="date" formControlName="fecha"></mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>Número de productos</mat-label><input matInput type="number" min="1" formControlName="productos"></mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>Total de unidades</mat-label><input matInput type="number" min="1" formControlName="unidades"></mat-form-field>
-    <mat-form-field appearance="outline" class="full-width"><mat-label>Responsable de recepción</mat-label><mat-icon matPrefix>person</mat-icon><input matInput formControlName="responsable"></mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Orden de compra</mat-label>
+      <mat-icon matPrefix>receipt_long</mat-icon>
+      <input matInput formControlName="orden" placeholder="OC-2026-0000">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Proveedor</mat-label>
+      <mat-select formControlName="proveedor">
+        @for (proveedor of proveedores; track proveedor) {
+          <mat-option [value]="proveedor">{{ proveedor }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Almacén destino</mat-label>
+      <mat-select formControlName="almacen">
+        @for (almacen of almacenes; track almacen) {
+          <mat-option [value]="almacen">{{ almacen }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha esperada</mat-label>
+      <input matInput type="date" formControlName="fecha">
+    </mat-form-field>
+
   </div>
+
+  <mat-divider></mat-divider>
+
+  <section class="productos-section">
+    <div class="section-heading">
+      <div><h3>Productos de la recepción</h3><p>Usa cualquiera de las tres opciones para agregar productos.</p></div>
+      <mat-form-field appearance="outline" class="cantidad-general">
+        <mat-label>Cantidad</mat-label>
+        <input matInput type="number" min="1" [(ngModel)]="cantidadAgregar" [ngModelOptions]="{standalone: true}">
+      </mat-form-field>
+    </div>
+
+    <div class="captura-unificada">
+      <div class="captura-controls">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="producto-unico-field">
+          <mat-label>SKU, escanea o selecciona</mat-label>
+          <mat-icon matPrefix>barcode_scanner</mat-icon>
+          <input
+            matInput
+            [(ngModel)]="codigoManual"
+            [ngModelOptions]="{standalone: true}"
+            [matAutocomplete]="productosAuto"
+            (keyup.enter)="agregarPorCodigo()"
+            autocomplete="off"
+          >
+          <mat-autocomplete #productosAuto="matAutocomplete" (optionSelected)="seleccionarProducto($event.option.value)">
+            @for (producto of productosSugeridos; track producto.id) {
+              <mat-option [value]="producto.sku">
+                <span class="opcion-producto"><strong>{{ producto.sku }}</strong><span>{{ producto.producto }}</span><small>{{ producto.codigo }}</small></span>
+              </mat-option>
+            }
+          </mat-autocomplete>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="productos-table">
+      <table>
+        <thead><tr><th>Producto</th><th>Código de barras</th><th>Unidad</th><th>Cantidad</th><th></th></tr></thead>
+        <tbody>
+          @for (detalle of detalles; track detalle.id) {
+            <tr>
+              <td><strong>{{ detalle.nombre }}</strong><small>{{ detalle.sku }}</small></td>
+              <td>{{ detalle.codigo || 'Sin código' }}</td>
+              <td>{{ detalle.unidad }}</td>
+              <td><input class="cantidad-tabla" type="number" min="1" [value]="detalle.cantidad" (change)="cambiarCantidad(detalle.id, $any($event.target).value)"></td>
+              <td><button mat-icon-button color="warn" type="button" matTooltip="Quitar producto" (click)="quitarProducto(detalle.id)"><mat-icon>delete</mat-icon></button></td>
+            </tr>
+          } @empty {
+            <tr><td colspan="5" class="empty-products"><mat-icon>inventory_2</mat-icon><span>Aún no has agregado productos.</span></td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="productos-summary">
+      <span><strong>{{ detalles.length }}</strong> productos diferentes</span>
+      <span><strong>{{ totalUnidades }}</strong> unidades totales</span>
+    </div>
+  </section>
 </mat-dialog-content>
+
 <mat-dialog-actions align="end">
   <button mat-button mat-dialog-close>Cancelar</button>
-  <button mat-raised-button color="primary" (click)="guardar()"><mat-icon>save</mat-icon>Registrar recepción</button>
+  <button mat-raised-button color="primary" type="button" (click)="guardar()"><mat-icon>save</mat-icon>Registrar recepción</button>
 </mat-dialog-actions>
