@@ -11,3 +11,5 @@ id_rol|id_empresa|nombre|descripcion|activo|fecha_creacion|fecha_actualizacion|c
 10|1|Capturista|Registra información de catálogos|1|2024-02-08|2024-02-08|1|1
 11|1|Soporte|Atiende configuración e incidencias|1|2024-02-09|2024-02-09|1|1
 12|1|Consulta|Acceso de solo lectura|1|2024-02-10|2024-02-10|1|1
+13|1|Inventario|Consulta productos, existencias y movimientos de inventario|1|2026-07-23|2026-07-23|1|1
+14|1|Jefe de inventarios|Administra catalogos, existencias y movimientos de inventario|1|2026-07-23|2026-07-23|1|1

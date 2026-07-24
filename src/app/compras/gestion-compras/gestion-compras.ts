@@ -32,6 +32,59 @@ export interface OrdenCompra {
   cancelable: boolean;
 }
 
+const ORDENES_DEMO_RECIENTES: OrdenCompra[] = [
+  {
+    folio: 'OC-2026-0101',
+    proveedor: 'Suministros Corporativos del Centro',
+    articulos: 14,
+    total: '$36,780',
+    solicitante: 'Fernanda Castillo',
+    fecha: fechaHace(0),
+    estado: 'Pendiente',
+    cancelable: true,
+  },
+  {
+    folio: 'OC-2026-0102',
+    proveedor: 'Tecnologia Integral Bajio',
+    articulos: 6,
+    total: '$92,450',
+    solicitante: 'Jorge Ramirez',
+    fecha: fechaHace(0),
+    estado: 'Activo',
+    cancelable: true,
+  },
+  {
+    folio: 'OC-2026-0103',
+    proveedor: 'Equipamiento Industrial Nova',
+    articulos: 9,
+    total: '$48,320',
+    solicitante: 'Sofia Mendoza',
+    fecha: fechaHace(0),
+    estado: 'En transito',
+    cancelable: true,
+  },
+  {
+    folio: 'OC-2026-0104',
+    proveedor: 'Papeleria y Servicios Metropolitanos',
+    articulos: 22,
+    total: '$15,690',
+    solicitante: 'Miguel Salgado',
+    fecha: fechaHace(0),
+    estado: 'Completado',
+    cancelable: false,
+  },
+  {
+    folio: 'OC-2026-0105',
+    proveedor: 'Mobiliario Ejecutivo Nacional',
+    articulos: 11,
+    total: '$73,800',
+    solicitante: 'Valeria Contreras',
+    fecha: fechaHace(0),
+    estado: 'Pendiente',
+    cancelable: true,
+  },
+];
+
 interface OfertaCotizacion {
   proveedor: string;
   precioUnitario: string;
@@ -153,6 +206,7 @@ export class GestionCompras {
   ];
 
   readonly ordenes = signal<OrdenCompra[]>([
+    ...ORDENES_DEMO_RECIENTES,
     {
       folio: 'OC-2025-0087',
       proveedor: 'TechnoInsumos SA de CV',
@@ -335,6 +389,14 @@ export class GestionCompras {
   constructor() {
     this.solicitudes.set(this.persistencia.leer(this.claveSolicitudes, this.solicitudes()));
     this.ordenes.set(this.persistencia.leer(this.claveOrdenes, this.ordenes()));
+    const foliosGuardados = new Set(this.ordenes().map((orden) => orden.folio));
+    const ordenesFaltantes = ORDENES_DEMO_RECIENTES.filter(
+      (orden) => !foliosGuardados.has(orden.folio),
+    );
+    if (ordenesFaltantes.length) {
+      this.ordenes.update((ordenes) => [...ordenesFaltantes, ...ordenes]);
+      this.persistencia.guardar(this.claveOrdenes, this.ordenes());
+    }
     // Migra fechas de demostración antiguas para que los filtros de periodo sigan mostrando datos.
     if (!this.ordenes().some((orden) => perteneceAlPeriodo(orden.fecha, 'anio'))) {
       const antiguedad = [0, 8, 25, 55, 110, 300];

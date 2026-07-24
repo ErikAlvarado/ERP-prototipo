@@ -69,7 +69,11 @@
       <ng-container matColumnDef="margen"><th mat-header-cell *matHeaderCellDef>Margen s/costo</th><td mat-cell *matCellDef="let fila" class="number" [class.negative]="fila.margen < 0">{{ fila.margen }}%</td></ng-container>
       <ng-container matColumnDef="estado">
         <th mat-header-cell *matHeaderCellDef>Estado</th>
-        <td mat-cell *matCellDef="let fila"><span class="status-label" [class.active]="fila.vigente">{{ fila.vigente ? 'Vigente' : 'Fuera de vigencia' }}</span></td>
+        <td mat-cell *matCellDef="let fila">
+          <button mat-stroked-button type="button" (click)="cambiarEstatus(fila)">
+            <span class="status-label" [class.active]="fila.vigente">{{ fila.vigente ? 'Vigente' : 'Fuera de vigencia' }}</span>
+          </button>
+        </td>
       </ng-container>
       <ng-container matColumnDef="acciones">
         <th mat-header-cell *matHeaderCellDef class="actions-cell">Acciones</th>
@@ -88,7 +92,9 @@
       <article class="catalog-card">
         <div class="card-header">
           <div><h3>{{ fila.producto }}</h3><span class="muted">{{ fila.sku }} · {{ fila.lista }}</span></div>
-          <span class="status-label" [class.active]="fila.vigente">{{ fila.vigente ? 'Vigente' : 'Fuera de vigencia' }}</span>
+          <button mat-stroked-button type="button" (click)="cambiarEstatus(fila)">
+            <span class="status-label" [class.active]="fila.vigente">{{ fila.vigente ? 'Vigente' : 'Fuera de vigencia' }}</span>
+          </button>
         </div>
         <div class="card-body">
           <div><strong>Costo</strong>{{ fila.costo | currency:'MXN' }}</div>

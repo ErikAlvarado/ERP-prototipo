@@ -1,9 +1,15 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateChildFn, CanActivateFn, Router } from '@angular/router';
 import { Autenticacion } from '../services/autenticacion';
 
-export const autenticacionGuard: CanActivateFn = () => {
+const validarAcceso = (_route: unknown, state: { url: string }) => {
   const autenticacion = inject(Autenticacion);
   const router = inject(Router);
-  return autenticacion.sesion() ? true : router.createUrlTree(['/login']);
+  if (!autenticacion.sesion()) return router.createUrlTree(['/login']);
+  return autenticacion.puedeAcceder(state.url)
+    ? true
+    : router.createUrlTree([autenticacion.rutaInicial()]);
 };
+
+export const autenticacionGuard: CanActivateFn = validarAcceso;
+export const autorizacionHijosGuard: CanActivateChildFn = validarAcceso;

@@ -1,6 +1,7 @@
-import { Component, HostBinding, signal } from '@angular/core';
+import { Component, HostBinding, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
+import { Autenticacion } from '../../../shared/services/autenticacion';
 
 export interface MenuItem {
   title: string;
@@ -17,6 +18,7 @@ export interface MenuItem {
   styleUrls: ['./sidebar.css'],
 })
 export class Sidebar {
+  private readonly autenticacion = inject(Autenticacion);
   expanded = signal(false);
   showFiller = signal(false);
 
@@ -164,6 +166,20 @@ export class Sidebar {
     ]
   }
 ]);
+
+  constructor() {
+    if (this.autenticacion.esAdministrador()) return;
+    if (this.autenticacion.puedeVerCompras()) {
+      this.menus.set(this.menus().filter(menu => menu.title === 'Compras'));
+      return;
+    }
+    if (this.autenticacion.puedeVerInventario()) {
+      this.menus.set(this.menus().filter(menu =>
+        ['Dashboard', 'Catálogo de productos', 'CatÃ¡logo de productos', 'Inventario'].includes(menu.title)));
+      return;
+    }
+    this.menus.set([]);
+  }
 
   toggleMenuItem(index: number) {
     this.menus.update(menus =>

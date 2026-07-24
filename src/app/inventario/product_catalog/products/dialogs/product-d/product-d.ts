@@ -46,7 +46,7 @@ export class ProductD {
   }
 
   get estatusDisponibles(): string[] {
-    return ['Vigente', 'Descontinuado'];
+    return ['Vigente', 'Descontinuado', 'Eliminado'];
   }
 
   get marcasDisponibles(): OpcionProducto[] {

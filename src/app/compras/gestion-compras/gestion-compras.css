@@ -1,3 +1,35 @@
+.tabs-consultas {
+  margin-top: 26px;
+}
+
+.tabs-consultas ::ng-deep .mat-mdc-tab-header {
+  width: fit-content;
+  padding: 5px;
+  border: 0;
+  border-radius: 12px;
+  background: #f1f3f6;
+}
+
+.tabs-consultas ::ng-deep .mat-mdc-tab {
+  min-width: 110px;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 9px;
+}
+
+.tabs-consultas ::ng-deep .mdc-tab--active {
+  background: #fff;
+  box-shadow: 0 1px 3px #0f172a24;
+}
+
+.tabs-consultas ::ng-deep .mdc-tab-indicator {
+  display: none;
+}
+
+.tabs-consultas ::ng-deep .mat-mdc-tab-body-content {
+  overflow: visible;
+}
+
 .tarjeta-ordenes {
   margin-top: 24px;
 }
@@ -9,6 +41,13 @@
 .sin-resultados { display: grid; place-items: center; padding: 40px; color: #94a3b8; text-align: center; }
 .sin-resultados mat-icon { width: 36px; height: 36px; font-size: 36px; }
 @media (max-width: 680px) { .filtros-ordenes { grid-template-columns: 1fr; } }
+
+@media (max-width: 600px) {
+  .tabs-consultas ::ng-deep .mat-mdc-tab {
+    min-width: 92px;
+    padding: 0 10px;
+  }
+}
 
 .folio,
 .importe,
