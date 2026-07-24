@@ -1,0 +1,17 @@
+<h2 mat-dialog-title>Nueva recepción</h2>
+<mat-dialog-content [formGroup]="form">
+  <p class="dialog-description">Captura los datos generales de la mercancía que llegará al almacén.</p>
+  <div class="form-grid">
+    <mat-form-field appearance="outline"><mat-label>Orden de compra</mat-label><mat-icon matPrefix>receipt_long</mat-icon><input matInput formControlName="orden" placeholder="OC-2026-0000"></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Proveedor</mat-label><mat-icon matPrefix>local_shipping</mat-icon><input matInput formControlName="proveedor"></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Almacén destino</mat-label><mat-select formControlName="almacen">@for (almacen of almacenes; track almacen) { <mat-option [value]="almacen">{{ almacen }}</mat-option> }</mat-select></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Fecha esperada</mat-label><input matInput type="date" formControlName="fecha"></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Número de productos</mat-label><input matInput type="number" min="1" formControlName="productos"></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Total de unidades</mat-label><input matInput type="number" min="1" formControlName="unidades"></mat-form-field>
+    <mat-form-field appearance="outline" class="full-width"><mat-label>Responsable de recepción</mat-label><mat-icon matPrefix>person</mat-icon><input matInput formControlName="responsable"></mat-form-field>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-raised-button color="primary" (click)="guardar()"><mat-icon>save</mat-icon>Registrar recepción</button>
+</mat-dialog-actions>

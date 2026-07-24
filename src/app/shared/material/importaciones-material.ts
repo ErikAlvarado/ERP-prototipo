@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
@@ -48,6 +49,7 @@ export const IMPORTACIONES_MATERIAL_COMPRA_PROVEEDOR = [
   MatInputModule,
   MatListModule,
   MatNativeDateModule,
+  MatPaginatorModule,
   MatSelectModule,
 ];
 
@@ -79,6 +81,7 @@ export const IMPORTACIONES_MATERIAL_COMPRAS = [
   MatListModule,
   MatMenuModule,
   MatNativeDateModule,
+  MatPaginatorModule,
   MatSelectModule,
   MatTableModule,
   MatTabsModule,
@@ -96,6 +99,7 @@ export const IMPORTACIONES_MATERIAL_CONSULTAS = [
   MatInputModule,
   MatMenuModule,
   MatNativeDateModule,
+  MatPaginatorModule,
   MatSelectModule,
   MatTableModule,
   MatTabsModule,

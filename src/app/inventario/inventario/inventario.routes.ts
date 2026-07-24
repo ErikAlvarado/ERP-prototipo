@@ -20,6 +20,11 @@ export const inventarioRoutes: Routes = [
         path: 'transferencias',
         loadComponent: () =>
             import('./transferencias/transferencias').then(c => c.Transferencias)
+    },
+    {
+        path: 'recepcion',
+        loadComponent: () =>
+            import('./recepcion/recepcion').then(c => c.Recepcion)
     }
 
 ];

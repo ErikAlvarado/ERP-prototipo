@@ -1,0 +1,35 @@
+:root {
+  --navbar-height: 64px; --primary-color: #175cd3; --accent-color: #175cd3;
+  --accent-light: #eaf2ff; --success-color: #079455; --success-light: #ecfdf3;
+  --danger-color: #d92d20; --danger-light: #fef3f2; --warning-color: #b54708;
+  --warning-light: #fffaeb; --info-color: #026aa2; --info-light: #f0f9ff;
+  --text-primary: #101828; --text-secondary: #667085; --bg-color: #f4f7fb;
+  --panel-bg: #fff; --border-color: #dce5f0; --border-radius-sm: 8px;
+  --border-radius-md: 12px; --border-radius-lg: 15px; --border-radius-full: 999px;
+  --shadow-premium: 0 4px 14px rgba(15, 39, 66, .08); --transition-speed: .2s;
+}
+app-dashboard, app-pdv, app-cotizaciones, app-historial, app-devoluciones-init,
+app-gestion-devoluciones, app-configuracion {
+  display: block; min-height: 100%; padding: 22px 32px 42px;
+  color: var(--text-primary); background: var(--bg-color);
+}
+.card-premium { padding: 18px; border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); background: var(--panel-bg); box-shadow: var(--shadow-premium); }
+.btn-premium { min-height: 38px; padding: 8px 14px; border: 1px solid transparent; border-radius: var(--border-radius-sm); font: 500 13px Roboto, Arial, sans-serif; cursor: pointer; }
+.btn-accent { color: #fff; background: var(--primary-color); }
+.btn-secondary { color: #344054; border-color: #d0d5dd; background: #fff; }
+.btn-danger { color: #fff; background: var(--danger-color); }
+.btn-text { color: var(--primary-color); background: transparent; text-decoration: none; }
+.form-control { width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid #d0d5dd; border-radius: var(--border-radius-sm); color: var(--text-primary); background: #fff; font: inherit; outline: none; }
+.form-control:focus { border-color: #84adff; box-shadow: 0 0 0 3px #eff4ff; }
+.badge-custom { display: inline-flex; align-items: center; padding: 4px 9px; border-radius: var(--border-radius-full); font-size: 11px; font-weight: 700; }
+.modal-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 24px; background: rgba(15, 23, 42, .48); }
+.modal-head, .modal-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.modal-body { margin-block: 18px; }
+.text-primary { color: var(--primary-color) !important; } .text-accent, .text-info { color: var(--accent-color) !important; }
+.text-success { color: var(--success-color) !important; } .text-danger { color: var(--danger-color) !important; }
+.text-warning { color: var(--warning-color) !important; } .text-secondary { color: var(--text-secondary) !important; }
+.font-semibold { font-weight: 600; } .font-bold { font-weight: 700; }
+@media (max-width: 760px) {
+  app-dashboard, app-pdv, app-cotizaciones, app-historial, app-devoluciones-init,
+  app-gestion-devoluciones, app-configuracion { padding: 16px; }
+}

@@ -8,6 +8,7 @@ import { Archivos } from '../../shared/services/archivos';
 import { MatSnackBar } from '../../shared/material/importaciones-material';
 import { fechaHace, inicioPeriodo, perteneceAlPeriodo, PeriodoConsulta, PERIODOS_CONSULTA } from '../../shared/utils/periodos-consulta';
 import { ReportePdf } from '../../shared/services/reporte-pdf';
+import { PageEvent } from '@angular/material/paginator';
 
 interface OrdenCompra {
   folio: string;
@@ -61,13 +62,26 @@ export class Consultas {
     this.crearOrden('OC-2026-0090', 'Grupo Distribuidora Nacional', 'Carlos Vega', 8, 23400, fechaHace(55), 'Pendiente'),
     this.crearOrden('OC-2026-0091', 'Soluciones Logísticas Omega', 'Andrea Morales', 2, 67200, fechaHace(110), 'Activo'),
     this.crearOrden('OC-2026-0086', 'TechnoInsumos SA de CV', 'Ricardo Torres', 7, 128900, fechaHace(300), 'Cancelado'),
+    this.crearOrden('OC-2026-0092', 'Oficinas y Diseño MX', 'Roberto Sánchez', 9, 31850, fechaHace(4), 'Completado'),
+    this.crearOrden('OC-2026-0093', 'Distribuidora DirectTech', 'Elena Romero', 6, 98200, fechaHace(6), 'En tránsito'),
+    this.crearOrden('OC-2026-0094', 'Muebles Corporativos SA', 'Miguel Sánchez', 12, 54600, fechaHace(10), 'Pendiente'),
+    this.crearOrden('OC-2026-0095', 'Papelería Metropolitana', 'Laura Torres', 24, 18975, fechaHace(14), 'Activo'),
+    this.crearOrden('OC-2026-0096', 'Seguridad Industrial Bajío', 'Diego Navarro', 18, 76340, fechaHace(18), 'Completado'),
+    this.crearOrden('OC-2026-0097', 'Redes y Sistemas Omega', 'Fernanda Castillo', 10, 112500, fechaHace(22), 'Pendiente'),
+    this.crearOrden('OC-2026-0098', 'Logística Nacional Express', 'Jorge Ramírez', 15, 29780, fechaHace(28), 'En tránsito'),
   ];
   readonly ordenesFiltradas = computed(() => this.ordenes.filter((orden) => perteneceAlPeriodo(orden.fecha, this.periodo())));
+  readonly paginaHistorial = signal(0);
+  readonly ordenesPaginadas = computed(() => this.ordenesFiltradas().slice(this.paginaHistorial() * 10, this.paginaHistorial() * 10 + 10));
   readonly pedidosActivos = computed(() => this.ordenesFiltradas().filter((orden) => orden.estado !== 'Cancelado'));
   readonly totalPeriodo = computed(() => this.ordenesFiltradas().reduce((total, orden) => total + orden.total, 0));
   readonly canceladasPeriodo = computed(() => this.ordenesFiltradas().filter((orden) => orden.estado === 'Cancelado').length);
   readonly ordenSeleccionada = signal(this.ordenes[0]);
   readonly detalleOrden = computed(() => this.ordenSeleccionada());
+
+  cambiarPaginaHistorial(evento: PageEvent): void {
+    this.paginaHistorial.set(evento.pageIndex);
+  }
 
   seleccionarOrden(orden: OrdenCompra): void {
     this.ordenSeleccionada.set(orden);

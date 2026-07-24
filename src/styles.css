@@ -3,6 +3,7 @@
 @import "./app/shared/styles/_forms.css";
 @import "./app/shared/styles/_content-header.css";
 @import "./app/shared/styles/_dialog.css";
+@import "./app/ventas/ventas.css";
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
 html,

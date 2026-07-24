@@ -1,0 +1,6 @@
+.dialog-description { margin: 0 0 20px; color: #667085; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 16px; padding-top: 4px; }
+.full-width { grid-column: 1 / -1; }
+mat-dialog-content { min-width: 0; padding-top: 8px !important; }
+mat-dialog-actions { padding: 16px 24px 22px; }
+@media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; }.full-width { grid-column: auto; } }

@@ -99,6 +99,11 @@ export class Sidebar {
         icon: 'local_shipping',
         route: '/transferencias'
       },
+      {
+        title: 'Recepción',
+        icon: 'move_to_inbox',
+        route: '/recepcion'
+      },
     ]
   },
     {
@@ -136,6 +141,20 @@ export class Sidebar {
         icon: 'favorite',
         route: '/compras/preferencias'
       }
+    ]
+  },
+  {
+    title: 'Ventas',
+    icon: 'point_of_sale',
+    expanded: false,
+    children: [
+      { title: 'Dashboard de Ventas', icon: 'dashboard', route: '/ventas/dashboard' },
+      { title: 'Punto de Venta', icon: 'point_of_sale', route: '/ventas/pdv' },
+      { title: 'Cotizaciones', icon: 'request_quote', route: '/ventas/cotizaciones' },
+      { title: 'Historial de Ventas', icon: 'history', route: '/ventas/historial' },
+      { title: 'Devoluciones', icon: 'assignment_return', route: '/ventas/devoluciones' },
+      { title: 'Gestión de Devoluciones', icon: 'published_with_changes', route: '/ventas/gestion-devoluciones' },
+      { title: 'Configuración', icon: 'settings', route: '/ventas/configuracion' }
     ]
   },
   {

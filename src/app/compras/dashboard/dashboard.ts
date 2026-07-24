@@ -6,6 +6,7 @@ import { IMPORTACIONES_MATERIAL_COMPRAS } from '../../shared/material/importacio
 import { Card } from '../../shared/components/card/card';
 import { EncabezadoPagina } from '../../shared/components/encabezado-pagina/encabezado-pagina';
 import { Estado } from '../../shared/components/estado/estado';
+import { PageEvent } from '@angular/material/paginator';
 
 export interface OrdenCompra {
   folio: string;
@@ -51,6 +52,13 @@ const ORDENES_COMPRA: OrdenCompra[] = [
     total: '$67,200',
     estado: 'Activo',
   },
+  { folio: 'OC-2025-0092', proveedor: 'Oficinas y Diseño MX', solicitante: 'Roberto Sánchez', total: '$31,850', estado: 'Completado' },
+  { folio: 'OC-2025-0093', proveedor: 'Distribuidora DirectTech', solicitante: 'Elena Romero', total: '$98,200', estado: 'En transito' },
+  { folio: 'OC-2025-0094', proveedor: 'Muebles Corporativos SA', solicitante: 'Miguel Sánchez', total: '$54,600', estado: 'Pendiente' },
+  { folio: 'OC-2025-0095', proveedor: 'Papelería Metropolitana', solicitante: 'Laura Torres', total: '$18,975', estado: 'Activo' },
+  { folio: 'OC-2025-0096', proveedor: 'Seguridad Industrial Bajío', solicitante: 'Diego Navarro', total: '$76,340', estado: 'Completado' },
+  { folio: 'OC-2025-0097', proveedor: 'Redes y Sistemas Omega', solicitante: 'Fernanda Castillo', total: '$112,500', estado: 'Pendiente' },
+  { folio: 'OC-2025-0098', proveedor: 'Logística Nacional Express', solicitante: 'Jorge Ramírez', total: '$29,780', estado: 'En transito' },
 ];
 
 @Component({
@@ -70,6 +78,17 @@ const ORDENES_COMPRA: OrdenCompra[] = [
 export class Dashboard {
   readonly displayedColumns = ['folio', 'proveedor', 'solicitante', 'total', 'estado'];
   readonly dataSource = ORDENES_COMPRA;
+  pagina = 0;
+  readonly tamanoPagina = 10;
+
+  get ordenesPagina(): OrdenCompra[] {
+    const inicio = this.pagina * this.tamanoPagina;
+    return this.dataSource.slice(inicio, inicio + this.tamanoPagina);
+  }
+
+  cambiarPagina(evento: PageEvent): void {
+    this.pagina = evento.pageIndex;
+  }
 
   readonly comprasData: ChartConfiguration<'line'>['data'] = {
     labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],

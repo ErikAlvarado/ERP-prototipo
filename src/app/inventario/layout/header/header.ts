@@ -34,6 +34,7 @@ export class Header {
     '/kardex': 'Inventario / Kardex',
     '/ajustes': 'Inventario / Ajustes',
     '/transferencias': 'Inventario / Transferencias',
+    '/recepcion': 'Inventario / Recepción',
 
     // Compras (Nuevas rutas agregadas)
     '/compras/dashboard': 'Compras / Dashboard',
@@ -42,6 +43,15 @@ export class Header {
     '/compras/consultas': 'Compras / Consultas',
     '/compras/catalogo': 'Compras / Catálogo',
     '/compras/preferencias': 'Compras / Preferencias',
+
+    // Ventas
+    '/ventas/dashboard': 'Ventas / Dashboard',
+    '/ventas/pdv': 'Ventas / Punto de Venta',
+    '/ventas/cotizaciones': 'Ventas / Cotizaciones',
+    '/ventas/historial': 'Ventas / Historial',
+    '/ventas/devoluciones': 'Ventas / Devoluciones',
+    '/ventas/gestion-devoluciones': 'Ventas / Gestión de Devoluciones',
+    '/ventas/configuracion': 'Ventas / Configuración',
 
     // Administración
     '/almacenes': 'Administración / Almacenes',

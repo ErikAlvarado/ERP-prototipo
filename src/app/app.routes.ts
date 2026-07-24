@@ -8,6 +8,7 @@ import { administracionRoutes } from './inventario/administracion/administracion
 import { comprasRoutes } from './compras/compras.routes';
 import { Dashboard as ComprasDashboard } from './compras/dashboard/dashboard';
 import { autenticacionGuard, autorizacionHijosGuard } from './shared/guards/autenticacion.guard';
+import { ventasRoutes } from './ventas/ventas.routes';
 
 export const routes: Routes = [
   {
@@ -38,6 +39,10 @@ export const routes: Routes = [
             pathMatch: 'full',
           },
         ],
+      },
+      {
+        path: 'ventas',
+        children: ventasRoutes,
       },
     ]
   },
