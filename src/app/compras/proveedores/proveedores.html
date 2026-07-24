@@ -12,13 +12,13 @@
   </div>
 
   <!-- Barra de busqueda de proveedores -->
-  <mat-form-field appearance="outline" class="barra-busqueda">
-    <mat-icon matPrefix>search</mat-icon>
-    <input matInput placeholder="Buscar por nombre, razón social, contacto o categoría..." [value]="terminoBusqueda()" (input)="buscar($any($event.target).value)" />
+  <label class="barra-busqueda buscador-inventario">
+    <mat-icon>search</mat-icon>
+    <input placeholder="Buscar por nombre, razón social, contacto o categoría..." aria-label="Buscar proveedores" [value]="terminoBusqueda()" (input)="buscar($any($event.target).value)" />
     @if (terminoBusqueda()) {
-      <button matSuffix mat-icon-button type="button" aria-label="Limpiar búsqueda" (click)="buscar('')"><mat-icon>close</mat-icon></button>
+      <button mat-icon-button type="button" class="limpiar-busqueda" aria-label="Limpiar búsqueda" (click)="buscar('')"><mat-icon>close</mat-icon></button>
     }
-  </mat-form-field>
+  </label>
 
   <!-- Cartas de proveedores generadas desde proveedores.ts -->
   <div class="grid-proveedores">

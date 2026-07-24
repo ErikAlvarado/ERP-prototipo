@@ -30,17 +30,23 @@
   overflow: visible;
 }
 
+.tarjeta-tabla {
+  margin-top: 24px;
+  overflow: visible !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 .tarjeta-ordenes {
   margin-top: 24px;
 }
-.filtros-ordenes { display: grid; grid-template-columns: minmax(260px, 1fr) 190px; gap: 12px; align-items: start; margin-top: 24px; }
-.busqueda-compras { width: 100%; }
-.filtro-periodo { width: 100%; }
-.filtros-ordenes mat-form-field { --mat-form-field-container-height: 46px; --mat-form-field-container-vertical-padding: 11px; }
+.filtros-ordenes { margin-top: 24px; }
+.resumen-ordenes { display: flex; justify-content: space-between; align-items: center; min-height: 36px; padding-inline: 4px; color: #475467; font-size: 13px; }
+.resumen-ordenes > span:last-child { color: #0b66b2; font-weight: 600; }
 .tarjeta-ordenes { margin-top: 0; }
 .sin-resultados { display: grid; place-items: center; padding: 40px; color: #94a3b8; text-align: center; }
 .sin-resultados mat-icon { width: 36px; height: 36px; font-size: 36px; }
-@media (max-width: 680px) { .filtros-ordenes { grid-template-columns: 1fr; } }
 
 @media (max-width: 600px) {
   .tabs-consultas ::ng-deep .mat-mdc-tab {
@@ -74,15 +80,48 @@
 .acciones-tabla {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 2px;
+  white-space: nowrap;
 }
 
 .celda-estado { min-width: 155px; }
-.selector-estado { width: 148px; --mat-form-field-container-height: 42px; --mat-form-field-container-vertical-padding: 8px; }
+.selector-estado { width: 132px; --mat-form-field-container-height: 36px; --mat-form-field-container-vertical-padding: 6px; }
 .celda-prioridad { min-width: 135px; }
-.selector-prioridad { width: 128px; --mat-form-field-container-height: 42px; --mat-form-field-container-vertical-padding: 8px; }
+.selector-prioridad { width: 116px; --mat-form-field-container-height: 36px; --mat-form-field-container-vertical-padding: 6px; }
 :host ::ng-deep :is(.selector-estado, .selector-prioridad) .mat-mdc-select-value { overflow: visible; }
 :host ::ng-deep :is(.selector-estado, .selector-prioridad) .mat-mdc-form-field-infix { width: auto; }
+:host ::ng-deep :is(.selector-estado, .selector-prioridad) .mdc-text-field {
+  padding: 0 4px;
+  border-radius: 18px;
+  background: transparent;
+}
+:host ::ng-deep :is(.selector-estado, .selector-prioridad) .mdc-line-ripple,
+:host ::ng-deep :is(.selector-estado, .selector-prioridad) .mdc-notched-outline {
+  display: none;
+}
+:host ::ng-deep :is(.selector-estado, .selector-prioridad) .mat-mdc-select-arrow-wrapper {
+  margin-left: 5px;
+  color: #64748b;
+}
+:host ::ng-deep :is(.selector-estado, .selector-prioridad) app-estado .estado {
+  border: 0;
+  border-radius: 999px;
+}
+
+.vista-movil { display: none; }
+.lista-tarjetas { flex-direction: column; gap: 14px; }
+.tarjeta-registro { padding: 16px; border-color: #e4e7ec; border-radius: 9px; box-shadow: none; }
+.tarjeta-registro mat-card-header { display: block; margin-bottom: 12px; padding: 0 0 12px; border-bottom: 1px solid #eaecf0; }
+.encabezado-registro { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; width: 100%; }
+.encabezado-registro h3 { margin: 5px 0 0; color: #0f172a; font-size: 15px; line-height: 1.35; }
+.tarjeta-registro mat-card-content { padding: 0 0 16px; }
+.datos-registro { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 18px; }
+.datos-registro div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.datos-registro span { color: #94a3b8; font-size: 11px; }
+.datos-registro strong { overflow-wrap: anywhere; color: #334155; font-size: 13px; }
+.tarjeta-registro mat-card-actions { display: flex; justify-content: space-between; min-height: 40px; padding: 0; }
+.tarjeta-registro mat-icon { width: 18px; height: 18px; font-size: 18px; }
+.selector-limpio { margin-left: 4px; }
 
 .boton-ver,
 .boton-cancelar {
@@ -94,11 +133,11 @@
 }
 
 .boton-ver {
-  color: #94a3b8;
+  color: #0b66b2;
 }
 
 .boton-cancelar {
-  color: #ef4444;
+  color: #b42318;
 }
 
 .lista-cotizaciones {
@@ -247,4 +286,15 @@
   .grid-ofertas {
     grid-template-columns: 1fr;
   }
+}
+
+@media (max-width: 992px) {
+  .vista-escritorio { display: none; }
+  .vista-movil { display: flex; }
+}
+
+@media (max-width: 680px) {
+  .filtros-ordenes { align-items: stretch; flex-direction: column; }
+  .filtros-ordenes .boton-filtro-inventario { width: 100%; }
+  .datos-registro { grid-template-columns: 1fr; }
 }

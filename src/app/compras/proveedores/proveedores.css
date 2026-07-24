@@ -1,25 +1,6 @@
 .barra-busqueda {
   width: 100%;
-  --mat-form-field-container-height: 46px;
-  --mat-form-field-container-vertical-padding: 11px;
-  --mdc-outlined-text-field-outline-color: #172554;
-  --mdc-outlined-text-field-hover-outline-color: #172554;
-  --mdc-outlined-text-field-focus-outline-color: #172554;
-  --mdc-outlined-text-field-outline-width: 2px;
-  --mdc-outlined-text-field-focus-outline-width: 2px;
-  --mdc-outlined-text-field-container-shape: 10px;
-  --mdc-outlined-text-field-input-text-color: #172033;
-  --mdc-outlined-text-field-input-text-placeholder-color: #cbd5e1;
-}
-
-.barra-busqueda mat-icon {
-  color: #cbd5e1;
-  margin-right: 8px;
-}
-
-.barra-busqueda input {
-  font-size: 14px;
-  font-weight: 500;
+  margin-bottom: 18px;
 }
 
 .grid-proveedores {

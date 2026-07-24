@@ -48,6 +48,9 @@ export class Consultas {
   readonly columnas = ['folio', 'proveedor', 'solicitante', 'articulos', 'total', 'fecha', 'estado', 'acciones'] as const;
   readonly periodo = signal<PeriodoConsulta>('mes');
   readonly periodos = PERIODOS_CONSULTA;
+  readonly etiquetaPeriodo = computed(
+    () => this.periodos.find((opcion) => opcion.valor === this.periodo())?.etiqueta ?? 'Periodo',
+  );
   descripcionReporte = '';
   tipoReporte = 'periodo';
   formatoReporte = 'pdf';

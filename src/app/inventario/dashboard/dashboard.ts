@@ -1,5 +1,6 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { combineLatest } from 'rxjs';
 import { SHARED_IMPORTS } from '../../shared/imports/shared-imports';
 import {
@@ -35,6 +36,7 @@ interface MovimientoResumen {
   styleUrl: './dashboard.css',
 })
 export class Dashboard implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
   stockProducts: ProductoStock[] = [];
   recentMovements: MovimientoResumen[] = [];
   reorderProducts: Array<{
@@ -67,6 +69,7 @@ export class Dashboard implements OnInit {
   constructor(
     private gestion: GestionInventario,
     private catalogo: CatalogoProductos,
+    private changeDetector: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -78,10 +81,17 @@ export class Dashboard implements OnInit {
     combineLatest({
       contexto: this.gestion.cargar(),
       productosCatalogo: this.catalogo.cargar(),
-    }).subscribe({
-      next: ({ contexto, productosCatalogo }) =>
-        this.construir(contexto, productosCatalogo),
-      error: () => this.error = 'No fue posible leer los archivos de la base de datos del inventario.',
+    }).pipe(
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: ({ contexto, productosCatalogo }) => {
+        this.construir(contexto, productosCatalogo);
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.error = 'No fue posible leer los archivos de la base de datos del inventario.';
+        this.changeDetector.markForCheck();
+      },
     });
   }
 

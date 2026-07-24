@@ -221,6 +221,9 @@
 /* Card de ultimas ordenes */
 .ultimas-ordenes {
   margin-top: 20px;
+  border-color: #e4e7ec !important;
+  border-radius: 9px !important;
+  box-shadow: 0 2px 5px rgb(16 24 40 / 6%) !important;
 }
 
 /* Encabezado de la tabla */
@@ -264,8 +267,29 @@
   font-weight: 800;
 }
 
+.vista-movil { display: none; }
+.lista-ordenes-movil { flex-direction: column; gap: 14px; padding: 14px; background: transparent; }
+.tarjeta-orden { padding: 16px; border-color: #e4e7ec; border-radius: 9px; box-shadow: none; }
+.tarjeta-orden mat-card-header { display: block; margin-bottom: 12px; padding: 0 0 12px; border-bottom: 1px solid #eaecf0; }
+.encabezado-registro { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; width: 100%; }
+.encabezado-registro h3 { margin: 5px 0 0; color: #0f172a; font-size: 15px; line-height: 1.35; }
+.tarjeta-orden mat-card-content { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 18px; padding: 0; }
+.tarjeta-orden mat-card-content div { display: flex; flex-direction: column; gap: 4px; }
+.tarjeta-orden mat-card-content span { color: #94a3b8; font-size: 11px; }
+.tarjeta-orden mat-card-content strong { color: #334155; font-size: 13px; }
+
 @media (max-width: 900px) {
   .grid-contenido {
     grid-template-columns: 1fr;
   }
+}
+
+@media (max-width: 992px) {
+  .vista-escritorio { display: none; }
+  .vista-movil { display: flex; }
+  .contenedor-tabla { overflow: visible; }
+}
+
+@media (max-width: 680px) {
+  .tarjeta-orden mat-card-content { grid-template-columns: 1fr; }
 }

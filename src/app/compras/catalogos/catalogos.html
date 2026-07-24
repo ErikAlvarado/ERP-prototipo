@@ -4,28 +4,53 @@
     <p>Consulta y gestiona los productos disponibles para compra</p>
   </div>
 
-  <mat-form-field appearance="outline" class="buscador" subscriptSizing="dynamic">
-    <mat-icon matPrefix>search</mat-icon>
-    <input
-      matInput
-      type="search"
-      aria-label="Buscar productos o proveedores"
-      placeholder="Buscar productos o proveedores..."
-      [ngModel]="busqueda()"
-      (ngModelChange)="busqueda.set($event)"
-    />
-  </mat-form-field>
+  <div class="controles-catalogo barra-filtros-inventario">
+    <label class="buscador-inventario">
+      <mat-icon>search</mat-icon>
+      <input
+        type="search"
+        aria-label="Buscar productos o proveedores"
+        placeholder="Buscar productos o proveedores..."
+        [value]="busqueda()"
+        (input)="busqueda.set($any($event.target).value)"
+      />
+      @if (busqueda()) {
+        <button mat-icon-button type="button" class="limpiar-busqueda" aria-label="Limpiar búsqueda" (click)="busqueda.set('')"><mat-icon>close</mat-icon></button>
+      }
+    </label>
 
-  <mat-chip-listbox class="filtros" aria-label="Filtrar productos por categoría">
-    @for (categoria of categorias; track categoria.valor) {
-      <mat-chip-option
-        [selected]="categoriaActiva() === categoria.valor"
-        (click)="seleccionarCategoria(categoria.valor)"
-      >
-        {{ categoria.etiqueta }}
-      </mat-chip-option>
-    }
-  </mat-chip-listbox>
+    <button mat-stroked-button type="button" class="boton-filtro-inventario" [matMenuTriggerFor]="menuCategorias">
+      <mat-icon>tune</mat-icon>
+      {{ etiquetaCategoriaActiva() }}
+      @if (categoriaActiva() !== 'Todos') { <span class="contador-filtro">1</span> }
+    </button>
+    <mat-menu #menuCategorias="matMenu">
+      @for (categoria of categorias; track categoria.valor) {
+        <button mat-menu-item type="button" (click)="seleccionarCategoria(categoria.valor)">
+          @if (categoriaActiva() === categoria.valor) { <mat-icon>check</mat-icon> }
+          <span>{{ categoria.etiqueta }}</span>
+        </button>
+      }
+    </mat-menu>
+
+    <button mat-stroked-button type="button" class="boton-filtro-inventario" [matMenuTriggerFor]="menuOrdenCatalogo">
+      <mat-icon>sort</mat-icon>
+      {{ ordenCatalogo() }}
+    </button>
+    <mat-menu #menuOrdenCatalogo="matMenu">
+      @for (opcion of opcionesOrden; track opcion) {
+        <button mat-menu-item type="button" (click)="ordenCatalogo.set(opcion)">
+          @if (ordenCatalogo() === opcion) { <mat-icon>check</mat-icon> }
+          <span>{{ opcion }}</span>
+        </button>
+      }
+    </mat-menu>
+  </div>
+
+  <div class="resumen-catalogo">
+    <span><strong>{{ productosFiltrados().length }}</strong> de {{ productos().length }} productos</span>
+    @if (busqueda() || categoriaActiva() !== 'Todos') { <span>Resultados filtrados</span> }
+  </div>
 
   @if (productosFiltrados().length) {
     <div class="productos-grid">
@@ -33,11 +58,15 @@
         <mat-card class="producto-card" appearance="outlined">
           <mat-card-content>
             <div class="card-superior">
-              <span class="categoria">{{ producto.categoria }}</span>
+              <div class="identidad-producto">
+                <h2>{{ producto.nombre }}</h2>
+                <span class="categoria">{{ producto.categoria }}</span>
+              </div>
               <div class="acciones">
                 <button
                   mat-icon-button
                   type="button"
+                  [attr.aria-label]="producto.favorito ? 'Quitar de favoritos ' + producto.nombre : 'Agregar a favoritos ' + producto.nombre"
                   [class.activo-rojo]="producto.favorito"
                   [matTooltip]="producto.favorito ? 'Quitar de favoritos' : 'Agregar a favoritos'"
                   (click)="alternarFavorito(producto.id)"
@@ -47,9 +76,6 @@
               </div>
             </div>
 
-            <div class="producto-icono" aria-hidden="true"><mat-icon>inventory_2</mat-icon></div>
-
-            <h2>{{ producto.nombre }}</h2>
             <p class="proveedor">{{ producto.proveedor }}</p>
 
             <div class="separador"></div>

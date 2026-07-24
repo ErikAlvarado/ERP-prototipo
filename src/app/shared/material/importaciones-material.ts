@@ -11,6 +11,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
@@ -60,10 +61,8 @@ export const IMPORTACIONES_MATERIAL_NAVEGACION = [
 export const IMPORTACIONES_MATERIAL_CATALOGO = [
   MatButtonModule,
   MatCardModule,
-  MatChipsModule,
-  MatFormFieldModule,
   MatIconModule,
-  MatInputModule,
+  MatMenuModule,
   MatTooltipModule,
 ];
 
@@ -71,16 +70,19 @@ export const IMPORTACIONES_MATERIAL_CATALOGO = [
 export const IMPORTACIONES_MATERIAL_COMPRAS = [
   MatButtonModule,
   MatButtonToggleModule,
+  MatCardModule,
   MatDatepickerModule,
   MatDialogModule,
   MatFormFieldModule,
   MatIconModule,
   MatInputModule,
   MatListModule,
+  MatMenuModule,
   MatNativeDateModule,
   MatSelectModule,
   MatTableModule,
   MatTabsModule,
+  MatTooltipModule,
 ];
 
 export const IMPORTACIONES_MATERIAL_CONSULTAS = [
@@ -92,10 +94,12 @@ export const IMPORTACIONES_MATERIAL_CONSULTAS = [
   MatFormFieldModule,
   MatIconModule,
   MatInputModule,
+  MatMenuModule,
   MatNativeDateModule,
   MatSelectModule,
   MatTableModule,
   MatTabsModule,
+  MatTooltipModule,
 ];
 
 export const IMPORTACIONES_MATERIAL_TABLAS = [MatTableModule];

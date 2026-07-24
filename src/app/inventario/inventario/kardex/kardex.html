@@ -1,7 +1,6 @@
 <div class="content-header">
   <div>
     <h1>Kardex de inventario</h1>
-    <p>Historial auditable de entradas, salidas, ajustes y transferencias.</p>
   </div>
   <button mat-raised-button color="primary" (click)="exportar()" [disabled]="!dataSource.filteredData.length">
     <mat-icon>download</mat-icon>Exportar CSV

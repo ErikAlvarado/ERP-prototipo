@@ -4,12 +4,18 @@
   <mat-tab-group class="tabs-consultas" animationDuration="200ms">
     <mat-tab label="Seguimiento">
       <div class="barra-periodo">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Periodo</mat-label>
-          <mat-select [value]="periodo()" (selectionChange)="periodo.set($event.value)">
-            @for (opcion of periodos; track opcion.valor) { <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option> }
-          </mat-select>
-        </mat-form-field>
+        <button mat-stroked-button type="button" class="boton-filtro-inventario filtro-periodo-consultas" [matMenuTriggerFor]="menuPeriodoSeguimiento">
+          <mat-icon>date_range</mat-icon>
+          {{ etiquetaPeriodo() }}
+        </button>
+        <mat-menu #menuPeriodoSeguimiento="matMenu">
+          @for (opcion of periodos; track opcion.valor) {
+            <button mat-menu-item type="button" (click)="periodo.set(opcion.valor)">
+              @if (periodo() === opcion.valor) { <mat-icon>check</mat-icon> }
+              <span>{{ opcion.etiqueta }}</span>
+            </button>
+          }
+        </mat-menu>
       </div>
       <div class="seguimiento-grid">
         <mat-card appearance="outlined" class="panel pedidos-panel">
@@ -51,14 +57,18 @@
             <mat-card-subtitle>{{ ordenesFiltradas().length }} órdenes en el periodo seleccionado</mat-card-subtitle>
           </div>
           <div class="acciones-historial">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>Periodo</mat-label>
-              <mat-select [value]="periodo()" (selectionChange)="periodo.set($event.value)">
-                @for (opcion of periodos; track opcion.valor) {
-                  <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+            <button mat-stroked-button type="button" class="boton-filtro-inventario filtro-periodo-consultas" [matMenuTriggerFor]="menuPeriodoHistorial">
+              <mat-icon>date_range</mat-icon>
+              {{ etiquetaPeriodo() }}
+            </button>
+            <mat-menu #menuPeriodoHistorial="matMenu">
+              @for (opcion of periodos; track opcion.valor) {
+                <button mat-menu-item type="button" (click)="periodo.set(opcion.valor)">
+                  @if (periodo() === opcion.valor) { <mat-icon>check</mat-icon> }
+                  <span>{{ opcion.etiqueta }}</span>
+                </button>
+              }
+            </mat-menu>
             <button mat-stroked-button type="button" class="exportar" (click)="exportarHistorial()">
               <mat-icon>download</mat-icon>
               Exportar
@@ -67,17 +77,40 @@
         </mat-card-header>
         <mat-card-content class="tabla-scroll">
           <!-- Columnas del historial de compras -->
-          <table mat-table [dataSource]="ordenesFiltradas()" class="tabla-compartida">
-            <ng-container matColumnDef="folio"><th mat-header-cell *matHeaderCellDef>FOLIO</th><td mat-cell *matCellDef="let o" class="mono">{{ o.folio }}</td></ng-container>
-            <ng-container matColumnDef="proveedor"><th mat-header-cell *matHeaderCellDef>PROVEEDOR</th><td mat-cell *matCellDef="let o">{{ o.proveedor }}</td></ng-container>
-            <ng-container matColumnDef="solicitante"><th mat-header-cell *matHeaderCellDef>SOLICITANTE</th><td mat-cell *matCellDef="let o" class="secundario">{{ o.solicitante }}</td></ng-container>
-            <ng-container matColumnDef="articulos"><th mat-header-cell *matHeaderCellDef>ARTÍCULOS</th><td mat-cell *matCellDef="let o" class="secundario">{{ o.articulos }}</td></ng-container>
-            <ng-container matColumnDef="total"><th mat-header-cell *matHeaderCellDef>TOTAL</th><td mat-cell *matCellDef="let o" class="mono">{{ o.total | currency:'MXN':'symbol':'1.0-0' }}</td></ng-container>
-            <ng-container matColumnDef="fecha"><th mat-header-cell *matHeaderCellDef>FECHA</th><td mat-cell *matCellDef="let o" class="fecha-tabla">{{ o.fecha | date:'dd MMM yyyy' }}</td></ng-container>
-            <ng-container matColumnDef="estado"><th mat-header-cell *matHeaderCellDef>ESTADO</th><td mat-cell *matCellDef="let o"><app-estado [texto]="o.estado" /></td></ng-container>
-            <ng-container matColumnDef="acciones"><th mat-header-cell *matHeaderCellDef><span class="solo-lector">ACCIONES</span></th><td mat-cell *matCellDef="let o"><button mat-button type="button" class="recomprar" [attr.aria-label]="'Recomprar orden ' + o.folio" (click)="recomprar(o)"><mat-icon>refresh</mat-icon> Recomprar</button></td></ng-container>
+          <table mat-table [dataSource]="ordenesFiltradas()" class="tabla-compartida tabla-inventario vista-escritorio">
+            <ng-container matColumnDef="folio"><th mat-header-cell *matHeaderCellDef>Folio</th><td mat-cell *matCellDef="let o" class="mono">{{ o.folio }}</td></ng-container>
+            <ng-container matColumnDef="proveedor"><th mat-header-cell *matHeaderCellDef>Proveedor</th><td mat-cell *matCellDef="let o">{{ o.proveedor }}</td></ng-container>
+            <ng-container matColumnDef="solicitante"><th mat-header-cell *matHeaderCellDef>Solicitante</th><td mat-cell *matCellDef="let o" class="secundario">{{ o.solicitante }}</td></ng-container>
+            <ng-container matColumnDef="articulos"><th mat-header-cell *matHeaderCellDef>Artículos</th><td mat-cell *matCellDef="let o" class="secundario">{{ o.articulos }}</td></ng-container>
+            <ng-container matColumnDef="total"><th mat-header-cell *matHeaderCellDef>Total</th><td mat-cell *matCellDef="let o" class="mono">{{ o.total | currency:'MXN':'symbol':'1.0-0' }}</td></ng-container>
+            <ng-container matColumnDef="fecha"><th mat-header-cell *matHeaderCellDef>Fecha</th><td mat-cell *matCellDef="let o" class="fecha-tabla">{{ o.fecha | date:'dd MMM yyyy' }}</td></ng-container>
+            <ng-container matColumnDef="estado"><th mat-header-cell *matHeaderCellDef>Estado</th><td mat-cell *matCellDef="let o"><app-estado [texto]="o.estado" /></td></ng-container>
+            <ng-container matColumnDef="acciones"><th mat-header-cell *matHeaderCellDef>Acciones</th><td mat-cell *matCellDef="let o"><button mat-icon-button type="button" class="recomprar" matTooltip="Recomprar" [attr.aria-label]="'Recomprar orden ' + o.folio" (click)="recomprar(o)"><mat-icon>refresh</mat-icon></button></td></ng-container>
             <tr mat-header-row *matHeaderRowDef="columnas"></tr><tr mat-row *matRowDef="let row; columns: columnas"></tr>
           </table>
+          <div class="lista-historial vista-movil">
+            @for (o of ordenesFiltradas(); track o.folio) {
+              <mat-card appearance="outlined" class="tarjeta-historial">
+                <mat-card-header>
+                  <div class="encabezado-registro">
+                    <div><span class="mono">{{ o.folio }}</span><h3>{{ o.proveedor }}</h3></div>
+                    <app-estado [texto]="o.estado" />
+                  </div>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="datos-registro">
+                    <div><span>Solicitante</span><strong>{{ o.solicitante }}</strong></div>
+                    <div><span>Artículos</span><strong>{{ o.articulos }}</strong></div>
+                    <div><span>Fecha</span><strong>{{ o.fecha | date:'dd MMM yyyy' }}</strong></div>
+                    <div><span>Total</span><strong class="mono">{{ o.total | currency:'MXN':'symbol':'1.0-0' }}</strong></div>
+                  </div>
+                </mat-card-content>
+                <mat-card-actions align="end">
+                  <button mat-stroked-button type="button" class="recomprar" (click)="recomprar(o)"><mat-icon>refresh</mat-icon> Recomprar</button>
+                </mat-card-actions>
+              </mat-card>
+            }
+          </div>
         </mat-card-content>
       </mat-card>
     </mat-tab>

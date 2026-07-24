@@ -127,7 +127,7 @@
 
     <div class="contenedor-tabla">
       <!-- Columnas de órdenes recientes -->
-      <table mat-table [dataSource]="dataSource" class="tabla-compartida tabla-ordenes">
+      <table mat-table [dataSource]="dataSource" class="tabla-compartida tabla-inventario tabla-ordenes vista-escritorio">
         <!-- Columna: folio -->
 
         <ng-container matColumnDef="folio">
@@ -164,6 +164,22 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
+      <div class="lista-ordenes-movil vista-movil">
+        @for (orden of dataSource; track orden.folio) {
+          <mat-card appearance="outlined" class="tarjeta-orden">
+            <mat-card-header>
+              <div class="encabezado-registro">
+                <div><span class="folio">{{ orden.folio }}</span><h3>{{ orden.proveedor }}</h3></div>
+                <app-estado [texto]="orden.estado" />
+              </div>
+            </mat-card-header>
+            <mat-card-content>
+              <div><span>Solicitante</span><strong>{{ orden.solicitante }}</strong></div>
+              <div><span>Total</span><strong class="total">{{ orden.total }}</strong></div>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
     </div>
   </app-card>
 </section>

@@ -119,6 +119,9 @@ export class GestionCompras {
   readonly busquedaOrdenes = signal('');
   readonly periodoOrdenes = signal<PeriodoConsulta>('mes');
   readonly periodos = PERIODOS_CONSULTA;
+  readonly etiquetaPeriodoOrdenes = computed(
+    () => this.periodos.find((periodo) => periodo.valor === this.periodoOrdenes())?.etiqueta ?? 'Periodo',
+  );
   readonly estadosOrden: ReadonlyArray<OrdenCompra['estado']> = [
     'Pendiente',
     'Activo',

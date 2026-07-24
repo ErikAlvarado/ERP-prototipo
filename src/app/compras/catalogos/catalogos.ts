@@ -1,6 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { IMPORTACIONES_MATERIAL_CATALOGO } from '../../shared/material/importaciones-material';
 import {
@@ -9,10 +8,11 @@ import {
 } from '../../shared/services/catalogo-compras';
 
 type Categoria = 'Todos' | CategoriaProducto;
+type OrdenCatalogo = 'Nombre A - Z' | 'Nombre Z - A' | 'Menor precio' | 'Mayor precio';
 
 @Component({
   selector: 'app-catalogos',
-  imports: [FormsModule, CurrencyPipe, IMPORTACIONES_MATERIAL_CATALOGO],
+  imports: [CurrencyPipe, IMPORTACIONES_MATERIAL_CATALOGO],
   templateUrl: './catalogos.html',
   styleUrl: './catalogos.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,23 +22,45 @@ export class Catalogos {
   private readonly router = inject(Router);
   readonly categorias: Array<{ valor: Categoria; etiqueta: string }> = [
     { valor: 'Todos', etiqueta: 'Todos' },
-    { valor: 'Tecnologia', etiqueta: 'Tecnologia' },
-    { valor: 'Papeleria', etiqueta: 'Papeleria' },
+    { valor: 'Tecnologia', etiqueta: 'Tecnología' },
+    { valor: 'Papeleria', etiqueta: 'Papelería' },
     { valor: 'Industrial', etiqueta: 'Industrial' },
     { valor: 'Mobiliario', etiqueta: 'Mobiliario' },
     { valor: 'Consumibles', etiqueta: 'Consumibles' },
   ];
   readonly busqueda = signal('');
   readonly categoriaActiva = signal<Categoria>('Todos');
+  readonly ordenCatalogo = signal<OrdenCatalogo>('Nombre A - Z');
+  readonly opcionesOrden: ReadonlyArray<OrdenCatalogo> = [
+    'Nombre A - Z',
+    'Nombre Z - A',
+    'Menor precio',
+    'Mayor precio',
+  ];
+  readonly etiquetaCategoriaActiva = computed(
+    () => this.categorias.find((categoria) => categoria.valor === this.categoriaActiva())?.etiqueta ?? 'Todas',
+  );
   readonly productos = this.catalogo.productos;
 
   readonly productosFiltrados = computed(() => {
     const termino = this.normalizar(this.busqueda());
     const categoria = this.categoriaActiva();
-    return this.productos().filter((producto) => {
+    const productos = this.productos().filter((producto) => {
       const coincideCategoria = categoria === 'Todos' || producto.categoria === categoria;
       const texto = this.normalizar(`${producto.nombre} ${producto.proveedor}`);
       return coincideCategoria && (!termino || texto.includes(termino));
+    });
+    return [...productos].sort((a, b) => {
+      switch (this.ordenCatalogo()) {
+        case 'Nombre Z - A':
+          return b.nombre.localeCompare(a.nombre, 'es');
+        case 'Menor precio':
+          return a.precio - b.precio;
+        case 'Mayor precio':
+          return b.precio - a.precio;
+        default:
+          return a.nombre.localeCompare(b.nombre, 'es');
+      }
     });
   });
 
