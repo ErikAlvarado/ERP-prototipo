@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Venta } from '../../models/venta.model';
 import { NotificationService } from '../../services/notification.service';
+import { jsPDF } from 'jspdf';
 
 @Component({
   selector: 'app-ticket',
@@ -588,23 +589,32 @@ export class TicketComponent {
   constructor(private notificationService: NotificationService) {}
 
   printTicket(): void {
-    this.notificationService.success('Enviando instrucción a impresora térmica POS...');
-    setTimeout(() => {
-      alert(`Imprimiendo comprobante ${this.sale.folio}... \n(Simulado en terminal POS)`);
-    }, 400);
+    this.notificationService.info(`Preparando comprobante ${this.sale.folio} para impresión`);
+    window.print();
   }
 
   downloadPdf(): void {
-    this.notificationService.success('Generando comprobante PDF...');
-    setTimeout(() => {
-      const link = document.createElement('a');
-      link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(`Comprobante ZYRO POS - Folio: ${this.sale.folio}\nTotal: $${this.sale.total}`);
-      link.setAttribute('download', `comprobante_${this.sale.folio}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      this.notificationService.success('Descarga iniciada.');
-    }, 600);
+    const pdf = new jsPDF({ unit: 'mm', format: [80, 180] });
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(14);
+    pdf.text('ZYROIT', 40, 12, { align: 'center' });
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    pdf.text(`${this.sale.operationType || 'Venta'} ${this.sale.folio}`, 40, 20, { align: 'center' });
+    pdf.text(`Fecha: ${this.sale.date} ${this.sale.time}`, 8, 28);
+    pdf.text(`Cliente: ${this.sale.client.name}`, 8, 34);
+    let y = 43;
+    for (const item of this.sale.items) {
+      pdf.text(`${item.quantity} x ${item.product.name}`.slice(0, 38), 8, y);
+      pdf.text(`$${item.subtotal.toFixed(2)}`, 72, y, { align: 'right' });
+      y += 6;
+    }
+    pdf.line(8, y, 72, y);
+    y += 7;
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(`TOTAL: $${this.sale.total.toFixed(2)} MXN`, 72, y, { align: 'right' });
+    pdf.save(`comprobante_${this.sale.folio}.pdf`);
+    this.notificationService.success('Comprobante PDF descargado.');
   }
 
   close(): void {

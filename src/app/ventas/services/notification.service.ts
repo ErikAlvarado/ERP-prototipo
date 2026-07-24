@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 export interface ToastMessage {
@@ -13,6 +14,7 @@ export interface ToastMessage {
   providedIn: 'root'
 })
 export class NotificationService {
+  private readonly snackBar = inject(MatSnackBar);
   private toastsSubject = new BehaviorSubject<ToastMessage[]>([]);
   public toasts$: Observable<ToastMessage[]> = this.toastsSubject.asObservable();
 
@@ -24,6 +26,12 @@ export class NotificationService {
     
     const current = this.toastsSubject.value;
     this.toastsSubject.next([...current, toast]);
+    this.snackBar.open(title ? `${title}: ${text}` : text, 'Cerrar', {
+      duration,
+      horizontalPosition: 'end',
+      verticalPosition: 'top',
+      panelClass: [`ventas-aviso-${type}`],
+    });
 
     setTimeout(() => {
       this.remove(id);

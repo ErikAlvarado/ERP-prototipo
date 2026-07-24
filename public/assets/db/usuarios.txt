@@ -14,3 +14,4 @@ id_usuario|id_empresa|nombres|apellido_paterno|apellido_materno|fecha_nacimiento
 13|1|Usuario|Compras|||compras@gmail.com||compras123|1||0||1|2026-07-23|2026-07-23|1|1
 14|1|Usuario|Inventario|||inventario@gmail.com||inventario123|1||0||1|2026-07-23|2026-07-23|1|1
 15|1|Jefe|Inventarios|||jefeinventarios@gmail.com||jefeinventarios123|1||0||1|2026-07-23|2026-07-23|1|1
+16|1|Usuario|Ventas|||ventas@gmail.com||ventas123|1||0||1|2026-07-24|2026-07-24|1|1

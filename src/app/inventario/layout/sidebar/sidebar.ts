@@ -192,6 +192,10 @@ export class Sidebar {
       this.menus.set(this.menus().filter(menu => menu.title === 'Compras'));
       return;
     }
+    if (this.autenticacion.puedeVerVentas()) {
+      this.menus.set(this.menus().filter(menu => menu.title === 'Ventas'));
+      return;
+    }
     if (this.autenticacion.puedeVerInventario()) {
       this.menus.set(this.menus().filter(menu =>
         ['Dashboard', 'Catálogo de productos', 'CatÃ¡logo de productos', 'Inventario'].includes(menu.title)));

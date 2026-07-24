@@ -1,35 +1,259 @@
+/* Sistema visual de Ventas, alineado con Inventario y Angular Material. */
 :root {
-  --navbar-height: 64px; --primary-color: #175cd3; --accent-color: #175cd3;
-  --accent-light: #eaf2ff; --success-color: #079455; --success-light: #ecfdf3;
-  --danger-color: #d92d20; --danger-light: #fef3f2; --warning-color: #b54708;
-  --warning-light: #fffaeb; --info-color: #026aa2; --info-light: #f0f9ff;
-  --text-primary: #101828; --text-secondary: #667085; --bg-color: #f4f7fb;
-  --panel-bg: #fff; --border-color: #dce5f0; --border-radius-sm: 8px;
-  --border-radius-md: 12px; --border-radius-lg: 15px; --border-radius-full: 999px;
-  --shadow-premium: 0 4px 14px rgba(15, 39, 66, .08); --transition-speed: .2s;
+  --navbar-height: 64px;
+  --primary-color: #175cd3;
+  --accent-color: #175cd3;
+  --accent-light: #eff8ff;
+  --success-color: #079455;
+  --success-light: #ecfdf3;
+  --danger-color: #d92d20;
+  --danger-light: #fef3f2;
+  --warning-color: #b54708;
+  --warning-light: #fffaeb;
+  --info-color: #026aa2;
+  --info-light: #f0f9ff;
+  --text-primary: #101828;
+  --text-secondary: #667085;
+  --bg-color: #f4f7fb;
+  --panel-bg: #fff;
+  --border-color: #dce5f0;
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 15px;
+  --border-radius-full: 999px;
+  --shadow-premium: 0 4px 14px rgba(15, 39, 66, .06);
+  --transition-speed: .2s;
 }
-app-dashboard, app-pdv, app-cotizaciones, app-historial, app-devoluciones-init,
-app-gestion-devoluciones, app-configuracion {
-  display: block; min-height: 100%; padding: 22px 32px 42px;
-  color: var(--text-primary); background: var(--bg-color);
+
+app-dashboard,
+app-pdv,
+app-cotizaciones,
+app-historial,
+app-devoluciones-init,
+app-gestion-devoluciones,
+app-configuracion {
+  display: block;
+  min-height: 100%;
+  padding: 22px 32px 42px;
+  color: var(--text-primary);
+  background: var(--bg-color);
 }
-.card-premium { padding: 18px; border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); background: var(--panel-bg); box-shadow: var(--shadow-premium); }
-.btn-premium { min-height: 38px; padding: 8px 14px; border: 1px solid transparent; border-radius: var(--border-radius-sm); font: 500 13px Roboto, Arial, sans-serif; cursor: pointer; }
-.btn-accent { color: #fff; background: var(--primary-color); }
-.btn-secondary { color: #344054; border-color: #d0d5dd; background: #fff; }
-.btn-danger { color: #fff; background: var(--danger-color); }
-.btn-text { color: var(--primary-color); background: transparent; text-decoration: none; }
-.form-control { width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid #d0d5dd; border-radius: var(--border-radius-sm); color: var(--text-primary); background: #fff; font: inherit; outline: none; }
-.form-control:focus { border-color: #84adff; box-shadow: 0 0 0 3px #eff4ff; }
-.badge-custom { display: inline-flex; align-items: center; padding: 4px 9px; border-radius: var(--border-radius-full); font-size: 11px; font-weight: 700; }
-.modal-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 24px; background: rgba(15, 23, 42, .48); }
-.modal-head, .modal-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+app-dashboard h1,
+app-pdv h1,
+app-cotizaciones h1,
+app-historial h1,
+app-devoluciones-init h1,
+app-gestion-devoluciones h1,
+app-configuracion h1 {
+  margin: 0;
+  color: #0f2742;
+  font: 700 24px/1.25 Roboto, Arial, sans-serif;
+}
+
+.card-premium {
+  padding: 18px !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius-lg) !important;
+  background: var(--panel-bg) !important;
+  box-shadow: var(--shadow-premium) !important;
+}
+
+.btn-premium {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-sm);
+  font: 500 13px Roboto, Arial, sans-serif;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+.btn-premium:hover:not(:disabled) { box-shadow: 0 2px 7px rgba(15, 39, 66, .14); }
+.btn-premium:focus-visible { outline: 3px solid #b2ccff; outline-offset: 2px; }
+.btn-premium:disabled { opacity: .48; cursor: not-allowed; }
+.btn-accent, .btn-primary { color: #fff !important; background: var(--primary-color) !important; }
+.btn-success { color: #fff !important; background: var(--success-color) !important; }
+.btn-danger { color: #fff !important; background: var(--danger-color) !important; }
+.btn-secondary { color: #344054 !important; border-color: #d0d5dd !important; background: #fff !important; }
+.btn-text { color: var(--primary-color) !important; background: transparent !important; text-decoration: none; box-shadow: none !important; }
+
+.form-control {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #d0d5dd !important;
+  border-radius: var(--border-radius-sm) !important;
+  color: var(--text-primary);
+  background: #fff !important;
+  font: 400 14px Roboto, Arial, sans-serif;
+  outline: none;
+}
+
+.form-control:hover { border-color: #98a2b3 !important; }
+.form-control:focus { border-color: #84adff !important; box-shadow: 0 0 0 3px #eff4ff !important; }
+.form-group label { display: block; margin-bottom: 6px; color: #344054; font-size: 12px; font-weight: 600; }
+
+app-cotizaciones table,
+app-historial table,
+app-gestion-devoluciones table,
+app-pdv table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #344054;
+  background: #fff;
+}
+
+app-cotizaciones th,
+app-historial th,
+app-gestion-devoluciones th,
+app-pdv th {
+  height: 44px;
+  padding: 10px 14px !important;
+  border-bottom: 1px solid #dce5f0 !important;
+  color: #475467 !important;
+  background: #f8fafc !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+app-cotizaciones td,
+app-historial td,
+app-gestion-devoluciones td,
+app-pdv td {
+  height: 54px;
+  padding: 10px 14px !important;
+  border-bottom: 1px solid #eef2f6 !important;
+  font-size: 13px;
+}
+
+app-cotizaciones tbody tr:hover,
+app-historial tbody tr:hover,
+app-gestion-devoluciones tbody tr:hover,
+app-pdv tbody tr:hover { background: #f8fbff; }
+
+.table-container { padding: 0 !important; overflow: hidden auto !important; }
+.table-container table { min-width: 900px; }
+
+.badge-custom {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: var(--border-radius-full);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 24px;
+  background: rgba(15, 23, 42, .5);
+  backdrop-filter: blur(2px);
+}
+
+.modal-card, .drawer-card {
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border-radius: 16px !important;
+}
+
+.modal-head, .modal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-head {
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eef2f6;
+}
+
 .modal-body { margin-block: 18px; }
-.text-primary { color: var(--primary-color) !important; } .text-accent, .text-info { color: var(--accent-color) !important; }
-.text-success { color: var(--success-color) !important; } .text-danger { color: var(--danger-color) !important; }
-.text-warning { color: var(--warning-color) !important; } .text-secondary { color: var(--text-secondary) !important; }
-.font-semibold { font-weight: 600; } .font-bold { font-weight: 700; }
+.modal-foot { padding-top: 15px; border-top: 1px solid #eef2f6; }
+.close-modal-btn {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #475467;
+  background: transparent;
+  font-size: 24px;
+  cursor: pointer;
+}
+.close-modal-btn:hover { background: #f2f4f7; }
+
+/* Los iconos heredados se renderizan con la misma fuente de Material del ERP. */
+.fa-solid, .fa-regular {
+  display: inline-block;
+  width: 1em;
+  overflow: hidden;
+  font-family: 'Material Symbols Outlined' !important;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.fa-magnifying-glass::before { content: 'search'; }.fa-plus::before, .fa-plus-circle::before { content: 'add_circle'; }
+.fa-dollar-sign::before { content: 'payments'; }.fa-calendar-days::before { content: 'calendar_month'; }
+.fa-boxes-packing::before, .fa-boxes-stacked::before { content: 'inventory_2'; }.fa-triangle-exclamation::before { content: 'warning'; }
+.fa-circle-check::before, .fa-check::before { content: 'check_circle'; }.fa-circle-xmark::before { content: 'cancel'; }
+.fa-circle-info::before, .fa-info-circle::before { content: 'info'; }.fa-cart-shopping::before { content: 'shopping_cart'; }
+.fa-file-invoice-dollar::before, .fa-file-invoice::before { content: 'request_quote'; }.fa-tags::before, .fa-tag::before { content: 'sell'; }
+.fa-trash-can::before { content: 'delete'; }.fa-user-tag::before, .fa-user::before { content: 'person'; }
+.fa-phone::before { content: 'phone'; }.fa-credit-card::before { content: 'credit_card'; }
+.fa-cash-register::before { content: 'point_of_sale'; }.fa-file-signature::before { content: 'contract_edit'; }
+.fa-spinner::before { content: 'progress_activity'; }.fa-paper-plane::before { content: 'send'; }
+.fa-filter::before { content: 'filter_alt'; }.fa-file-excel::before { content: 'table_view'; }
+.fa-file-pdf::before { content: 'picture_as_pdf'; }.fa-eye::before { content: 'visibility'; }
+.fa-print::before { content: 'print'; }.fa-receipt::before { content: 'receipt_long'; }
+.fa-user-shield::before, .fa-user-gear::before { content: 'manage_accounts'; }.fa-truck-ramp-box::before { content: 'local_shipping'; }
+.fa-hand-holding-dollar::before { content: 'currency_exchange'; }.fa-ban::before { content: 'block'; }
+.fa-box-open::before { content: 'inventory'; }.fa-sliders::before { content: 'tune'; }
+.fa-desktop::before { content: 'computer'; }.fa-business-time::before { content: 'schedule'; }
+.fa-building-columns::before { content: 'account_balance'; }.fa-money-bill-wave::before { content: 'payments'; }
+.fa-ticket::before { content: 'confirmation_number'; }.fa-calendar-plus::before { content: 'event'; }
+.fa-barcode::before { content: 'barcode_scanner'; }.fa-paperclip::before { content: 'attach_file'; }
+.fa-copy::before { content: 'content_copy'; }.fa-envelope::before { content: 'mail'; }.fa-pen-to-square::before { content: 'edit'; }
+.fa-flag-checkered::before { content: 'flag'; }.fa-circle-down::before { content: 'move_to_inbox'; }
+
+.text-primary { color: var(--primary-color) !important; }
+.text-accent, .text-info { color: var(--accent-color) !important; }
+.text-success { color: var(--success-color) !important; }
+.text-danger { color: var(--danger-color) !important; }
+.text-warning { color: var(--warning-color) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
+.font-semibold { font-weight: 600; }.font-bold { font-weight: 700; }
+.ventas-aviso-success { --mdc-snackbar-container-color: #027a48; }
+.ventas-aviso-danger { --mdc-snackbar-container-color: #b42318; }
+.ventas-aviso-warning { --mdc-snackbar-container-color: #b54708; }
+.ventas-aviso-info { --mdc-snackbar-container-color: #175cd3; }
+
 @media (max-width: 760px) {
   app-dashboard, app-pdv, app-cotizaciones, app-historial, app-devoluciones-init,
   app-gestion-devoluciones, app-configuracion { padding: 16px; }
+  .modal-overlay { padding: 12px; }
+  .modal-card, .drawer-card { max-height: calc(100vh - 24px); }
+}
+
+@media print {
+  body * { visibility: hidden !important; }
+  #printable-ticket, #printable-ticket * { visibility: visible !important; }
+  #printable-ticket { position: absolute; inset: 0 auto auto 0; width: 80mm; }
 }

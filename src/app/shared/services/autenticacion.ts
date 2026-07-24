@@ -131,7 +131,7 @@ export class Autenticacion {
     );
   }
 
-  registrar(nombre: string, correo: string, contrasena: string, rol: 'Inventario' | 'Comprador'): boolean {
+  registrar(nombre: string, correo: string, contrasena: string, rol: 'Inventario' | 'Comprador' | 'Ventas'): boolean {
     const email = correo.trim().toLocaleLowerCase();
     if (this.cuentasLocales().some(cuenta => cuenta.correo.toLocaleLowerCase() === email)) return false;
     const cuentas = [...this.cuentasLocales(), {
@@ -157,9 +157,14 @@ export class Autenticacion {
     return this.esAdministrador() || this.tieneRol('Comprador', 'Compras');
   }
 
+  puedeVerVentas(): boolean {
+    return this.esAdministrador() || this.tieneRol('Ventas', 'Vendedor');
+  }
+
   rutaInicial(): string {
     if (this.esAdministrador() || this.puedeVerInventario()) return '/dashboard';
     if (this.puedeVerCompras()) return '/compras/dashboard';
+    if (this.puedeVerVentas()) return '/ventas/dashboard';
     return '/login';
   }
 
@@ -167,6 +172,7 @@ export class Autenticacion {
     if (!this.sesion()) return false;
     if (this.esAdministrador()) return true;
     if (url.startsWith('/compras')) return this.puedeVerCompras();
+    if (url.startsWith('/ventas')) return this.puedeVerVentas();
     if (['/usuarios', '/roles', '/empresas', '/almacenes'].some(ruta => url.startsWith(ruta))) {
       return false;
     }

@@ -14,3 +14,4 @@ id_usuario_rol|id_usuario|id_rol|fecha_asignacion|fecha_fin|activo|asignado_por_
 13|13|5|2026-07-23||1|1
 14|14|13|2026-07-23||1|1
 15|15|14|2026-07-23||1|1
+16|16|15|2026-07-24||1|1

@@ -19,7 +19,7 @@ export class Register {
     nombre: ['', [Validators.required, Validators.minLength(3)]],
     correo: ['', [Validators.required, Validators.email]],
     contrasena: ['', [Validators.required, Validators.minLength(8)]],
-    rol: ['Inventario' as 'Inventario' | 'Comprador', Validators.required],
+    rol: ['Inventario' as 'Inventario' | 'Comprador' | 'Ventas', Validators.required],
   });
 
   registrar(): void {
