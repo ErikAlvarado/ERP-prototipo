@@ -78,7 +78,7 @@
               <td><strong>{{ detalle.nombre }}</strong><small>{{ detalle.sku }}</small></td>
               <td>{{ detalle.codigo || 'Sin código' }}</td>
               <td>{{ detalle.unidad }}</td>
-              <td><input class="cantidad-tabla" type="number" min="1" [value]="detalle.cantidad" (change)="cambiarCantidad(detalle.id, $any($event.target).value)"></td>
+              <td><input matInput class="cantidad-tabla" type="number" min="1" [value]="detalle.cantidad" (change)="cambiarCantidad(detalle.id, $any($event.target).value)"></td>
               <td><button mat-icon-button color="warn" type="button" matTooltip="Quitar producto" (click)="quitarProducto(detalle.id)"><mat-icon>delete</mat-icon></button></td>
             </tr>
           } @empty {

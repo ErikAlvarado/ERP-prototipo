@@ -1,0 +1,8 @@
+id_contacto|id_proveedor|nombre|puesto|correo|telefono|es_principal|activo
+1|1|Carlos Mendoza|Ejecutivo de cuenta|carlos.mendoza@tecnocentro.mx|5551102001|1|1
+2|1|Laura Núñez|Soporte comercial|laura.nunez@tecnocentro.mx|5551102002|0|1
+3|2|Mónica Salas|Gerente comercial|monica.salas@oficinamoderna.mx|5551102003|1|1
+4|3|Ricardo Peña|Coordinador de ventas|ricardo.pena@electronacional.mx|5551102004|1|1
+5|4|Adriana León|Ejecutiva mayorista|adriana.leon@textilbajio.mx|5551102005|1|1
+6|5|Jorge Campos|Representante médico|jorge.campos@medicaomega.mx|5551102006|1|1
+7|6|Patricia Mora|Ventas corporativas|patricia.mora@limpiezauniversal.mx|5551102007|1|1

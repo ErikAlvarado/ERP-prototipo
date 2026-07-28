@@ -1,0 +1,9 @@
+id_detalle_solicitud|id_solicitud|id_producto|id_unidad|cantidad_solicitada|observaciones
+1|1|64|1|5|Kit completo
+2|1|69|1|3|Configuración profesional
+3|2|65|1|6|Equipo móvil
+4|2|67|1|10|Tallas variadas
+5|3|66|1|12|Color indistinto
+6|4|68|3|30|Caducidad mínima de doce meses
+7|5|70|5|24|Presentación estándar
+8|6|67|1|8|Partida cancelada

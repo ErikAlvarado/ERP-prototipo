@@ -41,10 +41,6 @@ export class ProductD {
     if (data.mode === 'add') this.prepararInventarioInicial();
   }
 
-  get tiposDisponibles(): string[] {
-    return [...new Set([this.producto.tipo, 'Físico', 'Servicio', 'Digital'].filter(Boolean))];
-  }
-
   get estatusDisponibles(): string[] {
     return ['Vigente', 'Descontinuado', 'Eliminado'];
   }

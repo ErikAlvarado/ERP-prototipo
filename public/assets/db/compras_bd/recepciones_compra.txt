@@ -1,0 +1,4 @@
+id_recepcion|folio|id_orden_compra|id_almacen|id_responsable|fecha_recepcion|documento_proveedor|observaciones
+1|RC-2026-0001|1|1|7|2026-06-12 14:20:00|REM-TC-8801|Recepción completa sin incidencias
+2|RC-2026-0002|2|2|2|2026-06-22 16:10:00|REM-TC-8845|Primera entrega parcial
+3|RC-2026-0003|2|2|2|2026-06-25 10:35:00|REM-TC-8860|Segunda entrega parcial

@@ -21,4 +21,9 @@
   grid-area: content;
   overflow-y: auto;
   padding: 20px;
+  scrollbar-width: none;
+}
+
+.content::-webkit-scrollbar {
+  display: none;
 }

@@ -6,7 +6,7 @@
 <div class="content-search">
   <div class="custom-search">
     <mat-icon>search</mat-icon>
-    <input [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar por nombre, razón social, RFC o contacto">
+    <input matInput [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar por nombre, razón social, RFC o contacto">
   </div>
   <div class="custom-filters">
     <button mat-stroked-button class="filter-btn" (click)="abrirFiltros()">

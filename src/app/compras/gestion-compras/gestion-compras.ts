@@ -86,24 +86,6 @@ const ORDENES_DEMO_RECIENTES: OrdenCompra[] = [
   },
 ];
 
-interface OfertaCotizacion {
-  proveedor: string;
-  precioUnitario: string;
-  total: string;
-  entrega: string;
-  calificacion: number;
-  mejorPrecio: boolean;
-}
-
-interface Cotizacion {
-  folio: string;
-  estado: 'Pendiente' | 'Aprobada';
-  descripcion: string;
-  cantidad: number;
-  fecha: string;
-  ofertas: OfertaCotizacion[];
-}
-
 @Component({
   selector: 'app-gestion-compras',
   imports: [CommonModule, Card, EncabezadoPagina, Estado, IMPORTACIONES_MATERIAL_COMPRAS],
@@ -348,67 +330,6 @@ export class GestionCompras {
     this.persistencia.guardar(this.claveOrdenes, this.ordenes());
     this.avisos.open(`Estado de ${folio} actualizado a ${estado}`, 'Cerrar', { duration: 3000 });
   }
-
-  readonly cotizaciones: readonly Cotizacion[] = [
-    {
-      folio: 'COT-2025-0023',
-      estado: 'Pendiente',
-      descripcion: 'Laptops Dell Latitude 5540 (5 unidades)',
-      cantidad: 5,
-      fecha: '16 Jun 2025',
-      ofertas: [
-        {
-          proveedor: 'TechnoInsumos SA de CV',
-          precioUnitario: '$18,500',
-          total: '$92,500',
-          entrega: '7 dias habiles',
-          calificacion: 4.8,
-          mejorPrecio: false,
-        },
-        {
-          proveedor: 'Electronica Empresarial MX',
-          precioUnitario: '$17,800',
-          total: '$89,000',
-          entrega: '10 dias habiles',
-          calificacion: 4.5,
-          mejorPrecio: true,
-        },
-        {
-          proveedor: 'Distribuidora DirectTech',
-          precioUnitario: '$19,200',
-          total: '$96,000',
-          entrega: '5 dias habiles',
-          calificacion: 4.1,
-          mejorPrecio: false,
-        },
-      ],
-    },
-    {
-      folio: 'COT-2025-0024',
-      estado: 'Aprobada',
-      descripcion: 'Sillas Ergonomicas ProMesh (12 unidades)',
-      cantidad: 12,
-      fecha: '15 Jun 2025',
-      ofertas: [
-        {
-          proveedor: 'Muebles Corporativos SA',
-          precioUnitario: '$4,200',
-          total: '$50,400',
-          entrega: '14 dias habiles',
-          calificacion: 4.3,
-          mejorPrecio: false,
-        },
-        {
-          proveedor: 'Oficinas & Diseno MX',
-          precioUnitario: '$3,950',
-          total: '$47,400',
-          entrega: '21 dias habiles',
-          calificacion: 3.8,
-          mejorPrecio: true,
-        },
-      ],
-    },
-  ];
 
   constructor() {
     const solicitudesDemo = this.solicitudes();

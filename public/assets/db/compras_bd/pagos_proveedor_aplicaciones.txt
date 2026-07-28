@@ -1,0 +1,4 @@
+id_aplicacion|id_pago|id_factura_proveedor|importe_aplicado
+1|1|1|109423.96
+2|2|2|3000.00
+3|3|3|10000.00

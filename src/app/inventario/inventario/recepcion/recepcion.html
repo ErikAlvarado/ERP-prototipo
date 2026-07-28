@@ -18,7 +18,7 @@
 <div class="content-search">
   <div class="custom-search">
     <mat-icon>search</mat-icon>
-    <input [(ngModel)]="busqueda" (input)="filtrar()" placeholder="Buscar por folio, orden, proveedor, almacén o responsable">
+    <input matInput [(ngModel)]="busqueda" (input)="filtrar()" placeholder="Buscar por folio, orden, proveedor, almacén o responsable">
   </div>
   <div class="custom-filters">
     <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="estadoMenu">

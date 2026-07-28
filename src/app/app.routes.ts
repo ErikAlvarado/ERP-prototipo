@@ -9,6 +9,7 @@ import { comprasRoutes } from './compras/compras.routes';
 import { Dashboard as ComprasDashboard } from './compras/dashboard/dashboard';
 import { autenticacionGuard, autorizacionHijosGuard } from './shared/guards/autenticacion.guard';
 import { ventasRoutes } from './ventas/ventas.routes';
+import { DashboardComponent as VentasDashboard } from './ventas/pages/dashboard/dashboard.component';
 
 export const routes: Routes = [
   {
@@ -19,6 +20,10 @@ export const routes: Routes = [
     children: [
       {
         path: 'dashboard',
+        component: VentasDashboard,
+      },
+      {
+        path: 'inventario-dashboard',
         component: Dashboard,
       },
 

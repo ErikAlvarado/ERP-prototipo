@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { CotizacionService } from '../../services/cotizacion.service';
 import { ClienteService } from '../../services/cliente.service';
 import { AuthService } from '../../services/auth.service';
@@ -13,14 +15,14 @@ import { MOCK_PRODUCTS } from '../../services/mock-data';
 @Component({
   selector: 'app-cotizaciones',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatInputModule, MatSelectModule],
   template: `
     <div class="quotes-page animate-fade-in">
       <!-- Top Action Bar -->
       <div class="action-bar card-premium">
         <div class="search-wrap">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input 
+          <input matInput
             type="text" 
             placeholder="Buscar por folio o cliente..." 
             class="form-control filter-input" 
@@ -99,25 +101,25 @@ import { MOCK_PRODUCTS } from '../../services/mock-data';
           <div class="modal-body form-body-grid">
             <div class="form-group">
               <label>Cliente *</label>
-              <select class="form-control" [(ngModel)]="formQuote.client">
-                <option *ngFor="let c of clients" [ngValue]="c">{{ c.name }}</option>
-              </select>
+              <mat-select class="form-control" [(ngModel)]="formQuote.client">
+                <mat-option *ngFor="let c of clients" [value]="c">{{ c.name }}</mat-option>
+              </mat-select>
             </div>
             
             <div class="form-group">
               <label>Fecha de Vencimiento *</label>
-              <input type="date" class="form-control" [(ngModel)]="formQuote.expirationDate" />
+              <input matInput type="date" class="form-control" [(ngModel)]="formQuote.expirationDate" />
             </div>
 
             <!-- Item Selector -->
             <div class="form-group items-selector-section">
               <label>Agregar Producto</label>
               <div class="add-item-row">
-                <select class="form-control" [(ngModel)]="selectedProductToAdd">
-                  <option [ngValue]="null">Seleccione un producto...</option>
-                  <option *ngFor="let p of availableProducts" [ngValue]="p">{{ p.name }} (\${{ p.price | number:'1.2-2' }})</option>
-                </select>
-                <input type="number" class="form-control qty-mini-input" [(ngModel)]="productQtyToAdd" min="1" placeholder="Cant" />
+                <mat-select class="form-control" [(ngModel)]="selectedProductToAdd">
+                  <mat-option [value]="null">Seleccione un producto...</mat-option>
+                  <mat-option *ngFor="let p of availableProducts" [value]="p">{{ p.name }} (\${{ p.price | number:'1.2-2' }})</mat-option>
+                </mat-select>
+                <input matInput type="number" class="form-control qty-mini-input" [(ngModel)]="productQtyToAdd" min="1" placeholder="Cant" />
                 <button class="btn-premium btn-accent" (click)="addItemToForm()">Agregar</button>
               </div>
             </div>
@@ -138,7 +140,7 @@ import { MOCK_PRODUCTS } from '../../services/mock-data';
                   <tr *ngFor="let item of formQuote.items; let idx = index">
                     <td>{{ item.product.name }}</td>
                     <td class="text-center">
-                      <input 
+                      <input matInput
                         type="number" 
                         class="form-qty-edit" 
                         [(ngModel)]="item.quantity" 
@@ -193,15 +195,15 @@ import { MOCK_PRODUCTS } from '../../services/mock-data';
           <div class="modal-body">
             <div class="form-group">
               <label for="em-to">Destinatario *</label>
-              <input type="email" id="em-to" class="form-control" [(ngModel)]="emailForm.to" />
+              <input matInput type="email" id="em-to" class="form-control" [(ngModel)]="emailForm.to" />
             </div>
             <div class="form-group">
               <label for="em-sub">Asunto</label>
-              <input type="text" id="em-sub" class="form-control" [(ngModel)]="emailForm.subject" />
+              <input matInput type="text" id="em-sub" class="form-control" [(ngModel)]="emailForm.subject" />
             </div>
             <div class="form-group">
               <label for="em-msg">Mensaje</label>
-              <textarea id="em-msg" class="form-control" rows="4" [(ngModel)]="emailForm.message"></textarea>
+              <textarea matInput id="em-msg" class="form-control" rows="4" [(ngModel)]="emailForm.message"></textarea>
             </div>
             <div class="email-attachment-info">
               <i class="fa-solid fa-paperclip"></i>

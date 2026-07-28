@@ -1,0 +1,5 @@
+id_metodo_pago|nombre|activo
+1|Transferencia bancaria|1
+2|Cheque|1
+3|Tarjeta empresarial|1
+4|Crédito con proveedor|1

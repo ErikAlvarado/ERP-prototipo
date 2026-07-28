@@ -1,0 +1,4 @@
+id_pago|id_proveedor|id_metodo_pago|id_moneda|fecha_pago|importe|referencia|id_usuario|observaciones
+1|1|1|1|2026-07-10|109423.96|SPEI-20260710-001|1|Liquidación factura A-10881
+2|1|1|2|2026-07-01|3000.00|SPEI-20260701-014|2|Primer abono factura A-10902
+3|3|4|1|2026-07-15|10000.00|CRED-ENA-7715|3|Abono programado

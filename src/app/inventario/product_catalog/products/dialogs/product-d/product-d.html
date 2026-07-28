@@ -6,7 +6,6 @@
       <mat-form-field appearance="outline"><mat-label>SKU</mat-label><input matInput [(ngModel)]="producto.sku" maxlength="60" required><mat-icon matPrefix>qr_code</mat-icon></mat-form-field>
       <mat-form-field appearance="outline"><mat-label>Código de barras</mat-label><input matInput [(ngModel)]="producto.codigo" maxlength="80"><mat-icon matPrefix>barcode</mat-icon></mat-form-field>
       <mat-form-field appearance="outline"><mat-label>Empresa</mat-label><mat-select [(ngModel)]="producto.idEmpresa" (selectionChange)="cambiarEmpresa($event.value)" [disabled]="data.mode === 'edit'">@for (opcion of data.opciones.empresas; track opcion.id) { <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option> }</mat-select><mat-icon matPrefix>business</mat-icon></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Tipo</mat-label><mat-select [(ngModel)]="producto.tipo">@for (tipo of tiposDisponibles; track tipo) { <mat-option [value]="tipo">{{ tipo }}</mat-option> }</mat-select><mat-icon matPrefix>category</mat-icon></mat-form-field>
       <mat-form-field appearance="outline" class="full-width"><mat-label>Descripción</mat-label><textarea matInput [(ngModel)]="producto.descripcion" rows="3"></textarea><mat-icon matPrefix>description</mat-icon></mat-form-field>
     </div></section>
 

@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { User, UserRole } from '../../models/user.model';
@@ -9,7 +11,7 @@ import { Observable } from 'rxjs';
 @Component({
   selector: 'app-configuracion',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatInputModule, MatSelectModule],
   template: `
     <div class="config-page animate-fade-in" *ngIf="currentUser$ | async as user">
       
@@ -25,21 +27,21 @@ import { Observable } from 'rxjs';
 
           <div class="form-group mt-3">
             <label for="emp-name">Nombre de Empleado</label>
-            <input type="text" id="emp-name" class="form-control" [(ngModel)]="user.name" />
+            <input matInput type="text" id="emp-name" class="form-control" [(ngModel)]="user.name" />
           </div>
 
           <div class="form-group">
             <label for="emp-id">Identificador ID de Empleado</label>
-            <input type="text" id="emp-id" class="form-control" [(ngModel)]="user.employeeId" />
+            <input matInput type="text" id="emp-id" class="form-control" [(ngModel)]="user.employeeId" />
           </div>
 
           <div class="form-group">
             <label for="emp-role">Rol Asignado</label>
-            <select id="emp-role" class="form-control" [ngModel]="user.role" (ngModelChange)="onRoleSelect($event)">
-              <option value="Cajero">Cajero (Caja 01)</option>
-              <option value="Supervisor">Supervisor (Caja / Almacén)</option>
-              <option value="Admin">Administrador (Acceso Completo)</option>
-            </select>
+            <mat-select id="emp-role" class="form-control" [ngModel]="user.role" (ngModelChange)="onRoleSelect($event)">
+              <mat-option value="Cajero">Cajero (Caja 01)</mat-option>
+              <mat-option value="Supervisor">Supervisor (Caja / Almacén)</mat-option>
+              <mat-option value="Admin">Administrador (Acceso Completo)</mat-option>
+            </mat-select>
           </div>
 
           <div class="form-group">

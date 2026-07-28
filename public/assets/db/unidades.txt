@@ -12,3 +12,8 @@ id_unidad|id_empresa|nombre|abreviatura|permitir_decimales
 13|1|Docena|doc|0
 14|1|Rollo|rollo|0
 15|1|Bolsa|bolsa|0
+
+
+
+
+

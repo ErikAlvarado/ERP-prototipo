@@ -1,13 +1,14 @@
 /* Grid de cards superiores */
 .grid-resumen1 {
   display: grid;
-  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
   gap: 16px;
 }
 
 /* Card de resumen */
 .tarjeta-resumen {
   width: 100%;
+  min-width: 0;
   min-height: 104px;
   padding: 17px 18px;
   display: flex;
@@ -19,6 +20,7 @@
 /* Texto interno de las cards de resumen */
 .info-resumen {
   display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: 6px;
 }
@@ -33,7 +35,7 @@
 
 .info-resumen strong {
   color: #0f172a;
-  font-size: 26px;
+  font-size: clamp(22px, 2.2vw, 30px);
   line-height: 1;
 }
 
@@ -69,13 +71,14 @@
 /* Grid de grafica y actividad reciente */
 .grid-contenido {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
   gap: 16px;
   margin-top: 20px;
 }
 
 /* Card de grafica */
 .tarjeta-grafica {
+  min-width: 0;
   min-height: 360px;
   padding: 20px 22px 24px;
 }
@@ -105,7 +108,9 @@
 
 /* Area donde se dibuja Chart.js */
 .contenedor-grafica {
-  height: 180px;
+  width: 100%;
+  height: clamp(190px, 24vw, 300px);
+  min-width: 0;
 }
 
 .contenedor-grafica canvas {
@@ -147,6 +152,7 @@
 
 /* Card de actividad reciente */
 .tarjeta-actividad {
+  min-width: 0;
   min-height: 360px;
   padding: 20px 22px;
 }
@@ -170,6 +176,10 @@
   grid-template-columns: 8px 1fr;
   gap: 10px;
   align-items: start;
+}
+
+.item-actividad > div {
+  min-width: 0;
 }
 
 .punto-actividad {
@@ -202,12 +212,10 @@
 
 .item-actividad p {
   margin: 3px 0 0;
-  overflow: hidden;
   color: #94a3b8;
   font-size: 12px;
   line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .item-actividad small {
@@ -253,6 +261,16 @@
 /* Tabla de ordenes */
 .contenedor-tabla {
   overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.contenedor-tabla::-webkit-scrollbar,
+.lista-actividad::-webkit-scrollbar {
+  display: none;
+}
+
+.lista-actividad {
+  scrollbar-width: none;
 }
 
 .tabla-ordenes {
@@ -282,6 +300,10 @@
   .grid-contenido {
     grid-template-columns: 1fr;
   }
+  .tarjeta-grafica,
+  .tarjeta-actividad {
+    min-height: auto;
+  }
 }
 
 @media (max-width: 992px) {
@@ -291,5 +313,12 @@
 }
 
 @media (max-width: 680px) {
+  .grid-resumen1 { gap: 12px; }
+  .tarjeta-resumen { min-height: 94px; padding: 15px 16px; }
+  .encabezado-grafica { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .tarjeta-grafica, .tarjeta-actividad { padding: 16px; }
+  .contenedor-grafica { height: 220px; }
+  .leyenda-grafica { flex-wrap: wrap; }
+  .encabezado-ordenes { align-items: flex-start; padding: 16px; }
   .tarjeta-orden mat-card-content { grid-template-columns: 1fr; }
 }

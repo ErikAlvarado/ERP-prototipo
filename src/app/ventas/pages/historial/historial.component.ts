@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { HistorialService } from '../../services/historial.service';
 import { NotificationService } from '../../services/notification.service';
 import { Venta, VentaStatus, PaymentMethod } from '../../models/venta.model';
@@ -9,7 +11,7 @@ import { TicketComponent } from '../../components/ticket/ticket.component';
 @Component({
   selector: 'app-historial',
   standalone: true,
-  imports: [CommonModule, FormsModule, TicketComponent],
+  imports: [CommonModule, FormsModule, MatInputModule, MatSelectModule, TicketComponent],
   template: `
     <div class="history-page animate-fade-in">
       <!-- Advanced Filters Panel -->
@@ -20,46 +22,46 @@ import { TicketComponent } from '../../components/ticket/ticket.component';
           <!-- Date Start -->
           <div class="form-group">
             <label for="f-start">Fecha Inicio</label>
-            <input type="date" id="f-start" class="form-control" [(ngModel)]="filters.startDate" (change)="onFilterChange()" />
+            <input matInput type="date" id="f-start" class="form-control" [(ngModel)]="filters.startDate" (change)="onFilterChange()" />
           </div>
 
           <!-- Date End -->
           <div class="form-group">
             <label for="f-end">Fecha Fin</label>
-            <input type="date" id="f-end" class="form-control" [(ngModel)]="filters.endDate" (change)="onFilterChange()" />
+            <input matInput type="date" id="f-end" class="form-control" [(ngModel)]="filters.endDate" (change)="onFilterChange()" />
           </div>
 
           <!-- Client -->
           <div class="form-group">
             <label for="f-client">Cliente</label>
-            <input type="text" id="f-client" class="form-control" placeholder="Buscar cliente..." [(ngModel)]="filters.clientName" (input)="onFilterChange()" />
+            <input matInput type="text" id="f-client" class="form-control" placeholder="Buscar cliente..." [(ngModel)]="filters.clientName" (input)="onFilterChange()" />
           </div>
 
           <!-- Cashier -->
           <div class="form-group">
             <label for="f-cashier">Cajero</label>
-            <input type="text" id="f-cashier" class="form-control" placeholder="Nombre de cajero..." [(ngModel)]="filters.cashier" (input)="onFilterChange()" />
+            <input matInput type="text" id="f-cashier" class="form-control" placeholder="Nombre de cajero..." [(ngModel)]="filters.cashier" (input)="onFilterChange()" />
           </div>
 
           <!-- Status -->
           <div class="form-group">
             <label for="f-status">Estado</label>
-            <select id="f-status" class="form-control" [(ngModel)]="filters.status" (change)="onFilterChange()">
-              <option [ngValue]="undefined">Todos los estados</option>
-              <option *ngFor="let st of statusOptions" [value]="st">{{ st }}</option>
-            </select>
+            <mat-select id="f-status" class="form-control" [(ngModel)]="filters.status" (selectionChange)="onFilterChange()">
+              <mat-option [value]="undefined">Todos los estados</mat-option>
+              <mat-option *ngFor="let st of statusOptions" [value]="st">{{ st }}</mat-option>
+            </mat-select>
           </div>
 
           <!-- Payment -->
           <div class="form-group">
             <label for="f-payment">Método de Pago</label>
-            <select id="f-payment" class="form-control" [(ngModel)]="filters.paymentMethod" (change)="onFilterChange()">
-              <option [ngValue]="undefined">Todos los métodos</option>
-              <option value="Efectivo">Efectivo</option>
-              <option value="Tarjeta">Tarjeta</option>
-              <option value="Transferencia">Transferencia</option>
-              <option value="Crédito">Crédito</option>
-            </select>
+            <mat-select id="f-payment" class="form-control" [(ngModel)]="filters.paymentMethod" (selectionChange)="onFilterChange()">
+              <mat-option [value]="undefined">Todos los métodos</mat-option>
+              <mat-option value="Efectivo">Efectivo</mat-option>
+              <mat-option value="Tarjeta">Tarjeta</mat-option>
+              <mat-option value="Transferencia">Transferencia</mat-option>
+              <mat-option value="Crédito">Crédito</mat-option>
+            </mat-select>
           </div>
         </div>
 

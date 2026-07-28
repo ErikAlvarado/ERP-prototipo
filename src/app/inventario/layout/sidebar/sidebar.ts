@@ -80,6 +80,11 @@ export class Sidebar {
     expanded: false,
     children: [
       {
+        title: 'Dashboard de Inventario',
+        icon: 'dashboard',
+        route: '/inventario-dashboard'
+      },
+      {
         title: 'Existencias',
         icon: 'inventory_2',
         route: '/existencias'
@@ -148,7 +153,6 @@ export class Sidebar {
     icon: 'point_of_sale',
     expanded: false,
     children: [
-      { title: 'Dashboard de Ventas', icon: 'dashboard', route: '/ventas/dashboard' },
       { title: 'Punto de Venta', icon: 'point_of_sale', route: '/ventas/pdv' },
       { title: 'Cotizaciones', icon: 'request_quote', route: '/ventas/cotizaciones' },
       { title: 'Historial de Ventas', icon: 'history', route: '/ventas/historial' },
@@ -198,7 +202,8 @@ export class Sidebar {
     }
     if (this.autenticacion.puedeVerInventario()) {
       this.menus.set(this.menus().filter(menu =>
-        ['Dashboard', 'Catálogo de productos', 'CatÃ¡logo de productos', 'Inventario'].includes(menu.title)));
+        menu.title === 'Inventario'
+        || (this.autenticacion.esJefeInventarios() && menu.icon === 'deployed_code')));
       return;
     }
     this.menus.set([]);
@@ -224,7 +229,6 @@ export class Sidebar {
 
     if (!this.expanded()) {
       this.expanded.set(true);
-      return;
     }
 
     this.toggleMenuItem(index);

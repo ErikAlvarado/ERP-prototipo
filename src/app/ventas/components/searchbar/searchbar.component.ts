@@ -1,18 +1,19 @@
 import { Component, EventEmitter, Output, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
 import { Product } from '../../models/product.model';
 import { MOCK_PRODUCTS } from '../../services/mock-data';
 
 @Component({
   selector: 'app-searchbar',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatInputModule],
   template: `
     <div class="searchbar-container">
       <div class="search-input-wrapper">
         <i class="fa-solid fa-barcode scan-icon" title="Escanear Código"></i>
-        <input 
+        <input matInput
           type="text" 
           placeholder="Buscar por nombre, marca, modelo, SKU (ej. KBG500, Gamer, Mecánico)..." 
           class="form-control barcode-input" 

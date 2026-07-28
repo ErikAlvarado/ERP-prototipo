@@ -7,7 +7,6 @@ export interface FiltrosProducto {
   categoria: string;
   marca: string;
   unidad: string;
-  tipo: string;
   ubicacion: string;
   claveSat: string;
   conCodigo: boolean | null;
@@ -24,7 +23,6 @@ export interface DatosFiltroProducto {
   categorias: string[];
   marcas: string[];
   unidades: string[];
-  tipos: string[];
 }
 
 const FILTROS_VACIOS: FiltrosProducto = {
@@ -32,7 +30,6 @@ const FILTROS_VACIOS: FiltrosProducto = {
   categoria: '',
   marca: '',
   unidad: '',
-  tipo: '',
   ubicacion: '',
   claveSat: '',
   conCodigo: null,

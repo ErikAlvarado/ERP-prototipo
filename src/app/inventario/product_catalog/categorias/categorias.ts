@@ -133,8 +133,8 @@ export class Categorias implements OnInit, AfterViewInit {
         filtros: this.filtros,
         campos: [
           { clave: 'empresa', etiqueta: 'Empresa', icono: 'business', opciones: this.empresasCatalogo.map(empresa => ({ valor: empresa.id, etiqueta: empresa.nombre })) },
-          { clave: 'padre', etiqueta: 'Categoría padre', icono: 'account_tree', opciones: padres },
-          { clave: 'tipo', etiqueta: 'Tipo de categoría', icono: 'category', opciones: [{ valor: 'principal', etiqueta: 'Principal' }, { valor: 'subcategoria', etiqueta: 'Subcategoría' }] },
+          { clave: 'padre', etiqueta: 'Pertenece a', icono: 'account_tree', opciones: padres },
+          { clave: 'tipo', etiqueta: 'Nivel', icono: 'category', opciones: [{ valor: 'principal', etiqueta: 'Categoría' }, { valor: 'subcategoria', etiqueta: 'Subcategoría' }] },
           { clave: 'estado', etiqueta: 'Estado', icono: 'toggle_on', opciones: [{ valor: 'true', etiqueta: 'Activa' }, { valor: 'false', etiqueta: 'Inactiva' }] },
         ],
       },

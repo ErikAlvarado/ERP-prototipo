@@ -1,0 +1,3 @@
+id_detalle_devolucion|id_devolucion_compra|id_detalle_recepcion|cantidad_devuelta|observaciones
+1|1|4|1|Caja golpeada y sello roto
+2|2|2|1|Modelo distinto al solicitado

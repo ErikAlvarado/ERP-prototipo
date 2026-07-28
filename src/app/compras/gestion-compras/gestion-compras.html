@@ -1,7 +1,7 @@
 <section class="pagina-contenido pagina-gestion">
   <app-encabezado-pagina
     titulo="Gestion Compras"
-    subtitulo="Solicitudes, ordenes de compra y cotizaciones"
+    subtitulo="Solicitudes y órdenes de compra"
   />
 
   <mat-tab-group class="tabs-consultas" animationDuration="200ms">
@@ -126,7 +126,7 @@
       <div class="filtros-ordenes barra-filtros-inventario">
         <label class="buscador-inventario">
           <mat-icon>search</mat-icon>
-          <input
+          <input matInput
             [value]="busquedaOrdenes()"
             (input)="buscarOrden($any($event.target).value)"
             placeholder="Buscar por folio, proveedor, solicitante o estado"
@@ -288,58 +288,6 @@
           <div class="sin-resultados"><mat-icon>search_off</mat-icon><p>No se encontraron compras con esos datos.</p></div>
         }
       </app-card>
-    </mat-tab>
-    <mat-tab label="Cotizaciones">
-      <div class="lista-cotizaciones">
-        <app-card class="tarjeta-cotizacion" *ngFor="let cotizacion of cotizaciones">
-          <div class="encabezado-cotizacion">
-            <div>
-              <div class="meta-cotizacion">
-                <span class="folio-cotizacion">{{ cotizacion.folio }}</span>
-                <app-estado [texto]="cotizacion.estado" />
-              </div>
-              <h2>{{ cotizacion.descripcion }}</h2>
-              <p>Cantidad: {{ cotizacion.cantidad }} · {{ cotizacion.fecha }}</p>
-            </div>
-          </div>
-
-          <div class="separador-cotizacion"></div>
-
-          <h3>Comparativa de Proveedores</h3>
-
-          <div class="grid-ofertas">
-            <app-card
-              class="tarjeta-oferta"
-              *ngFor="let oferta of cotizacion.ofertas"
-              [class.mejor-precio]="oferta.mejorPrecio"
-            >
-              <span class="mejor-precio-texto" *ngIf="oferta.mejorPrecio"> ✓ Mejor precio </span>
-
-              <h4>{{ oferta.proveedor }}</h4>
-
-              <div class="datos-oferta">
-                <div>
-                  <span>Precio unitario</span>
-                  <strong>{{ oferta.precioUnitario }}</strong>
-                </div>
-                <div>
-                  <span>Total ({{ cotizacion.cantidad }} u.)</span>
-                  <strong>{{ oferta.total }}</strong>
-                </div>
-                <div>
-                  <span>Entrega</span>
-                  <strong>{{ oferta.entrega }}</strong>
-                </div>
-              </div>
-
-              <div class="calificacion-oferta">
-                <span>*****</span>
-                <small>{{ oferta.calificacion }}</small>
-              </div>
-            </app-card>
-          </div>
-        </app-card>
-      </div>
     </mat-tab>
   </mat-tab-group>
 </section>

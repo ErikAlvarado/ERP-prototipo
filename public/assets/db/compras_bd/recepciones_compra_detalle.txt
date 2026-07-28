@@ -1,0 +1,7 @@
+id_detalle_recepcion|id_recepcion|id_detalle_orden|cantidad_recibida|cantidad_rechazada|motivo_rechazo
+1|1|1|5|0|
+2|1|2|3|0|
+3|2|3|4|0|
+4|2|4|6|1|Empaque dañado
+5|3|3|2|0|
+6|3|4|3|0|

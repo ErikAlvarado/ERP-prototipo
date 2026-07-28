@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { DevolucionService } from '../../services/devolucion.service';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
@@ -10,7 +12,7 @@ import { TimelineComponent } from '../../components/timeline/timeline.component'
 @Component({
   selector: 'app-gestion-devoluciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, TimelineComponent],
+  imports: [CommonModule, FormsModule, MatInputModule, MatSelectModule, TimelineComponent],
   template: `
     <div class="returns-admin-page animate-fade-in">
       <!-- Title Header -->
@@ -21,12 +23,12 @@ import { TimelineComponent } from '../../components/timeline/timeline.component'
         </div>
         <div class="filter-row">
           <label for="priority-f font-semibold">Prioridad:</label>
-          <select id="priority-f" class="form-control mini-sel" [(ngModel)]="priorityFilter" (change)="applyFilters()">
-            <option value="Todas">Todas</option>
-            <option value="Alta">Alta</option>
-            <option value="Media">Media</option>
-            <option value="Baja">Baja</option>
-          </select>
+          <mat-select id="priority-f" class="form-control mini-sel" [(ngModel)]="priorityFilter" (selectionChange)="applyFilters()">
+            <mat-option value="Todas">Todas</mat-option>
+            <mat-option value="Alta">Alta</mat-option>
+            <mat-option value="Media">Media</mat-option>
+            <mat-option value="Baja">Baja</mat-option>
+          </mat-select>
         </div>
       </div>
 
@@ -248,7 +250,7 @@ import { TimelineComponent } from '../../components/timeline/timeline.component'
           <div class="modal-body">
             <div class="form-group">
               <label for="rej-comment">Escriba el motivo técnico del rechazo *</label>
-              <textarea id="rej-comment" class="form-control" rows="3" [(ngModel)]="rejectionComment" placeholder="Ej. El empaque presenta golpes ajenos al transporte..."></textarea>
+              <textarea matInput id="rej-comment" class="form-control" rows="3" [(ngModel)]="rejectionComment" placeholder="Ej. El empaque presenta golpes ajenos al transporte..."></textarea>
             </div>
           </div>
           <div class="modal-foot">

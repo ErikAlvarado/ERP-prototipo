@@ -1,0 +1,54 @@
+
+> prototipo@0.0.0 start
+> ng serve --host 0.0.0.0 --port 4201
+
+> Building...
+√ Building...
+Initial chunk files | Names                          |  Raw size
+main.js             | main                           | 152.60 kB | 
+chunk-XNI4HLOM.js   | -                              |  52.57 kB | 
+chunk-5J7DGJ7B.js   | -                              |  41.23 kB | 
+styles.css          | styles                         |  37.53 kB | 
+chunk-ZPJ5S4MK.js   | -                              |  17.25 kB | 
+chunk-O6673FXO.js   | -                              |  15.88 kB | 
+chunk-TAPS6L6O.js   | -                              |  15.33 kB | 
+chunk-P3DL6LE5.js   | -                              |  14.74 kB | 
+chunk-MNLCZKL6.js   | -                              |  10.44 kB | 
+chunk-QUYIZZYT.js   | -                              |   8.75 kB | 
+chunk-62FORSNC.js   | -                              |   8.36 kB | 
+chunk-R5SV35YZ.js   | -                              |   6.92 kB | 
+chunk-VOW6XYD2.js   | -                              |   3.78 kB | 
+chunk-6MMA2KIA.js   | -                              |   3.72 kB | 
+chunk-HSHIP6IW.js   | -                              |   3.14 kB | 
+chunk-EC6SKSI4.js   | -                              |   2.26 kB | 
+chunk-NTZSAKQA.js   | -                              |   2.02 kB | 
+chunk-TITZDG5Q.js   | -                              |   1.30 kB | 
+chunk-CZJLB7T5.js   | -                              |   1.08 kB | 
+
+                    | Initial total                  | 398.90 kB
+
+Lazy chunk files    | Names                          |  Raw size
+chunk-TFWJYILI.js   | pdv-component                  | 142.37 kB | 
+chunk-G4NA7VND.js   | transferencias                 | 128.45 kB | 
+chunk-WNDDXKUQ.js   | kits                           | 105.75 kB | 
+chunk-HTJS33CG.js   | gestion-compras                | 100.12 kB | 
+chunk-ZAMAJ3XA.js   | proveedores                    | 100.12 kB | 
+chunk-MOZ6TFXJ.js   | products                       |  96.35 kB | 
+chunk-PNKG4WOW.js   | consultas                      |  82.28 kB | 
+chunk-QEQC5PL5.js   | precios                        |  81.95 kB | 
+chunk-2T3GKWXR.js   | gestion-devoluciones-component |  79.88 kB | 
+chunk-TQXQCRX3.js   | ajustes                        |  72.92 kB | 
+chunk-OCP5L7XY.js   | recepcion                      |  72.41 kB | 
+chunk-66ZFGWKA.js   | usuarios                       |  70.18 kB | 
+chunk-RKMC4FHI.js   | -                              |  67.40 kB | 
+chunk-KDXQVPOU.js   | kardex                         |  67.04 kB | 
+chunk-B6UTCKEI.js   | categorias                     |  64.97 kB | 
+...and 27 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [86.958 seconds] - 2026-07-28T16:36:10.126Z
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m4201[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.116:[1m4201[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m

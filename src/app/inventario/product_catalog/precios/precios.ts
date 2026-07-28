@@ -104,28 +104,6 @@ export class Precios implements OnInit, AfterViewInit {
     this.abrirDialogo('edit', fila);
   }
 
-  cambiarEstatus(fila: PrecioFila): void {
-    const hoy = new Date();
-    const ayer = new Date(hoy);
-    ayer.setDate(ayer.getDate() - 1);
-    const fechaHoy = hoy.toISOString().slice(0, 10);
-    const fechaAyer = ayer.toISOString().slice(0, 10);
-    this.productos = this.productos.map(producto => producto.id === fila.idProducto
-      ? this.catalogo.actualizarResumenPrecio({
-          ...producto,
-          precios: producto.precios.map(precio => precio.id === fila.idPrecio
-            ? {
-                ...precio,
-                fechaInicio: fila.vigente ? precio.fechaInicio : fechaHoy,
-                fechaFin: fila.vigente ? fechaAyer : '',
-                vigente: !fila.vigente,
-              }
-            : precio),
-        })
-      : producto);
-    this.persistir();
-  }
-
   eliminar(fila: PrecioFila): void {
     this.dialog.open(ConfirmDialog, {
       width: '420px',

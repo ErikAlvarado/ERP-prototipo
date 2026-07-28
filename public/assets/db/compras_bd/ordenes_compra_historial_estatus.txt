@@ -1,0 +1,10 @@
+id_historial|id_orden_compra|id_estatus_compra|id_usuario|fecha_cambio|comentario
+1|1|3|1|2026-06-05 09:00:00|Orden aprobada
+2|1|4|1|2026-06-05 10:00:00|Enviada al proveedor
+3|1|6|7|2026-06-12 14:20:00|Recepción completada
+4|2|3|1|2026-06-12 11:00:00|Orden aprobada
+5|2|5|2|2026-06-22 16:10:00|Recepción parcial
+6|3|4|3|2026-06-20 13:00:00|En tránsito
+7|4|2|4|2026-07-05 12:30:00|Pendiente de aprobación
+8|5|4|6|2026-07-14 09:40:00|Enviada al proveedor
+9|6|7|5|2026-07-21 08:15:00|Orden cancelada

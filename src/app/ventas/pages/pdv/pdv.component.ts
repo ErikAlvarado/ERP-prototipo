@@ -1,6 +1,8 @@
 import { Component, OnInit, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { VentaService } from '../../services/venta.service';
 import { ClienteService } from '../../services/cliente.service';
 import { CotizacionService } from '../../services/cotizacion.service';
@@ -17,7 +19,7 @@ import { Observable, BehaviorSubject } from 'rxjs';
 @Component({
   selector: 'app-pdv',
   standalone: true,
-  imports: [CommonModule, FormsModule, SearchbarComponent, TicketComponent],
+  imports: [CommonModule, FormsModule, MatInputModule, MatSelectModule, SearchbarComponent, TicketComponent],
   template: `
     <div class="pdv-layout animate-fade-in" *ngIf="currentUser$ | async as activeUser">
       <!-- Left Terminal: Cart and Search -->
@@ -111,7 +113,7 @@ import { Observable, BehaviorSubject } from 'rxjs';
                   <td>
                     <div class="quantity-picker">
                       <button (click)="decreaseQty(item.product.sku, item.quantity)">-</button>
-                      <input 
+                      <input matInput
                         type="number" 
                         [ngModel]="item.quantity" 
                         (ngModelChange)="onQtyChange(item.product.sku, $event)"
@@ -163,7 +165,7 @@ import { Observable, BehaviorSubject } from 'rxjs';
           <div class="client-search-wrapper">
             <div class="input-with-icon">
               <i class="fa-solid fa-magnifying-glass search-client-icon"></i>
-              <input 
+              <input matInput
                 type="text" 
                 class="form-control client-search-input" 
                 placeholder="Buscar por nombre, RFC, razón social, teléfono..."
@@ -239,7 +241,7 @@ import { Observable, BehaviorSubject } from 'rxjs';
                 <label>Cantidad Recibida:</label>
                 <div class="input-money-wrap">
                   <span class="currency-symbol">$</span>
-                  <input 
+                  <input matInput
                     type="number" 
                     class="form-control money-input" 
                     [(ngModel)]="cashReceived"
@@ -266,36 +268,36 @@ import { Observable, BehaviorSubject } from 'rxjs';
               <div class="form-row-2col">
                 <div class="form-subcol">
                   <label>Titular de la Tarjeta:</label>
-                  <input type="text" class="form-control" [(ngModel)]="cardHolderName" placeholder="Nombre como en la tarjeta" />
+                  <input matInput type="text" class="form-control" [(ngModel)]="cardHolderName" placeholder="Nombre como en la tarjeta" />
                 </div>
                 <div class="form-subcol">
                   <label>Últimos 4 Dígitos:</label>
-                  <input type="text" class="form-control" [(ngModel)]="cardLast4" maxlength="4" placeholder="1234" />
+                  <input matInput type="text" class="form-control" [(ngModel)]="cardLast4" maxlength="4" placeholder="1234" />
                 </div>
               </div>
               <div class="form-row-2col">
                 <div class="form-subcol">
                   <label>Banco Emisor:</label>
-                  <select class="form-control" [(ngModel)]="cardBank">
-                    <option value="BBVA">BBVA</option>
-                    <option value="Santander">Santander</option>
-                    <option value="Banamex">Citibanamex</option>
-                    <option value="Banorte">Banorte</option>
-                    <option value="HSBC">HSBC</option>
-                    <option value="Otro">Otro Banco</option>
-                  </select>
+                  <mat-select class="form-control" [(ngModel)]="cardBank">
+                    <mat-option value="BBVA">BBVA</mat-option>
+                    <mat-option value="Santander">Santander</mat-option>
+                    <mat-option value="Banamex">Citibanamex</mat-option>
+                    <mat-option value="Banorte">Banorte</mat-option>
+                    <mat-option value="HSBC">HSBC</mat-option>
+                    <mat-option value="Otro">Otro Banco</mat-option>
+                  </mat-select>
                 </div>
                 <div class="form-subcol">
                   <label>Tipo de Tarjeta:</label>
-                  <select class="form-control" [(ngModel)]="cardType">
-                    <option value="Débito">Débito</option>
-                    <option value="Crédito">Crédito</option>
-                  </select>
+                  <mat-select class="form-control" [(ngModel)]="cardType">
+                    <mat-option value="Débito">Débito</mat-option>
+                    <mat-option value="Crédito">Crédito</mat-option>
+                  </mat-select>
                 </div>
               </div>
               <div class="form-row">
                 <label>Número de Autorización (Simulado):</label>
-                <input type="text" class="form-control font-mono" [(ngModel)]="authorizationCode" placeholder="Ej. AUTH-882710" />
+                <input matInput type="text" class="form-control font-mono" [(ngModel)]="authorizationCode" placeholder="Ej. AUTH-882710" />
               </div>
             </div>
 
@@ -304,22 +306,22 @@ import { Observable, BehaviorSubject } from 'rxjs';
               <div class="form-row-2col">
                 <div class="form-subcol">
                   <label>Banco Emisor:</label>
-                  <select class="form-control" [(ngModel)]="transferBank">
-                    <option value="BBVA">BBVA</option>
-                    <option value="Santander">Santander</option>
-                    <option value="Banamex">Citibanamex</option>
-                    <option value="Banorte">Banorte</option>
-                    <option value="SPEI / OTRO">SPEI / Otro</option>
-                  </select>
+                  <mat-select class="form-control" [(ngModel)]="transferBank">
+                    <mat-option value="BBVA">BBVA</mat-option>
+                    <mat-option value="Santander">Santander</mat-option>
+                    <mat-option value="Banamex">Citibanamex</mat-option>
+                    <mat-option value="Banorte">Banorte</mat-option>
+                    <mat-option value="SPEI / OTRO">SPEI / Otro</mat-option>
+                  </mat-select>
                 </div>
                 <div class="form-subcol">
                   <label>Referencia:</label>
-                  <input type="text" class="form-control" [(ngModel)]="transferReference" placeholder="Ej. REF-99201" />
+                  <input matInput type="text" class="form-control" [(ngModel)]="transferReference" placeholder="Ej. REF-99201" />
                 </div>
               </div>
               <div class="form-row">
                 <label>Folio de Transferencia (Clave RASTREO SPEI):</label>
-                <input type="text" class="form-control font-mono" [(ngModel)]="transferFolio" placeholder="Ej. 2026072440014782" />
+                <input matInput type="text" class="form-control font-mono" [(ngModel)]="transferFolio" placeholder="Ej. 2026072440014782" />
               </div>
             </div>
 
@@ -328,17 +330,17 @@ import { Observable, BehaviorSubject } from 'rxjs';
               <div class="form-row-2col">
                 <div class="form-subcol">
                   <label>Empresa Emisora:</label>
-                  <select class="form-control" [(ngModel)]="voucherCompany">
-                    <option value="Edenred">Edenred</option>
-                    <option value="Sodexo">Sodexo</option>
-                    <option value="Up Sí Vale">Up Sí Vale</option>
-                    <option value="Toka">Toka</option>
-                    <option value="Otra">Otra Empresa</option>
-                  </select>
+                  <mat-select class="form-control" [(ngModel)]="voucherCompany">
+                    <mat-option value="Edenred">Edenred</mat-option>
+                    <mat-option value="Sodexo">Sodexo</mat-option>
+                    <mat-option value="Up Sí Vale">Up Sí Vale</mat-option>
+                    <mat-option value="Toka">Toka</mat-option>
+                    <mat-option value="Otra">Otra Empresa</mat-option>
+                  </mat-select>
                 </div>
                 <div class="form-subcol">
                   <label>Número de Vale / Folio:</label>
-                  <input type="text" class="form-control" [(ngModel)]="voucherNumber" placeholder="Ej. V-772810" />
+                  <input matInput type="text" class="form-control" [(ngModel)]="voucherNumber" placeholder="Ej. V-772810" />
                 </div>
               </div>
             </div>
@@ -347,16 +349,16 @@ import { Observable, BehaviorSubject } from 'rxjs';
             <div *ngIf="selectedPayment === 'Crédito'" class="payment-form-group">
               <div class="form-row">
                 <label>Días de Crédito Autorizados:</label>
-                <select class="form-control" [(ngModel)]="creditDays">
-                  <option [ngValue]="15">15 Días</option>
-                  <option [ngValue]="30">30 Días</option>
-                  <option [ngValue]="60">60 Días</option>
-                  <option [ngValue]="90">90 Días</option>
-                </select>
+                <mat-select class="form-control" [(ngModel)]="creditDays">
+                  <mat-option [value]="15">15 Días</mat-option>
+                  <mat-option [value]="30">30 Días</mat-option>
+                  <mat-option [value]="60">60 Días</mat-option>
+                  <mat-option [value]="90">90 Días</mat-option>
+                </mat-select>
               </div>
               <div class="form-row">
                 <label>Observaciones de Crédito:</label>
-                <input type="text" class="form-control" [(ngModel)]="creditNotes" placeholder="Ej. Autorizado por Gerencia" />
+                <input matInput type="text" class="form-control" [(ngModel)]="creditNotes" placeholder="Ej. Autorizado por Gerencia" />
               </div>
             </div>
           </div>
@@ -434,23 +436,23 @@ import { Observable, BehaviorSubject } from 'rxjs';
           <div class="modal-body">
             <div class="form-group">
               <label for="c-name">Nombre / Razón Social *</label>
-              <input type="text" id="c-name" class="form-control" [(ngModel)]="newClient.name" placeholder="Ej. Juan Pérez u Operadora S.A." />
+              <input matInput type="text" id="c-name" class="form-control" [(ngModel)]="newClient.name" placeholder="Ej. Juan Pérez u Operadora S.A." />
             </div>
             <div class="form-group">
               <label for="c-rfc">RFC *</label>
-              <input type="text" id="c-rfc" class="form-control" [(ngModel)]="newClient.rfc" placeholder="Ej. PERJ850228K89" />
+              <input matInput type="text" id="c-rfc" class="form-control" [(ngModel)]="newClient.rfc" placeholder="Ej. PERJ850228K89" />
             </div>
             <div class="form-group">
               <label for="c-email">Correo Electrónico *</label>
-              <input type="email" id="c-email" class="form-control" [(ngModel)]="newClient.email" placeholder="Ej. cliente@example.com" />
+              <input matInput type="email" id="c-email" class="form-control" [(ngModel)]="newClient.email" placeholder="Ej. cliente@example.com" />
             </div>
             <div class="form-group">
               <label for="c-phone">Teléfono</label>
-              <input type="text" id="c-phone" class="form-control" [(ngModel)]="newClient.phone" placeholder="Ej. 555-123-4567" />
+              <input matInput type="text" id="c-phone" class="form-control" [(ngModel)]="newClient.phone" placeholder="Ej. 555-123-4567" />
             </div>
             <div class="form-group">
               <label for="c-addr">Dirección Fiscal</label>
-              <input type="text" id="c-addr" class="form-control" [(ngModel)]="newClient.address" placeholder="Calle, Número, Colonia, CP" />
+              <input matInput type="text" id="c-addr" class="form-control" [(ngModel)]="newClient.address" placeholder="Calle, Número, Colonia, CP" />
             </div>
           </div>
           <div class="modal-foot">

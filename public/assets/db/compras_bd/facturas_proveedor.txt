@@ -1,0 +1,4 @@
+id_factura_proveedor|id_proveedor|id_orden_compra|uuid_fiscal|serie|folio|fecha_emision|fecha_vencimiento|id_moneda|tipo_cambio|subtotal|impuestos|total|estatus
+1|1|1|550e8400-e29b-41d4-a716-446655440001|A|10881|2026-06-12|2026-07-12|1|1.0000|94331.00|15092.96|109423.96|Pagada
+2|1|2|550e8400-e29b-41d4-a716-446655440002|A|10902|2026-06-22|2026-07-07|2|18.2500|4690.00|750.40|5440.40|Parcial
+3|3|3|550e8400-e29b-41d4-a716-446655440003|B|7715|2026-06-28|2026-07-28|1|1.0000|18892.80|3022.85|21915.65|Pendiente

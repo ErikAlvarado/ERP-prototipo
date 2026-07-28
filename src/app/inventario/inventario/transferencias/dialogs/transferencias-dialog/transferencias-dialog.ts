@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SHARED_IMPORTS } from '../../../../../shared/imports/shared-imports';
@@ -12,6 +12,7 @@ import {
   TransferenciaInventario,
   UsuarioInventarioRef,
 } from '../../../gestion-inventario';
+import { Autenticacion } from '../../../../../shared/services/autenticacion';
 
 export interface TransferenciasDialogData {
   mode: 'add' | 'edit' | 'view';
@@ -39,6 +40,7 @@ interface PartidaTransferenciaEdicion extends PartidaTransferenciaFormulario {
   styleUrl: './transferencias-dialog.css',
 })
 export class TransferenciasDialog {
+  private readonly autenticacion = inject(Autenticacion);
   formulario: Omit<TransferenciaFormulario, 'partidas'>;
   partidas: PartidaTransferenciaEdicion[] = [];
   productoBusqueda = '';
@@ -55,8 +57,8 @@ export class TransferenciasDialog {
     const empresaOrigen = data.almacenes.find(almacen => almacen.id === origenId)?.idEmpresa;
     const destinoCompatible = data.almacenes.find(almacen =>
       almacen.id !== origenId && almacen.idEmpresa === empresaOrigen);
-    const solicitanteCompatible = data.usuarios.find(usuario =>
-      usuario.idEmpresa === empresaOrigen);
+    const solicitanteCompatible = this.usuarioSesion(empresaOrigen)
+      ?? data.usuarios.find(usuario => usuario.idEmpresa === empresaOrigen);
     this.formulario = {
       origenId,
       destinoId: actual?.destinoId
@@ -119,6 +121,11 @@ export class TransferenciasDialog {
     return this.data.usuarios.filter(usuario => usuario.idEmpresa === this.empresaOrigen);
   }
 
+  get nombreSolicitante(): string {
+    return this.data.usuarios.find(usuario =>
+      usuario.id === this.formulario.solicitanteId)?.nombre || 'Usuario en sesión';
+  }
+
   private get empresaOrigen(): number | undefined {
     return this.data.almacenes.find(
       almacen => almacen.id === Number(this.formulario.origenId),
@@ -137,9 +144,7 @@ export class TransferenciasDialog {
     this.partidas = [];
     this.error = '';
     this.formulario.destinoId = this.almacenesDestino[0]?.id ?? 0;
-    if (!this.usuariosEmpresa.some(usuario => usuario.id === this.formulario.solicitanteId)) {
-      this.formulario.solicitanteId = this.usuariosEmpresa[0]?.id ?? null;
-    }
+    this.formulario.solicitanteId = this.usuarioSesion(this.empresaOrigen)?.id ?? null;
     if (!this.usuariosEmpresa.some(usuario => usuario.id === this.formulario.autorizadorId)) {
       this.formulario.autorizadorId = null;
       this.formulario.fechaAutorizacion = '';
@@ -336,5 +341,14 @@ export class TransferenciasDialog {
 
   private normalizar(valor: string): string {
     return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  private usuarioSesion(idEmpresa?: number): UsuarioInventarioRef | undefined {
+    const sesion = this.autenticacion.sesion();
+    if (!sesion) return undefined;
+    return this.data.usuarios.find(usuario =>
+      usuario.idEmpresa === idEmpresa
+      && (usuario.id === Number(sesion.id)
+        || this.normalizar(usuario.nombre) === this.normalizar(sesion.nombre)));
   }
 }

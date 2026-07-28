@@ -4,7 +4,7 @@ import { catchError, map, Observable, of, throwError } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class DatosDb {
-  private readonly rutaBase = '/assets/db';
+  private readonly rutaBase = '/assets/db/inventari_db';
 
   constructor(private http: HttpClient) {}
 

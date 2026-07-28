@@ -4,7 +4,7 @@
 </div>
 
 <div class="content-search">
-  <div class="custom-search"><mat-icon>search</mat-icon><input [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar por ID, valor, unidad o abreviatura"></div>
+  <div class="custom-search"><mat-icon>search</mat-icon><input matInput [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar por ID, valor, unidad o abreviatura"></div>
   <div class="custom-filters">
     <button mat-stroked-button class="filter-btn" (click)="abrirFiltros()"><mat-icon>tune</mat-icon>Filtrar@if (conteoFiltros) { <span class="filter-count">{{ conteoFiltros }}</span> }</button>
   </div>

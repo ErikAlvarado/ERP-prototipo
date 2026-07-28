@@ -84,12 +84,9 @@
       <div class="grid-layout">
         <mat-form-field appearance="outline">
           <mat-label>Solicitante</mat-label>
-          <mat-select [(ngModel)]="formulario.solicitanteId" [disabled]="soloLectura">
-            @for (usuario of usuariosEmpresa; track usuario.id) {
-              <mat-option [value]="usuario.id">{{ usuario.nombre }}</mat-option>
-            }
-          </mat-select>
+          <input matInput [value]="nombreSolicitante" disabled>
           <mat-icon matPrefix>person</mat-icon>
+          <mat-hint>Asignado según el usuario que inició sesión</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline">

@@ -1,0 +1,7 @@
+id_proveedor|id_empresa|razon_social|nombre_comercial|rfc|correo|telefono|direccion_fiscal|activo|fecha_registro
+1|1|Tecnología Integral del Centro SA de CV|TecnoCentro|TIC180512AB3|ventas@tecnocentro.mx|5551001001|Av. Tecnología 120, CDMX|1|2025-01-15
+2|1|Distribuidora Oficina Moderna SA de CV|Oficina Moderna|DOM190821CD4|contacto@oficinamoderna.mx|5551001002|Insurgentes Sur 840, CDMX|1|2025-02-10
+3|1|Electrodomésticos Nacionales SA de CV|ElectroNacional|ENA170304EF5|pedidos@electronacional.mx|5551001003|Av. Industria 455, Estado de México|1|2025-03-05
+4|1|Textiles y Calzado del Bajío SA de CV|Textil Bajío|TCB200611GH6|compras@textilbajio.mx|5551001004|Blvd. León 220, Guanajuato|1|2025-04-18
+5|1|Suministros Médicos Omega SA de CV|Médica Omega|SMO160908IJ7|atencion@medicaomega.mx|5551001005|Av. Salud 99, Querétaro|1|2025-05-20
+6|1|Productos de Limpieza Universal SA de CV|Limpieza Universal|PLU210115KL8|ventas@limpiezauniversal.mx|5551001006|Calle Higiene 310, Puebla|1|2025-06-12

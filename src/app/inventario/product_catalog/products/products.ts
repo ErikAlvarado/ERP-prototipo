@@ -34,7 +34,6 @@ const FILTROS_VACIOS: FiltrosProducto = {
   categoria: '',
   marca: '',
   unidad: '',
-  tipo: '',
   ubicacion: '',
   claveSat: '',
   conCodigo: null,
@@ -52,7 +51,7 @@ const FILTROS_VACIOS: FiltrosProducto = {
   styleUrl: './products.css',
 })
 export class Products implements OnInit, AfterViewInit {
-  displayedColumns: string[] = ['sku', 'producto', 'tipo', 'marca', 'categoria', 'medida', 'precio', 'estatus', 'acciones'];
+  displayedColumns: string[] = ['sku', 'producto', 'marca', 'categoria', 'medida', 'precio', 'estatus', 'acciones'];
   dataSource = new MatTableDataSource<PeriodicElement>([]);
   currentSearch = '';
   currentSort = 'Más antiguos';
@@ -96,7 +95,6 @@ export class Products implements OnInit, AfterViewInit {
         && (!avanzados.categoria || producto.categoria === avanzados.categoria)
         && (!avanzados.marca || producto.marca === avanzados.marca)
         && (!avanzados.unidad || producto.medida === avanzados.unidad)
-        && (!avanzados.tipo || producto.tipo === avanzados.tipo)
         && (!avanzados.ubicacion || this.normalizar(producto.ubicacionDefault).includes(this.normalizar(avanzados.ubicacion)))
         && (!avanzados.claveSat || this.normalizar(producto.claveSat).includes(this.normalizar(avanzados.claveSat)))
         && (avanzados.conCodigo == null || (avanzados.conCodigo ? !!producto.codigo : !producto.codigo))
@@ -152,7 +150,6 @@ export class Products implements OnInit, AfterViewInit {
         categorias: this.opciones.categorias.map(opcion => opcion.nombre),
         marcas: this.opciones.marcas.map(opcion => opcion.nombre),
         unidades: this.opciones.unidades.map(opcion => opcion.nombre),
-        tipos: this.valores('tipo'),
       },
     }).afterClosed().subscribe((resultado?: FiltrosProducto) => {
       if (!resultado) return;

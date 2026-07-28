@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { HistorialService } from '../../services/historial.service';
 import { DevolucionService } from '../../services/devolucion.service';
 import { AuthService } from '../../services/auth.service';
@@ -11,7 +14,7 @@ import { DevolucionReason, DevolucionPriority } from '../../models/devolucion.mo
 @Component({
   selector: 'app-devoluciones-init',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatCheckboxModule, MatInputModule, MatSelectModule],
   template: `
     <div class="returns-init-page animate-fade-in">
       <!-- Search Folio Card -->
@@ -20,7 +23,7 @@ import { DevolucionReason, DevolucionPriority } from '../../models/devolucion.mo
         <p class="text-secondary text-xs mb-3">Ingrese el folio del ticket de venta para iniciar la solicitud de devolución.</p>
         
         <div class="search-row">
-          <input 
+          <input matInput
             type="text" 
             placeholder="Folio de venta (ej. F-10003)..." 
             class="form-control" 
@@ -80,7 +83,7 @@ import { DevolucionReason, DevolucionPriority } from '../../models/devolucion.mo
             <div class="items-selection-list">
               <div class="selection-item" *ngFor="let item of returnCandidates">
                 <div class="chk-wrap">
-                  <input type="checkbox" [(ngModel)]="item.selected" (change)="onCandidateSelectChange()" />
+                  <mat-checkbox [(ngModel)]="item.selected" (change)="onCandidateSelectChange()" aria-label="Seleccionar producto para devolución"></mat-checkbox>
                 </div>
                 <div class="item-name-wrap">
                   <span class="item-name font-semibold">{{ item.product.name }}</span>
@@ -89,9 +92,9 @@ import { DevolucionReason, DevolucionPriority } from '../../models/devolucion.mo
                 
                 <div class="qty-select-wrap" *ngIf="item.selected">
                   <label>Cant. a Devolver:</label>
-                  <select [(ngModel)]="item.returnQty" class="form-control qty-select">
-                    <option *ngFor="let q of getQtyArray(item.purchasedQty)" [value]="q">{{ q }}</option>
-                  </select>
+                  <mat-select [(ngModel)]="item.returnQty" class="form-control qty-select">
+                    <mat-option *ngFor="let q of getQtyArray(item.purchasedQty)" [value]="q">{{ q }}</mat-option>
+                  </mat-select>
                 </div>
               </div>
             </div>
@@ -104,25 +107,25 @@ import { DevolucionReason, DevolucionPriority } from '../../models/devolucion.mo
             <!-- Reason Selector -->
             <div class="form-group">
               <label for="ret-reason">Motivo de la Devolución *</label>
-              <select id="ret-reason" class="form-control" [(ngModel)]="returnReason">
-                <option *ngFor="let r of reasons" [value]="r">{{ r }}</option>
-              </select>
+              <mat-select id="ret-reason" class="form-control" [(ngModel)]="returnReason">
+                <mat-option *ngFor="let r of reasons" [value]="r">{{ r }}</mat-option>
+              </mat-select>
             </div>
 
             <!-- Priority -->
             <div class="form-group">
               <label for="ret-priority">Prioridad de Revisión *</label>
-              <select id="ret-priority" class="form-control" [(ngModel)]="returnPriority">
-                <option value="Baja">Baja (Revisión de rutina)</option>
-                <option value="Media">Media (Validación estándar)</option>
-                <option value="Alta">Alta (Garantías urgentes / Quejas)</option>
-              </select>
+              <mat-select id="ret-priority" class="form-control" [(ngModel)]="returnPriority">
+                <mat-option value="Baja">Baja (Revisión de rutina)</mat-option>
+                <mat-option value="Media">Media (Validación estándar)</mat-option>
+                <mat-option value="Alta">Alta (Garantías urgentes / Quejas)</mat-option>
+              </mat-select>
             </div>
 
             <!-- Comment -->
             <div class="form-group">
               <label for="ret-comment">Comentarios / Diagnóstico Inicial</label>
-              <textarea 
+              <textarea matInput
                 id="ret-comment" 
                 class="form-control" 
                 rows="4" 

@@ -153,6 +153,10 @@ export class Autenticacion {
     return this.esAdministrador() || this.tieneRol('Inventario', 'Almacenista', 'Jefe de inventarios');
   }
 
+  esJefeInventarios(): boolean {
+    return this.esAdministrador() || this.tieneRol('Jefe de inventarios');
+  }
+
   puedeVerCompras(): boolean {
     return this.esAdministrador() || this.tieneRol('Comprador', 'Compras');
   }
@@ -162,7 +166,8 @@ export class Autenticacion {
   }
 
   rutaInicial(): string {
-    if (this.esAdministrador() || this.puedeVerInventario()) return '/dashboard';
+    if (this.esAdministrador()) return '/dashboard';
+    if (this.puedeVerInventario()) return '/inventario-dashboard';
     if (this.puedeVerCompras()) return '/compras/dashboard';
     if (this.puedeVerVentas()) return '/ventas/dashboard';
     return '/login';
@@ -176,7 +181,11 @@ export class Autenticacion {
     if (['/usuarios', '/roles', '/empresas', '/almacenes'].some(ruta => url.startsWith(ruta))) {
       return false;
     }
-    return this.puedeVerInventario();
+    if (!this.puedeVerInventario()) return false;
+    const rutasCatalogo = ['/products', '/kits', '/precios', '/marcas', '/categorias', '/unidades'];
+    if (rutasCatalogo.some(ruta => url.startsWith(ruta))) return this.esJefeInventarios();
+    if (url === '/dashboard' || url.startsWith('/dashboard?')) return false;
+    return true;
   }
 
   cerrarSesion(): void {

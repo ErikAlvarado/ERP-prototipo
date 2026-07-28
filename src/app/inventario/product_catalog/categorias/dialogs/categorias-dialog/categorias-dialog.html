@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>{{ data.mode === 'add' ? 'Agregar categoría' : 'Actualizar categoría' }}</h2>
+<h2 mat-dialog-title>{{ data.mode === 'add' ? 'Agregar categoría o subcategoría' : 'Actualizar categoría o subcategoría' }}</h2>
 <mat-dialog-content>
   <div class="formulario">
     <mat-form-field appearance="outline">
@@ -14,14 +14,14 @@
       </mat-select>
     </mat-form-field>
     <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Categoría padre</mat-label>
+      <mat-label>Pertenece a</mat-label>
       <mat-select [(ngModel)]="categoria.idPadre">
-        <mat-option value="">Sin categoría padre</mat-option>
+        <mat-option value="">Categoría principal</mat-option>
         @for (categoriaPadre of categoriasPadre; track categoriaPadre.id) {
           <mat-option [value]="categoriaPadre.id">{{ categoriaPadre.nombre }}</mat-option>
         }
       </mat-select>
-      <mat-hint>Déjalo vacío para crear una categoría principal.</mat-hint>
+      <mat-hint>Selecciona una categoría para crear una subcategoría.</mat-hint>
     </mat-form-field>
     <div class="checks"><mat-checkbox [(ngModel)]="categoria.estado">Categoría activa</mat-checkbox></div>
     @if (error) { <p class="error-text full-width">{{ error }}</p> }
