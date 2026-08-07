@@ -1,6 +1,7 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+<<<<<<< HEAD
 const dbDirectory = resolve(
   process.cwd(),
   'public',
@@ -8,6 +9,9 @@ const dbDirectory = resolve(
   'db',
   'inventari_db',
 );
+=======
+const dbDirectory = resolve(process.cwd(), 'public', 'assets', 'db', 'inventari_db');
+>>>>>>> 29f1c4015e72b2b7d532c551171e9adc1afd5bbc
 const migrationDate = '2026-07-23';
 
 function readTable(fileName) {
@@ -26,12 +30,28 @@ function readTable(fileName) {
   return { fileName, columns, rows };
 }
 
+function readTableOrCreate(fileName, columns) {
+  return existsSync(resolve(dbDirectory, fileName))
+    ? readTable(fileName)
+    : { fileName, columns, rows: [] };
+}
+
+function writeFileIfChanged(filePath, lines) {
+  const previous = existsSync(filePath) ? readFileSync(filePath, 'utf8') : '';
+  const newline = previous.includes('\r\n') || (!previous && process.platform === 'win32')
+    ? '\r\n'
+    : '\n';
+  const content = `${lines.join(newline)}${newline}`;
+
+  if (previous !== content) writeFileSync(filePath, content, 'utf8');
+}
+
 function writeTable(table) {
-  const content = [
+  const lines = [
     table.columns.join('|'),
     ...table.rows.map((row) => table.columns.map((column) => row[column] ?? '').join('|')),
-  ].join('\n');
-  writeFileSync(resolve(dbDirectory, table.fileName), `${content}\n`, 'utf8');
+  ];
+  writeFileIfChanged(resolve(dbDirectory, table.fileName), lines);
 }
 
 function removeColumns(table, columnsToRemove) {
@@ -58,6 +78,18 @@ function inventoryKey(productId, warehouseId) {
   return `${productId}|${warehouseId}`;
 }
 
+function normalizeShelfName(value) {
+  return String(value || '')
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('es-MX');
+}
+
+function shelfKey(warehouseId, name) {
+  return `${warehouseId}|${normalizeShelfName(name)}`;
+}
+
 const products = readTable('productos.txt');
 const inventory = readTable('inventario.txt');
 const kardex = readTable('kardex_inventario.txt');
@@ -72,6 +104,83 @@ const companies = readTable('empresas.txt');
 const warehouses = readTable('almacenes.txt');
 const users = readTable('usuarios.txt');
 const kitComponents = readTable('componentes_kit.txt');
+const shelves = readTableOrCreate('anaqueles.txt', [
+  'id_anaquel',
+  'id_almacen',
+  'nombre_anaquel',
+  'activo',
+  'fecha_creacion',
+  'fecha_actualizacion',
+]);
+
+// Accept the short-lived draft column name while always writing the canonical
+// schema used by the rest of inventari_db.
+if (shelves.columns.includes('nombre') && !shelves.columns.includes('nombre_anaquel')) {
+  shelves.columns[shelves.columns.indexOf('nombre')] = 'nombre_anaquel';
+  for (const shelf of shelves.rows) {
+    shelf.nombre_anaquel = shelf.nombre;
+    delete shelf.nombre;
+  }
+}
+
+let shelfId = nextId(shelves.rows, 'id_anaquel');
+const shelfById = new Map(shelves.rows.map((row) => [row.id_anaquel, row]));
+const shelfByKey = new Map();
+for (const shelf of [...shelves.rows].sort((a, b) => number(a.id_anaquel) - number(b.id_anaquel))) {
+  const key = shelfKey(shelf.id_almacen, shelf.nombre_anaquel);
+  if (shelfByKey.has(key)) continue;
+  shelfByKey.set(key, shelf);
+}
+
+function ensureShelf(warehouseId, name, date = migrationDate) {
+  const cleanName = String(name || '').trim();
+  if (!warehouseId || !cleanName || cleanName === '—' || cleanName === '-') return '';
+  const key = shelfKey(warehouseId, cleanName);
+  const existing = shelfByKey.get(key);
+  if (existing) return existing.id_anaquel;
+
+  const shelf = {
+    id_anaquel: String(shelfId++),
+    id_almacen: String(warehouseId),
+    nombre_anaquel: cleanName,
+    activo: '1',
+    fecha_creacion: date || migrationDate,
+    fecha_actualizacion: date || migrationDate,
+  };
+  shelves.rows.push(shelf);
+  shelfById.set(shelf.id_anaquel, shelf);
+  shelfByKey.set(key, shelf);
+  return shelf.id_anaquel;
+}
+
+// Normalize the former free-text shelf on inventory into a catalog FK. Existing
+// id_anaquel values are preserved; every base inventory row gets an assignment.
+if (!inventory.columns.includes('id_anaquel')) {
+  const warehouseColumn = inventory.columns.indexOf('id_almacen');
+  inventory.columns.splice(warehouseColumn + 1, 0, 'id_anaquel');
+}
+for (const row of inventory.rows) {
+  if (row.id_anaquel) {
+    const shelf = shelfById.get(row.id_anaquel);
+    if (!shelf) {
+      throw new Error(
+        `Inventory ${row.id_inventario} references missing shelf ${row.id_anaquel}.`,
+      );
+    }
+    if (shelf.id_almacen !== row.id_almacen) {
+      throw new Error(
+        `Inventory ${row.id_inventario} references shelf ${row.id_anaquel} from another warehouse.`,
+      );
+    }
+    continue;
+  }
+  row.id_anaquel = ensureShelf(
+    row.id_almacen,
+    row.anaquel || `INI-${String(row.id_producto).padStart(3, '0')}`,
+    row.fecha_actualizacion || migrationDate,
+  );
+}
+removeColumns(inventory, ['anaquel']);
 
 removeColumns(products, ['usar_lotes_caducidades']);
 removeColumns(inventory, ['lote', 'fecha_caducidad']);
@@ -166,11 +275,15 @@ for (const product of [...products.rows].sort((a, b) => number(a.id_producto) - 
     id_inventario: String(inventoryId++),
     id_producto: product.id_producto,
     id_almacen: '1',
+    id_anaquel: ensureShelf(
+      '1',
+      `INI-${String(product.id_producto).padStart(3, '0')}`,
+      migrationDate,
+    ),
     stock: decimal(stock),
     stock_reorden: decimal(5),
     stock_critico: decimal(2),
     stock_maximo: decimal(50),
-    anaquel: `INI-${String(product.id_producto).padStart(3, '0')}`,
     fecha_actualizacion: migrationDate,
   };
   inventory.rows.push(row);
@@ -252,11 +365,15 @@ for (const transfer of transfers.rows.filter((row) => row.fecha_recepcion)) {
         id_inventario: String(inventoryId++),
         id_producto: detail.id_producto,
         id_almacen: transfer.id_almacen_destino,
+        id_anaquel: ensureShelf(
+          transfer.id_almacen_destino,
+          `TR-${String(detail.id_producto).padStart(3, '0')}`,
+          transfer.fecha_recepcion,
+        ),
         stock: decimal(0),
         stock_reorden: source.stock_reorden,
         stock_critico: source.stock_critico,
         stock_maximo: source.stock_maximo,
-        anaquel: `TR-${String(detail.id_producto).padStart(3, '0')}`,
         fecha_actualizacion: transfer.fecha_recepcion,
       };
       inventory.rows.push(destination);
@@ -314,9 +431,11 @@ for (const transfer of transfers.rows.filter((row) => row.fecha_recepcion)) {
 
 inventory.rows.sort((a, b) => number(a.id_inventario) - number(b.id_inventario));
 kardex.rows.sort((a, b) => number(a.id_movimiento) - number(b.id_movimiento));
+shelves.rows.sort((a, b) => number(a.id_anaquel) - number(b.id_anaquel));
 
 writeTable(products);
 writeTable(inventory);
+writeTable(shelves);
 writeTable(kardex);
 writeTable(units);
 writeTable(measures);
@@ -325,7 +444,7 @@ writeTable(transfers);
 writeTable(companies);
 writeTable(kitComponents);
 
-writeFileSync(
+writeFileIfChanged(
   resolve(dbDirectory, 'tipos_movimiento.txt'),
   [
     'id_tipo_movimiento|nombre|naturaleza|activo',
@@ -333,9 +452,7 @@ writeFileSync(
     '2|Salida|Salida|1',
     '3|Ajuste|Ajuste|1',
     '4|Transferencia|Transferencia|1',
-    '',
-  ].join('\n'),
-  'utf8',
+  ],
 );
 
 console.log(

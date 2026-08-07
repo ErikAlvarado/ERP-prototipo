@@ -15,27 +15,25 @@
       <mat-form-field appearance="outline"><mat-label>Unidad</mat-label><mat-select [(ngModel)]="producto.idUnidad" (selectionChange)="cambiarUnidad($event.value)">@for (opcion of unidadesDisponibles; track opcion.id) { <mat-option [value]="opcion.id">{{ opcion.nombre }}</mat-option> }</mat-select></mat-form-field>
     </div></section>
 
-    <section class="form-section"><h3>Ubicación, estatus y datos fiscales</h3><div class="form-grid three-columns">
+    <section class="form-section"><h3>Estatus</h3><div class="form-grid">
       <mat-form-field appearance="outline"><mat-label>Estatus</mat-label><mat-select [(ngModel)]="producto.estatus" (selectionChange)="cambiarEstatus($event.value)">@for (estatus of estatusDisponibles; track estatus) { <mat-option [value]="estatus">{{ estatus }}</mat-option> }</mat-select></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Ubicación predeterminada</mat-label><input matInput [(ngModel)]="producto.ubicacionDefault" maxlength="120"><mat-icon matPrefix>location_on</mat-icon></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Clave SAT</mat-label><input matInput [(ngModel)]="producto.claveSat" maxlength="30"><mat-icon matPrefix>receipt_long</mat-icon></mat-form-field>
     </div></section>
 
     <section class="form-section"><h3>Configuración</h3><div class="checkbox-grid">
       <mat-checkbox [(ngModel)]="producto.pos">Punto de venta</mat-checkbox><mat-checkbox [(ngModel)]="producto.linea">Catálogo en línea</mat-checkbox><mat-checkbox [(ngModel)]="producto.requiereReceta">Requiere receta</mat-checkbox><mat-checkbox [(ngModel)]="producto.usarExistencias" (change)="cambiarControlExistencias($event.checked)">Controlar existencias</mat-checkbox>
     </div></section>
 
-    @if (debeCapturarInventarioInicial) {
+    @if (muestraInventario) {
       <section class="form-section">
         <div class="section-title-row">
-          <h3>Inventario inicial</h3>
-          <small>Obligatorio para productos con control de existencias</small>
+          <h3>{{ debeCapturarInventarioInicial ? 'Inventario inicial' : 'Ubicación de inventario' }}</h3>
+          <small>El anaquel depende del almacén seleccionado</small>
         </div>
         @if (inventarioInicial) {
           <div class="form-grid three-columns">
             <mat-form-field appearance="outline">
               <mat-label>Almacén</mat-label>
-              <mat-select [(ngModel)]="inventarioInicial.idAlmacen" (selectionChange)="cambiarAlmacenInicial($event.value)">
+              <mat-select [(ngModel)]="inventarioInicial.idAlmacen" (selectionChange)="cambiarAlmacenInicial($event.value)" [disabled]="data.mode === 'edit'">
                 @for (almacen of almacenesDisponibles; track almacen.id) {
                   <mat-option [value]="almacen.id">{{ almacen.nombre }}</mat-option>
                 }
@@ -43,23 +41,28 @@
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Stock inicial</mat-label>
-              <input matInput type="number" min="0.01" [(ngModel)]="inventarioInicial.stock">
+              <input matInput type="number" min="0.01" [(ngModel)]="inventarioInicial.stock" [disabled]="data.mode === 'edit'">
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Anaquel</mat-label>
-              <input matInput [(ngModel)]="inventarioInicial.anaquel" maxlength="80">
+              <mat-select [(ngModel)]="inventarioInicial.idAnaquel" (selectionChange)="cambiarAnaquelInicial($event.value)">
+                @for (anaquel of anaquelesDisponibles; track anaquel.id) {
+                  <mat-option [value]="anaquel.id" [disabled]="!anaquel.estado">{{ anaquel.nombre }}</mat-option>
+                }
+              </mat-select>
+              @if (!anaquelesDisponibles.length) { <mat-hint>Crea un anaquel para este almacén antes de guardar.</mat-hint> }
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Stock crítico</mat-label>
-              <input matInput type="number" min="0" [(ngModel)]="inventarioInicial.stockCritico">
+              <input matInput type="number" min="0" [(ngModel)]="inventarioInicial.stockCritico" [disabled]="data.mode === 'edit'">
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Punto de reorden</mat-label>
-              <input matInput type="number" min="0" [(ngModel)]="inventarioInicial.stockReorden">
+              <input matInput type="number" min="0" [(ngModel)]="inventarioInicial.stockReorden" [disabled]="data.mode === 'edit'">
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Stock máximo</mat-label>
-              <input matInput type="number" min="0.01" [(ngModel)]="inventarioInicial.stockMaximo">
+              <input matInput type="number" min="0.01" [(ngModel)]="inventarioInicial.stockMaximo" [disabled]="data.mode === 'edit'">
             </mat-form-field>
           </div>
         } @else {

@@ -1,4 +1,5 @@
 import { Component, Inject } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SHARED_IMPORTS } from '../../../../../shared/imports/shared-imports';
 import { OpcionListaPrecio, calcularMargenPrecio } from '../../../../../shared/services/catalogo-productos';
@@ -37,13 +38,17 @@ export interface PrecioDialogData {
 })
 export class PrecioDialog {
   precio: PrecioDialogResult;
+  readonly productoControl = new FormControl<number | string>('', { nonNullable: true });
+  productosFiltrados: ProductoPrecioOption[] = [];
   error = '';
 
   constructor(
     private dialogRef: MatDialogRef<PrecioDialog>,
     @Inject(MAT_DIALOG_DATA) public data: PrecioDialogData,
   ) {
-    const producto = data.productos.find(actual => actual.id === data.precio?.idProducto) || data.productos[0];
+    const producto = data.mode === 'edit'
+      ? data.productos.find(actual => actual.id === data.precio?.idProducto)
+      : undefined;
     const lista = data.listas.find(actual => actual.id === data.precio?.idLista)
       || data.listas.find(actual => actual.idEmpresa === producto?.idEmpresa && actual.predeterminada && actual.activa)
       || data.listas.find(actual => actual.idEmpresa === producto?.idEmpresa && actual.activa);
@@ -55,6 +60,31 @@ export class PrecioDialog {
       fechaInicio: data.precio?.fechaInicio || new Date().toISOString().slice(0, 10),
       fechaFin: data.precio?.fechaFin || '',
     };
+    this.productoControl.setValue(producto?.id || '', { emitEvent: false });
+    this.productosFiltrados = producto ? [producto] : [];
+    this.productoControl.valueChanges.subscribe(valor => {
+      if (typeof valor === 'number') {
+        this.precio.idProducto = valor;
+        const seleccionado = this.data.productos.find(actual => actual.id === valor);
+        this.productosFiltrados = seleccionado ? [seleccionado] : [];
+        this.cambiarProducto();
+        return;
+      }
+      this.precio.idProducto = 0;
+      this.precio.idLista = 0;
+      this.productosFiltrados = this.buscarProductos(valor);
+    });
+  }
+
+  readonly mostrarProducto = (valor: number | string): string => {
+    if (typeof valor !== 'number') return valor;
+    const producto = this.data.productos.find(actual => actual.id === valor);
+    return producto ? this.etiquetaProducto(producto) : '';
+  };
+
+  get terminoProducto(): string {
+    const valor = this.productoControl.value;
+    return typeof valor === 'string' ? this.normalizar(valor.trim()) : '';
   }
 
   get productoSeleccionado(): ProductoPrecioOption | undefined {
@@ -76,6 +106,26 @@ export class PrecioDialog {
     const lista = this.listasDisponibles.find(opcion => opcion.predeterminada && opcion.activa)
       || this.listasDisponibles.find(opcion => opcion.activa);
     this.precio.idLista = lista?.id || 0;
+  }
+
+  private etiquetaProducto(producto: ProductoPrecioOption): string {
+    return `${producto.sku} · ${producto.nombre} · ${producto.empresa}`;
+  }
+
+  private normalizar(valor: string): string {
+    return valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
+  }
+
+  private buscarProductos(valor: string): ProductoPrecioOption[] {
+    const termino = this.normalizar(valor.trim());
+    if (termino.length < 2) return [];
+    const coincidencias: ProductoPrecioOption[] = [];
+    for (const producto of this.data.productos) {
+      if (!this.normalizar(this.etiquetaProducto(producto)).includes(termino)) continue;
+      coincidencias.push(producto);
+      if (coincidencias.length === 50) break;
+    }
+    return coincidencias;
   }
 
   guardar(): void {

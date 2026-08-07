@@ -3,11 +3,29 @@
   <div class="formulario">
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Producto</mat-label>
-      <mat-select [(ngModel)]="precio.idProducto" (selectionChange)="cambiarProducto()" required>
-        @for (producto of data.productos; track producto.id) {
-          <mat-option [value]="producto.id">{{ producto.sku }} · {{ producto.nombre }} · {{ producto.empresa }}</mat-option>
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        type="text"
+        [formControl]="productoControl"
+        [matAutocomplete]="productoAuto"
+        placeholder="Buscar por SKU, producto o empresa"
+        autocomplete="off"
+        required>
+      <mat-autocomplete #productoAuto="matAutocomplete" [displayWith]="mostrarProducto" autoActiveFirstOption>
+        @if (terminoProducto.length < 2) {
+          <mat-option disabled>Escribe al menos 2 caracteres para buscar</mat-option>
+        } @else {
+          @for (producto of productosFiltrados; track producto.id) {
+            <mat-option [value]="producto.id">
+              <strong>{{ producto.sku }}</strong> · {{ producto.nombre }} · {{ producto.empresa }}
+            </mat-option>
+          } @empty {
+            <mat-option disabled>No se encontraron productos</mat-option>
+          }
         }
-      </mat-select>
+      </mat-autocomplete>
+      <mat-hint>Selecciona una coincidencia de la búsqueda.</mat-hint>
     </mat-form-field>
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Lista de precios</mat-label>

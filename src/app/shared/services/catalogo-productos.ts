@@ -41,6 +41,7 @@ export interface PrecioProductoCatalogo {
 export interface InventarioProductoCatalogo {
   id: number;
   idAlmacen: number;
+  idAnaquel: number | null;
   almacen: string;
   stock: number;
   stockReorden: number;
@@ -125,7 +126,8 @@ interface UnidadDb {
 interface MarcaDb { id_marca: string; id_empresa: string; nombre: string; activo: string; }
 interface AlmacenDb { id_almacen: string; id_empresa: string; nombre_almacen: string; }
 interface ImagenDb { id_producto: string; url_imagen: string; es_principal: string; orden: string; }
-interface InventarioDb { id_inventario: string; id_producto: string; id_almacen: string; stock: string; stock_reorden: string; stock_critico: string; stock_maximo: string; anaquel: string; fecha_actualizacion: string; }
+interface InventarioDb { id_inventario: string; id_producto: string; id_almacen: string; id_anaquel: string; stock: string; stock_reorden: string; stock_critico: string; stock_maximo: string; anaquel?: string; fecha_actualizacion: string; }
+interface AnaquelDb { id_anaquel: string; id_almacen: string; nombre_anaquel: string; activo: string; }
 interface PrecioDb { id_precio: string; id_producto: string; id_lista_precio: string; precio_costo: string; precio_venta: string; fecha_inicio: string; fecha_fin: string; }
 interface ListaPrecioDb { id_lista_precio: string; id_empresa: string; nombre: string; es_predeterminado: string; activo: string; }
 interface MovimientoDb { id_producto: string; cantidad: string; referencia: string; fecha: string; }
@@ -147,6 +149,12 @@ interface UnidadLocal {
   nombre: string;
   permitirDecimales: boolean;
 }
+interface AnaquelLocal {
+  id: string;
+  idAlmacen: number;
+  nombre: string;
+  estado: boolean;
+}
 interface EstadoCatalogoLocal<T> {
   registros: T[];
   eliminados: string[];
@@ -167,6 +175,7 @@ type DatosRelacionados = {
   precios: PrecioDb[];
   listasPrecios: ListaPrecioDb[];
   inventario: InventarioDb[];
+  anaqueles: AnaquelDb[];
   almacenes: AlmacenDb[];
   imagenes: ImagenDb[];
   kardex: MovimientoDb[];
@@ -181,8 +190,13 @@ export class CatalogoProductos {
    */
   private readonly claveCambios = 'catalogo-productos-cambios-v3';
   private origenPorId = new Map<number, ProductoCatalogo>();
+<<<<<<< HEAD
   private readonly cambiosInternos = new Subject<void>();
   readonly cambios$ = this.cambiosInternos.asObservable();
+=======
+  private anaquelesPorId = new Map<number, string>();
+  private anaquelesPorUbicacion = new Map<string, number>();
+>>>>>>> 29f1c4015e72b2b7d532c551171e9adc1afd5bbc
 
   constructor(private db: DatosDb, private persistencia: PersistenciaLocal) {}
 
@@ -328,6 +342,7 @@ export class CatalogoProductos {
       precios: this.leer<PrecioDb>('productos_precios.txt'),
       listasPrecios: this.leer<ListaPrecioDb>('listas_precios.txt'),
       inventario: this.leer<InventarioDb>('inventario.txt'),
+      anaqueles: this.leer<AnaquelDb>('anaqueles.txt'),
       almacenes: this.leer<AlmacenDb>('almacenes.txt'),
       imagenes: this.leer<ImagenDb>('producto_imagenes.txt'),
       kardex: this.leer<MovimientoDb>('kardex_inventario.txt'),
@@ -359,23 +374,49 @@ export class CatalogoProductos {
     const unidades = new Map(datos.unidades.map(fila => [fila.id_unidad, fila.nombre]));
     const marcas = new Map(datos.marcas.map(fila => [fila.id_marca, fila.nombre]));
     const almacenes = new Map(datos.almacenes.map(fila => [fila.id_almacen, fila.nombre_almacen]));
+    const anaquelesCatalogo = this.combinarCatalogoLocal<AnaquelLocal>(
+      'catalogo-anaqueles-v2',
+      datos.anaqueles.map(fila => ({
+        id: fila.id_anaquel,
+        idAlmacen: Number(fila.id_almacen),
+        nombre: fila.nombre_anaquel,
+        estado: fila.activo !== '0',
+      })),
+    );
+    this.anaquelesPorId = new Map(
+      anaquelesCatalogo.map(fila => [Number(fila.id), fila.nombre]),
+    );
+    this.anaquelesPorUbicacion = new Map(anaquelesCatalogo.map(fila => [
+      this.claveAnaquel(fila.idAlmacen, fila.nombre),
+      Number(fila.id),
+    ]));
     const listasPrecios = new Map(datos.listasPrecios.map(fila => [fila.id_lista_precio, fila]));
     const fechaActual = this.hoy();
 
     return datos.productos.map(producto => {
       const inventarios: InventarioProductoCatalogo[] = datos.inventario
         .filter(fila => fila.id_producto === producto.id_producto)
-        .map(fila => ({
-          id: Number(fila.id_inventario),
-          idAlmacen: Number(fila.id_almacen),
-          almacen: almacenes.get(fila.id_almacen) || `Almacén ${fila.id_almacen}`,
-          stock: Number(fila.stock) || 0,
-          stockReorden: Number(fila.stock_reorden) || 0,
-          stockCritico: Number(fila.stock_critico) || 0,
-          stockMaximo: Number(fila.stock_maximo) || 0,
-          anaquel: fila.anaquel || '—',
-          fechaActualizacion: fila.fecha_actualizacion || '',
-        }));
+        .map(fila => {
+          const idAnaquel = this.resolverIdAnaquel(
+            fila.id_anaquel,
+            Number(fila.id_almacen),
+            fila.anaquel,
+          );
+          return {
+            id: Number(fila.id_inventario),
+            idAlmacen: Number(fila.id_almacen),
+            idAnaquel,
+            almacen: almacenes.get(fila.id_almacen) || `Almacén ${fila.id_almacen}`,
+            stock: Number(fila.stock) || 0,
+            stockReorden: Number(fila.stock_reorden) || 0,
+            stockCritico: Number(fila.stock_critico) || 0,
+            stockMaximo: Number(fila.stock_maximo) || 0,
+            anaquel: idAnaquel == null
+              ? fila.anaquel || '—'
+              : this.anaquelesPorId.get(idAnaquel) || 'Anaquel no disponible',
+            fechaActualizacion: fila.fecha_actualizacion || '',
+          };
+        });
       const precios: PrecioProductoCatalogo[] = datos.precios
         .filter(fila => fila.id_producto === producto.id_producto)
         .map(fila => {
@@ -459,7 +500,22 @@ export class CatalogoProductos {
     return this.actualizarResumenPrecio({
       ...producto,
       precios: Array.isArray(producto.precios) ? producto.precios : [],
-      inventarios: Array.isArray(producto.inventarios) ? producto.inventarios : [],
+      inventarios: Array.isArray(producto.inventarios)
+        ? producto.inventarios.map(inventario => {
+            const idAnaquel = this.resolverIdAnaquel(
+              inventario.idAnaquel,
+              inventario.idAlmacen,
+              inventario.anaquel,
+            );
+            return {
+              ...inventario,
+              idAnaquel,
+              anaquel: idAnaquel == null
+                ? inventario.anaquel || '—'
+                : this.anaquelesPorId.get(idAnaquel) || 'Anaquel no disponible',
+            };
+          })
+        : [],
       imagenes: Array.isArray(producto.imagenes)
         ? producto.imagenes
         : producto.imagen ? [producto.imagen] : [],
@@ -504,6 +560,30 @@ export class CatalogoProductos {
     const numerico = Number(id);
     if (Number.isSafeInteger(numerico) && numerico > 0) return numerico;
     return 0;
+  }
+
+  private idRelacion(id: string | number | null | undefined): number | null {
+    const numerico = Number(id);
+    return Number.isSafeInteger(numerico) && numerico > 0 ? numerico : null;
+  }
+
+  private resolverIdAnaquel(
+    id: string | number | null | undefined,
+    idAlmacen: number,
+    nombre: string | undefined,
+  ): number | null {
+    return this.idRelacion(id)
+      ?? this.anaquelesPorUbicacion.get(this.claveAnaquel(idAlmacen, nombre || ''))
+      ?? null;
+  }
+
+  private claveAnaquel(idAlmacen: number, nombre: string): string {
+    const normalizado = String(nombre || '')
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLocaleLowerCase();
+    return `${Number(idAlmacen)}:${normalizado}`;
   }
 }
 

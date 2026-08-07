@@ -39,6 +39,16 @@ export interface KitDialogData {
   skus: string[];
 }
 
+export function calcularCostoComponentes(
+  elementos: ReadonlyArray<Pick<KitElemento, 'costo' | 'cantidad'>>,
+): number {
+  const total = elementos.reduce(
+    (acumulado, elemento) => acumulado + Number(elemento.costo) * Number(elemento.cantidad),
+    0,
+  );
+  return Number(total.toFixed(2));
+}
+
 @Component({
   selector: 'app-kits-dialog',
   imports: [SHARED_IMPORTS, CurrencyPipe],
@@ -89,6 +99,7 @@ export class KitsDialog {
           elementos: [],
           estado: true,
         };
+    this.sincronizarCosto();
   }
 
   get marcasDisponibles(): OpcionProducto[] {
@@ -108,15 +119,17 @@ export class KitsDialog {
   }
 
   get stockSeleccionado(): number {
-    return this.productosDisponibles.find(producto => producto.idProducto === Number(this.nuevoProductoId))?.stock || 0;
+    const stock = this.productosDisponibles
+      .find(producto => producto.idProducto === Number(this.nuevoProductoId))?.stock;
+    return this.stockEntero(stock);
   }
 
   get costoComponentes(): number {
-    return this.kit.elementos.reduce((total, elemento) => total + elemento.costo * elemento.cantidad, 0);
+    return calcularCostoComponentes(this.kit.elementos);
   }
 
   get margen(): number {
-    return calcularMargenPrecio(this.kit.costo, this.kit.precio);
+    return calcularMargenPrecio(this.costoComponentes, this.kit.precio);
   }
 
   cambiarEmpresa(): void {
@@ -129,37 +142,67 @@ export class KitsDialog {
     this.asignarPrimeraOpcion('categoria', this.categoriasDisponibles);
     this.asignarPrimeraOpcion('unidad', this.unidadesDisponibles);
     this.nuevoProductoId = 0;
+    this.sincronizarCosto();
   }
 
   agregarElemento(): void {
     const producto = this.productosDisponibles.find(actual => actual.idProducto === Number(this.nuevoProductoId));
-    const cantidad = Math.max(1, Math.floor(Number(this.cantidadNueva) || 1));
     if (!producto) {
       this.error = 'Selecciona un producto de la misma empresa que el kit.';
       return;
     }
+    const cantidad = Number(this.cantidadNueva);
+    if (!Number.isInteger(cantidad) || cantidad < 1) {
+      this.error = 'La cantidad debe ser un número entero mayor a cero.';
+      return;
+    }
     const existente = this.kit.elementos.find(elemento => elemento.idProducto === producto.idProducto);
-    if (existente) existente.cantidad += cantidad;
+    const cantidadTotal = (existente?.cantidad || 0) + cantidad;
+    const stockDisponible = this.stockEntero(producto.stock);
+    if (cantidadTotal > stockDisponible) {
+      const yaIncluidas = existente?.cantidad || 0;
+      this.error = yaIncluidas
+        ? `El kit ya incluye ${yaIncluidas} unidad(es) de "${producto.nombre}". El total no puede superar su stock disponible de ${stockDisponible}.`
+        : `La cantidad de "${producto.nombre}" no puede superar su stock disponible de ${stockDisponible}.`;
+      return;
+    }
+    if (existente) existente.cantidad = cantidadTotal;
     else this.kit.elementos.push({ ...producto, cantidad });
     this.nuevoProductoId = 0;
     this.cantidadNueva = 1;
     this.error = '';
+    this.sincronizarCosto();
   }
 
   actualizarCantidad(elemento: KitElemento): void {
-    elemento.cantidad = Math.max(1, Math.floor(Number(elemento.cantidad) || 1));
+    const cantidad = Number(elemento.cantidad);
+    const stockDisponible = this.stockEntero(elemento.stock);
+    if (!Number.isInteger(cantidad) || cantidad < 1) {
+      this.error = 'La cantidad debe ser un número entero mayor a cero.';
+      this.sincronizarCosto();
+      return;
+    }
+    if (cantidad > stockDisponible) {
+      this.error = `La cantidad de "${elemento.nombre}" no puede superar su stock disponible de ${stockDisponible}.`;
+      this.sincronizarCosto();
+      return;
+    }
+    elemento.cantidad = cantidad;
     this.error = '';
+    this.sincronizarCosto();
   }
 
   removerElemento(index: number): void {
     this.kit.elementos.splice(index, 1);
+    this.error = '';
+    this.sincronizarCosto();
   }
 
   guardar(): void {
     this.error = '';
     const nombre = this.kit.nombre.trim();
     const sku = this.kit.sku.trim();
-    const costo = Number(this.kit.costo);
+    const costo = this.costoComponentes;
     const precio = Number(this.kit.precio);
     if (!nombre) {
       this.error = 'El nombre del kit es obligatorio.';
@@ -191,10 +234,19 @@ export class KitsDialog {
       this.error = 'Todos los componentes deben pertenecer a la misma empresa que el kit.';
       return;
     }
-    if (!Number.isFinite(precio) || !Number.isFinite(costo) || precio < 0 || costo < 0) {
-      this.error = 'El precio y el costo registrado no pueden ser negativos.';
+    const elementoSinStock = this.kit.elementos.find(elemento => {
+      const cantidad = Number(elemento.cantidad);
+      return !Number.isInteger(cantidad) || cantidad < 1 || cantidad > this.stockEntero(elemento.stock);
+    });
+    if (elementoSinStock) {
+      this.error = `La cantidad de "${elementoSinStock.nombre}" debe ser un entero entre 1 y su stock disponible de ${this.stockEntero(elementoSinStock.stock)}.`;
       return;
     }
+    if (!Number.isFinite(precio) || !Number.isFinite(costo) || precio < 0 || costo < 0) {
+      this.error = 'El precio y el costo calculado no pueden ser negativos.';
+      return;
+    }
+    this.kit.costo = costo;
     this.dialogRef.close({
       ...this.kit,
       idEmpresa: Number(this.kit.idEmpresa),
@@ -229,5 +281,13 @@ export class KitsDialog {
 
   private relacionValida(opciones: OpcionProducto[], id: number): boolean {
     return opciones.some(opcion => opcion.id === Number(id));
+  }
+
+  private sincronizarCosto(): void {
+    this.kit.costo = this.costoComponentes;
+  }
+
+  private stockEntero(stock: number | undefined): number {
+    return Math.max(0, Math.floor(Number(stock) || 0));
   }
 }

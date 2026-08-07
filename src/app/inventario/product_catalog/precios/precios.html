@@ -12,33 +12,25 @@
     <mat-icon>search</mat-icon>
     <input matInput [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar producto, SKU, empresa o lista">
   </label>
-  <div class="custom-filters price-filters">
-    <mat-form-field appearance="outline" class="filter-field">
-      <mat-label>Empresa</mat-label>
-      <mat-select [(ngModel)]="empresaFiltro" (selectionChange)="applyFilter()">
-        <mat-option value="">Todas</mat-option>
-        @for (empresa of opciones.empresas; track empresa.id) {
-          <mat-option [value]="empresa.id.toString()">{{ empresa.nombre }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-    <mat-form-field appearance="outline" class="filter-field">
-      <mat-label>Lista</mat-label>
-      <mat-select [(ngModel)]="listaFiltro" (selectionChange)="applyFilter()">
-        <mat-option value="">Todas</mat-option>
-        @for (lista of listasFiltradas; track lista.id) {
-          <mat-option [value]="lista.id.toString()">{{ lista.nombre }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-    <mat-form-field appearance="outline" class="filter-field">
-      <mat-label>Vigencia</mat-label>
-      <mat-select [(ngModel)]="estadoFiltro" (selectionChange)="applyFilter()">
-        <mat-option value="">Todos</mat-option>
-        <mat-option value="vigente">Vigentes</mat-option>
-        <mat-option value="fuera">Fuera de vigencia</mat-option>
-      </mat-select>
-    </mat-form-field>
+  <div class="custom-filters">
+    <button mat-stroked-button class="filter-btn" (click)="abrirFiltros()" [disabled]="cargando || !!errorCarga">
+      <mat-icon>tune</mat-icon>
+      Filtros
+      @if (filtrosActivos) {
+        <span class="filter-count">{{ filtrosActivos }}</span>
+      }
+    </button>
+
+    <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="sortMenu" [disabled]="cargando || !!errorCarga">
+      <mat-icon>sort</mat-icon>
+      {{ currentSort }}
+    </button>
+    <mat-menu #sortMenu="matMenu">
+      <button mat-menu-item (click)="setSort('Más antiguos')">Más antiguos</button>
+      <button mat-menu-item (click)="setSort('Más recientes')">Más recientes</button>
+      <button mat-menu-item (click)="setSort('Producto A - Z')">Producto A - Z</button>
+      <button mat-menu-item (click)="setSort('Producto Z - A')">Producto Z - A</button>
+    </mat-menu>
   </div>
 </div>
 

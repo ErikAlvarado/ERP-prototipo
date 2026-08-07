@@ -4,8 +4,14 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 
 ## Datos del prototipo
 
-La fuente de datos se encuentra en `public/assets/db/*.txt`. Los archivos usan
-columnas separadas por `|`.
+La fuente de datos de inventario se encuentra en
+`public/assets/db/inventari_db/*.txt`. Los archivos usan columnas separadas por
+`|`; son fixtures estáticas, no un servidor de base de datos.
+
+Los anaqueles se modelan como una tabla independiente: `anaqueles.txt` pertenece
+a `almacenes.txt`, y `inventario.txt` referencia cada ubicación mediante
+`id_anaquel`. `npm run validate:data` comprueba ambas claves foráneas y evita que
+una existencia use un anaquel de otro almacén.
 
 Para volver a aplicar de forma idempotente la migración que retira
 lotes/caducidades, inicializa el inventario y corrige las relaciones de muestra:

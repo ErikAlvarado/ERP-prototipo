@@ -72,6 +72,11 @@ export class Sidebar {
         icon: 'balance',
         route: '/unidades'
       },
+      {
+        title: 'Anaqueles',
+        icon: 'shelves',
+        route: '/anaqueles'
+      },
     ]
   },
   {
@@ -80,7 +85,7 @@ export class Sidebar {
     expanded: false,
     children: [
       {
-        title: 'Dashboard de Inventario',
+        title: 'Reportes inventario',
         icon: 'dashboard',
         route: '/inventario-dashboard'
       },

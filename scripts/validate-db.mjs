@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+<<<<<<< HEAD
 const dbDirectory = resolve(
   process.cwd(),
   'public',
@@ -8,6 +9,9 @@ const dbDirectory = resolve(
   'db',
   'inventari_db',
 );
+=======
+const dbDirectory = resolve(process.cwd(), 'public', 'assets', 'db', 'inventari_db');
+>>>>>>> 29f1c4015e72b2b7d532c551171e9adc1afd5bbc
 const failures = [];
 const tables = new Map();
 
@@ -56,6 +60,27 @@ function validateUnique(fileName, columns) {
   }
 }
 
+function normalizeTextKey(value) {
+  return String(value || '')
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('es-MX');
+}
+
+function validateUniqueNormalized(fileName, columns) {
+  const seen = new Set();
+  for (const [rowIndex, row] of readTable(fileName).rows.entries()) {
+    const key = columns.map((column) => normalizeTextKey(row[column])).join('|');
+    assert(key.replaceAll('|', ''), `${fileName}, row ${rowIndex + 2}: empty normalized unique key.`);
+    assert(
+      !seen.has(key),
+      `${fileName}: duplicate normalized key ${columns.join('+')} = "${key}".`,
+    );
+    seen.add(key);
+  }
+}
+
 function validateForeignKey(sourceFile, sourceColumn, targetFile, targetColumn, optional = false) {
   const targetIds = new Set(readTable(targetFile).rows.map((row) => row[targetColumn]));
   for (const [rowIndex, row] of readTable(sourceFile).rows.entries()) {
@@ -74,6 +99,7 @@ for (const fileName of readdirSync(dbDirectory).filter((file) => file.endsWith('
 
 const primaryKeys = [
   ['almacenes.txt', ['id_almacen']],
+  ['anaqueles.txt', ['id_anaquel']],
   ['categorias.txt', ['id_categoria']],
   ['componentes_kit.txt', ['id_componente_kit']],
   ['detalle_transferencia.txt', ['id_transferencia', 'id_producto']],
@@ -102,6 +128,7 @@ const foreignKeys = [
   ['almacenes.txt', 'id_empresa', 'empresas.txt', 'id_empresa'],
   ['almacenes.txt', 'creado_por_usuario', 'usuarios.txt', 'id_usuario'],
   ['almacenes.txt', 'actualizado_por_usuario', 'usuarios.txt', 'id_usuario'],
+  ['anaqueles.txt', 'id_almacen', 'almacenes.txt', 'id_almacen'],
   ['categorias.txt', 'id_empresa', 'empresas.txt', 'id_empresa'],
   ['categorias.txt', 'id_categoria_padre', 'categorias.txt', 'id_categoria', true],
   ['componentes_kit.txt', 'id_producto_kit', 'productos.txt', 'id_producto'],
@@ -112,6 +139,7 @@ const foreignKeys = [
   ['empresas.txt', 'actualizado_por_usuario', 'usuarios.txt', 'id_usuario'],
   ['inventario.txt', 'id_producto', 'productos.txt', 'id_producto'],
   ['inventario.txt', 'id_almacen', 'almacenes.txt', 'id_almacen'],
+  ['inventario.txt', 'id_anaquel', 'anaqueles.txt', 'id_anaquel'],
   ['kardex_inventario.txt', 'id_producto', 'productos.txt', 'id_producto'],
   ['kardex_inventario.txt', 'id_almacen', 'almacenes.txt', 'id_almacen'],
   ['kardex_inventario.txt', 'id_tipo_movimiento', 'tipos_movimiento.txt', 'id_tipo_movimiento'],
@@ -151,6 +179,7 @@ for (const relation of foreignKeys) validateForeignKey(...relation);
 const products = readTable('productos.txt').rows;
 const productById = index('productos.txt', 'id_producto');
 const inventory = readTable('inventario.txt').rows;
+const shelves = readTable('anaqueles.txt').rows;
 const kardex = readTable('kardex_inventario.txt').rows;
 const prices = readTable('productos_precios.txt').rows;
 const lists = readTable('listas_precios.txt').rows;
@@ -158,11 +187,30 @@ const transfers = readTable('transferencias.txt').rows;
 const transferDetails = readTable('detalle_transferencia.txt').rows;
 const companyById = index('empresas.txt', 'id_empresa');
 const warehouseById = index('almacenes.txt', 'id_almacen');
+const shelfById = index('anaqueles.txt', 'id_anaquel');
 const categoryById = index('categorias.txt', 'id_categoria');
 const brandById = index('marcas.txt', 'id_marca');
 const unitById = index('unidades.txt', 'id_unidad');
 const priceListById = index('listas_precios.txt', 'id_lista_precio');
 const roleById = index('roles.txt', 'id_rol');
+
+const expectedShelfColumns = [
+  'id_anaquel',
+  'id_almacen',
+  'nombre_anaquel',
+  'activo',
+  'fecha_creacion',
+  'fecha_actualizacion',
+];
+assert(
+  JSON.stringify(readTable('anaqueles.txt').columns) === JSON.stringify(expectedShelfColumns),
+  `anaqueles.txt: expected columns ${expectedShelfColumns.join('|')}.`,
+);
+assert(
+  readTable('inventario.txt').columns.includes('id_anaquel')
+    && !readTable('inventario.txt').columns.includes('anaquel'),
+  'inventario.txt: id_anaquel must replace the legacy anaquel text column.',
+);
 
 for (const tableName of ['productos.txt', 'inventario.txt', 'kardex_inventario.txt']) {
   const columns = readTable(tableName).columns.map((column) => column.toLocaleLowerCase('es-MX'));
@@ -176,8 +224,18 @@ validateUnique('productos.txt', ['id_empresa', 'sku']);
 validateUnique('productos.txt', ['id_empresa', 'codigo_barras']);
 validateUnique('usuarios.txt', ['id_empresa', 'email']);
 validateUnique('inventario.txt', ['id_producto', 'id_almacen']);
+validateUniqueNormalized('anaqueles.txt', ['id_almacen', 'nombre_anaquel']);
 validateUnique('unidades.txt', ['id_empresa', 'nombre', 'abreviatura', 'permitir_decimales']);
 validateUnique('componentes_kit.txt', ['id_producto_kit', 'id_producto_hijo']);
+
+for (const shelf of shelves) {
+  assert(shelf.nombre_anaquel.trim(), `Shelf ${shelf.id_anaquel}: name is required.`);
+  assert(['0', '1'].includes(shelf.activo), `Shelf ${shelf.id_anaquel}: activo must be 0 or 1.`);
+  assert(
+    !shelf.fecha_actualizacion || shelf.fecha_actualizacion >= shelf.fecha_creacion,
+    `Shelf ${shelf.id_anaquel}: update date precedes creation date.`,
+  );
+}
 
 for (const product of products) {
   assert(companyById.has(product.id_empresa), `Product ${product.id_producto}: company does not exist.`);
@@ -207,6 +265,11 @@ for (const row of inventory) {
   assert(
     productById.get(row.id_producto)?.id_empresa === warehouseById.get(row.id_almacen)?.id_empresa,
     `Inventory ${row.id_inventario}: product and warehouse belong to different companies.`,
+  );
+  const shelf = row.id_anaquel ? shelfById.get(row.id_anaquel) : undefined;
+  assert(
+    shelf && shelf.id_almacen === row.id_almacen,
+    `Inventory ${row.id_inventario}: shelf ${row.id_anaquel} belongs to another warehouse.`,
   );
   const critical = number(row.stock_critico);
   const reorder = number(row.stock_reorden);

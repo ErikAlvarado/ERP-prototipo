@@ -20,6 +20,7 @@ export class Header {
   private routeTitleMap: Record<string, string> = {
     // Dashboard principal
     '/dashboard': 'Dashboard',
+    '/inventario-dashboard': 'Inventario / Reportes inventario',
 
     // Catálogo de Productos
     '/products': 'Catálogo / Productos',
@@ -28,6 +29,7 @@ export class Header {
     '/categorias': 'Catálogo / Categorías',
     '/marcas': 'Catálogo / Marcas',
     '/unidades': 'Catálogo / Unidades',
+    '/anaqueles': 'Catálogo / Anaqueles',
 
     // Inventario
     '/existencias': 'Inventario / Existencias',

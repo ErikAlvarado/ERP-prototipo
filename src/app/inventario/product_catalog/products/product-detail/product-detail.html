@@ -96,8 +96,6 @@
       <mat-card-header><mat-icon mat-card-avatar>info</mat-icon><mat-card-title>Información adicional</mat-card-title></mat-card-header>
       <mat-card-content class="data-grid details-grid">
         <div><span>Descripción</span><strong>{{ p.descripcion || 'Sin descripción' }}</strong></div>
-        <div><span>Clave SAT</span><strong>{{ p.claveSat }}</strong></div>
-        <div><span>Ubicación predeterminada</span><strong>{{ p.ubicacionDefault }}</strong></div>
         <div><span>Configuración</span><strong>POS: {{ p.pos ? 'Sí' : 'No' }} · En línea: {{ p.linea ? 'Sí' : 'No' }} · Control de existencias: {{ p.usarExistencias ? 'Sí' : 'No' }}</strong></div>
       </mat-card-content>
     </mat-card>

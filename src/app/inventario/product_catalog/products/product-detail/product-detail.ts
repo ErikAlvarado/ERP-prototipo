@@ -9,12 +9,17 @@ import {
   OpcionesProducto,
   ProductoCatalogo,
 } from '../../../../shared/services/catalogo-productos';
-import { OpcionAlmacenProducto, ProductD } from '../dialogs/product-d/product-d';
+import {
+  OpcionAlmacenProducto,
+  OpcionAnaquelProducto,
+  ProductD,
+} from '../dialogs/product-d/product-d';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 import { switchMap } from 'rxjs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { EstatusProducto } from '../../../../shared/components/estatus-producto/estatus-producto';
 import { AdministracionDatos } from '../../../administracion/administracion-datos';
+import { AnaquelesCatalogo } from '../../anaqueles/anaqueles-catalogo';
 
 @Component({
   selector: 'app-product-detail',
@@ -30,6 +35,7 @@ export class ProductDetail implements OnInit {
   private productos: ProductoCatalogo[] = [];
   private opciones: OpcionesProducto = { empresas: [], categorias: [], marcas: [], unidades: [], listasPrecios: [] };
   private almacenes: OpcionAlmacenProducto[] = [];
+  private anaqueles: OpcionAnaquelProducto[] = [];
   private empresasAdministracion: OpcionProducto[] = [];
 
   constructor(
@@ -38,11 +44,22 @@ export class ProductDetail implements OnInit {
     private catalogo: CatalogoProductos,
     private dialog: MatDialog,
     private administracion: AdministracionDatos,
+    private catalogoAnaqueles: AnaquelesCatalogo,
   ) {}
 
   ngOnInit(): void {
     const productoNavegacion = history.state?.producto as ProductoCatalogo | undefined;
     if (productoNavegacion) this.producto = productoNavegacion;
+    this.catalogoAnaqueles.cargar().subscribe({
+      next: anaqueles => this.anaqueles = anaqueles.map(anaquel => ({
+        id: Number(anaquel.id),
+        idEmpresa: Number(anaquel.idEmpresa),
+        idAlmacen: Number(anaquel.idAlmacen),
+        nombre: anaquel.nombre,
+        estado: anaquel.estado,
+      })),
+      error: () => this.errorCarga = 'No fue posible cargar anaqueles.txt.',
+    });
     this.administracion.cargar().subscribe(estado => {
       const empresasActivas = new Set(estado.empresas
         .filter(empresa => empresa.estado)
@@ -108,6 +125,7 @@ export class ProductDetail implements OnInit {
         product: this.producto,
         opciones: this.opciones,
         almacenes: this.almacenes,
+        anaqueles: this.anaqueles,
         productos: this.productos,
       },
     }).afterClosed().subscribe(resultado => {
@@ -140,4 +158,5 @@ export class ProductDetail implements OnInit {
       this.producto = eliminado;
     });
   }
+
 }

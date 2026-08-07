@@ -14,12 +14,16 @@ interface EstadoCatalogo<T> {
 export class CatalogosPersistencia {
   constructor(private persistencia: PersistenciaLocal) {}
 
-  combinar<T extends RegistroCatalogo>(clave: string, fuente: T[]): { registros: T[]; eliminados: string[] } {
+  combinar<T extends RegistroCatalogo>(
+    clave: string,
+    fuente: T[],
+    bajaLogica = fuente.some(registro => this.tieneEstado(registro)),
+  ): { registros: T[]; eliminados: string[] } {
     const estado = this.persistencia.leer<EstadoCatalogo<T>>(clave, { registros: [], eliminados: [] });
     const eliminados = new Set(estado.eliminados || []);
     const locales = new Map((estado.registros || []).map(registro => [registro.id, registro]));
     const idsFuente = new Set(fuente.map(registro => registro.id));
-    const admiteBajaLogica = fuente.some(registro => this.tieneEstado(registro));
+    const admiteBajaLogica = bajaLogica;
 
     const registros = fuente
       .filter(registro => !eliminados.has(registro.id) || admiteBajaLogica)

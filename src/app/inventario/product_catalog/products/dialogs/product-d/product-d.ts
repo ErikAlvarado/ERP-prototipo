@@ -14,11 +14,20 @@ export interface OpcionAlmacenProducto {
   nombre: string;
 }
 
+export interface OpcionAnaquelProducto {
+  id: number;
+  idEmpresa: number;
+  idAlmacen: number;
+  nombre: string;
+  estado: boolean;
+}
+
 export interface ProductDialogData {
   mode: 'add' | 'edit';
   product?: ProductoCatalogo;
   opciones: OpcionesProducto;
   almacenes: OpcionAlmacenProducto[];
+  anaqueles: OpcionAnaquelProducto[];
   productos: ProductoCatalogo[];
 }
 
@@ -63,6 +72,15 @@ export class ProductD {
     );
   }
 
+  get anaquelesDisponibles(): OpcionAnaquelProducto[] {
+    const inventario = this.inventarioInicial;
+    if (!inventario) return [];
+    return (this.data.anaqueles || []).filter(anaquel =>
+      anaquel.idEmpresa === Number(this.producto.idEmpresa)
+      && anaquel.idAlmacen === Number(inventario.idAlmacen)
+      && (anaquel.estado || anaquel.id === inventario.idAnaquel));
+  }
+
   get debeCapturarInventarioInicial(): boolean {
     return this.producto.usarExistencias
       && (this.data.mode === 'add'
@@ -72,6 +90,10 @@ export class ProductD {
 
   get inventarioInicial(): InventarioProductoCatalogo | undefined {
     return this.producto.inventarios[0];
+  }
+
+  get muestraInventario(): boolean {
+    return this.producto.usarExistencias;
   }
 
   cambiarEmpresa(id: number): void {
@@ -118,6 +140,22 @@ export class ProductD {
     if (!inventario || !almacen) return;
     inventario.idAlmacen = almacen.id;
     inventario.almacen = almacen.nombre;
+    const actualEsValido = this.anaquelesDisponibles.some(
+      anaquel => anaquel.estado && anaquel.id === inventario.idAnaquel,
+    );
+    if (!actualEsValido) {
+      const anaquel = this.anaquelesDisponibles.find(opcion => opcion.estado);
+      inventario.idAnaquel = anaquel?.id ?? null;
+      inventario.anaquel = anaquel?.nombre || '—';
+    }
+  }
+
+  cambiarAnaquelInicial(id: number): void {
+    const inventario = this.inventarioInicial;
+    const anaquel = this.anaquelesDisponibles.find(opcion => opcion.id === Number(id));
+    if (!inventario || !anaquel) return;
+    inventario.idAnaquel = anaquel.id;
+    inventario.anaquel = anaquel.nombre;
   }
 
   cambiarEstatus(estatus: string): void {
@@ -158,8 +196,9 @@ export class ProductD {
       return;
     }
     if (this.debeCapturarInventarioInicial && !this.validarInventarioInicial()) return;
+    if (!this.debeCapturarInventarioInicial && this.muestraInventario && !this.validarAnaquelInicial()) return;
     const hoy = new Date().toISOString().slice(0, 10);
-    if (this.debeCapturarInventarioInicial && this.inventarioInicial) {
+    if (this.muestraInventario && this.inventarioInicial) {
       this.inventarioInicial.fechaActualizacion = hoy;
       this.actualizarResumenInventario();
     }
@@ -173,8 +212,8 @@ export class ProductD {
       tipo: this.producto.tipo.trim(),
       estatus: this.producto.estatus.trim(),
       estado: this.producto.estatus.trim().toLocaleLowerCase() === 'vigente',
-      ubicacionDefault: this.producto.ubicacionDefault.trim(),
-      claveSat: this.producto.claveSat.trim(),
+      ubicacionDefault: '',
+      claveSat: '',
       fechaCreacion: this.producto.fechaCreacion || hoy,
       fechaActualizacion: hoy,
     } satisfies ProductoCatalogo);
@@ -262,16 +301,18 @@ export class ProductD {
   private prepararInventarioInicial(reemplazar = false): void {
     if (this.producto.inventarios.length && !reemplazar) return;
     const almacen = this.almacenesDisponibles[0];
+    const anaquel = almacen ? this.primerAnaquel(almacen.id) : undefined;
     const hoy = new Date().toISOString().slice(0, 10);
     this.producto.inventarios = almacen ? [{
       id: 0,
       idAlmacen: almacen.id,
+      idAnaquel: anaquel?.id ?? null,
       almacen: almacen.nombre,
       stock: 10,
       stockReorden: 5,
       stockCritico: 2,
       stockMaximo: 50,
-      anaquel: '',
+      anaquel: anaquel?.nombre || '—',
       fechaActualizacion: hoy,
     }] : [];
     this.actualizarResumenInventario();
@@ -310,6 +351,7 @@ export class ProductD {
       this.error = `La unidad ${unidad.nombre} sólo acepta cantidades enteras.`;
       return false;
     }
+    if (!this.validarAnaquelInicial()) return false;
     Object.assign(inventario, {
       idAlmacen: almacen.id,
       almacen: almacen.nombre,
@@ -320,6 +362,29 @@ export class ProductD {
       anaquel: String(inventario.anaquel || '').trim(),
     });
     return true;
+  }
+
+  private validarAnaquelInicial(): boolean {
+    const inventario = this.inventarioInicial;
+    const anaquel = inventario && (this.data.anaqueles || []).find(opcion =>
+      opcion.estado
+      && opcion.idEmpresa === Number(this.producto.idEmpresa)
+      && opcion.idAlmacen === Number(inventario.idAlmacen)
+      && opcion.id === Number(inventario.idAnaquel));
+    if (!inventario || !anaquel) {
+      this.error = 'Selecciona un anaquel activo del almacén para ubicar el producto.';
+      return false;
+    }
+    inventario.idAnaquel = anaquel.id;
+    inventario.anaquel = anaquel.nombre;
+    return true;
+  }
+
+  private primerAnaquel(idAlmacen: number): OpcionAnaquelProducto | undefined {
+    return (this.data.anaqueles || []).find(anaquel =>
+      anaquel.estado
+      && anaquel.idEmpresa === Number(this.producto.idEmpresa)
+      && anaquel.idAlmacen === Number(idAlmacen));
   }
 
   private actualizarResumenInventario(): void {

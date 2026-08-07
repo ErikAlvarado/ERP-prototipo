@@ -42,10 +42,10 @@
       </mat-select>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Costo registrado</mat-label>
+      <mat-label>Costo calculado</mat-label>
       <span matTextPrefix>$&nbsp;</span>
-      <input matInput type="number" min="0" step="0.01" [(ngModel)]="kit.costo" required>
-      <mat-hint>No se reemplaza con el costo de componentes.</mat-hint>
+      <input matInput type="number" [value]="costoComponentes" readonly aria-label="Costo calculado del kit">
+      <mat-hint>Se calcula con el costo y la cantidad de los productos.</mat-hint>
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Precio de venta</mat-label>
@@ -59,7 +59,7 @@
 
     <section class="elementos-section full-width">
       <h3>Productos incluidos</h3>
-      <p class="section-help">La definición del kit no depende del stock actual; las existencias se muestran sólo como referencia.</p>
+      <p class="section-help">La cantidad de cada producto no puede superar su stock disponible.</p>
       <div class="product-picker">
         <mat-form-field appearance="outline">
           <mat-label>Producto</mat-label>
@@ -72,8 +72,8 @@
         </mat-form-field>
         <mat-form-field appearance="outline" class="quantity-field">
           <mat-label>Cantidad</mat-label>
-          <input matInput type="number" min="1" step="1" [(ngModel)]="cantidadNueva">
-          <mat-hint>Stock informativo: {{ stockSeleccionado }}</mat-hint>
+          <input matInput type="number" min="1" [max]="stockSeleccionado" step="1" [(ngModel)]="cantidadNueva">
+          <mat-hint>Stock disponible: {{ stockSeleccionado }}</mat-hint>
         </mat-form-field>
         <button mat-raised-button color="primary" type="button" (click)="agregarElemento()" [disabled]="!nuevoProductoId">
           <mat-icon>add</mat-icon>Agregar
@@ -90,7 +90,7 @@
               </div>
               <mat-form-field appearance="outline" class="element-quantity">
                 <mat-label>Cantidad</mat-label>
-                <input matInput type="number" min="1" step="1" [(ngModel)]="elemento.cantidad" (change)="actualizarCantidad(elemento)">
+                <input matInput type="number" min="1" [max]="elemento.stock" step="1" [(ngModel)]="elemento.cantidad" (change)="actualizarCantidad(elemento)">
               </mat-form-field>
               <span class="subtotal">{{ elemento.costo * elemento.cantidad | currency:'MXN' }}</span>
               <button mat-icon-button color="warn" type="button" matTooltip="Quitar" (click)="removerElemento(i)"><mat-icon>close</mat-icon></button>
@@ -103,8 +103,7 @@
     </section>
 
     <div class="totals full-width">
-      <div><span>Costo registrado</span><strong>{{ kit.costo | currency:'MXN' }}</strong></div>
-      <div><span>Costo de componentes</span><strong>{{ costoComponentes | currency:'MXN' }}</strong></div>
+      <div><span>Costo calculado</span><strong>{{ costoComponentes | currency:'MXN' }}</strong></div>
       <div><span>Margen sobre costo</span><strong [class.negative]="margen < 0">{{ margen }}%</strong></div>
     </div>
     <div class="checks full-width"><mat-checkbox [(ngModel)]="kit.estado">Kit activo</mat-checkbox></div>

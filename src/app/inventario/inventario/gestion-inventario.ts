@@ -38,6 +38,7 @@ export interface ExistenciaInventario {
   id: string;
   productoId: number;
   almacenId: number;
+  idAnaquel: number | null;
   sku: string;
   producto: string;
   unidad: string;
@@ -91,6 +92,7 @@ export interface AjusteFormulario {
   ajuste: number;
   motivo: string;
   usuarioId: number | null;
+  usuarioNombre?: string;
 }
 
 export interface PartidaTransferenciaInventario {
@@ -167,11 +169,12 @@ interface InventarioDb {
   id_inventario: string;
   id_producto: string;
   id_almacen: string;
+  id_anaquel: string;
   stock: string;
   stock_reorden: string;
   stock_critico: string;
   stock_maximo: string;
-  anaquel: string;
+  anaquel?: string;
   fecha_actualizacion: string;
 }
 
@@ -281,12 +284,16 @@ export class GestionInventario {
     );
     const anterior = existencia?.stock ?? 0;
     const cantidadCapturada = Number(formulario.ajuste);
+    const nombreResponsable = usuario?.nombre || formulario.usuarioNombre?.trim() || '';
     if (!producto || !almacen) throw new Error('El producto o el almacén seleccionado no existe.');
     if (producto.idEmpresa !== almacen.idEmpresa) {
       throw new Error('El producto y el almacén deben pertenecer a la misma empresa.');
     }
     if (usuario && usuario.idEmpresa !== producto.idEmpresa) {
       throw new Error('El responsable debe pertenecer a la misma empresa del ajuste.');
+    }
+    if (!nombreResponsable) {
+      throw new Error('No fue posible identificar al usuario responsable del ajuste.');
     }
     if (!producto.permiteDecimales && !Number.isInteger(cantidadCapturada)) {
       throw new Error(`La unidad ${producto.unidad} de "${producto.nombre}" sólo acepta cantidades enteras.`);
@@ -308,7 +315,7 @@ export class GestionInventario {
       existencia: anterior + cantidad,
       motivo: formulario.motivo.trim(),
       usuarioId: formulario.usuarioId == null ? null : Number(formulario.usuarioId),
-      usuario: usuario?.nombre || 'Sin usuario',
+      usuario: nombreResponsable,
     };
     const actuales = this.persistencia.leer<AjusteInventario[]>(this.claveAjustes, []);
     this.persistencia.guardar(this.claveAjustes, [ajuste, ...actuales]);
@@ -713,6 +720,7 @@ export class GestionInventario {
       id_inventario: String(inventario.id),
       id_producto: String(producto.id),
       id_almacen: String(inventario.idAlmacen),
+      id_anaquel: inventario.idAnaquel == null ? '' : String(inventario.idAnaquel),
       stock: String(inventario.stock),
       stock_reorden: String(inventario.stockReorden),
       stock_critico: String(inventario.stockCritico),
@@ -784,6 +792,7 @@ export class GestionInventario {
         existente.reorden = Math.max(existente.reorden, this.numero(item.stock_reorden));
         existente.critico = Math.max(existente.critico, this.numero(item.stock_critico));
         existente.maximo = Math.max(existente.maximo, this.numero(item.stock_maximo));
+        existente.idAnaquel ??= this.idNullable(item.id_anaquel);
         existente.anaquel = this.combinarTexto(existente.anaquel, item.anaquel);
         existente.actualizacion = this.fechaMasReciente(existente.actualizacion, item.fecha_actualizacion);
         continue;
@@ -792,6 +801,7 @@ export class GestionInventario {
         id: item.id_inventario || clave,
         productoId,
         almacenId,
+        idAnaquel: this.idNullable(item.id_anaquel),
         sku: producto?.sku || '—',
         producto: producto.nombre,
         unidad: producto.unidad,
@@ -881,6 +891,7 @@ export class GestionInventario {
       producto: producto?.nombre || `Producto #${productoId} (no registrado)`,
       unidad: producto?.unidad || 'unidad',
       almacen: almacenes.get(almacenId)?.nombre || `Almacén #${almacenId} (no registrado)`,
+      idAnaquel: null,
       stock: 0,
       reorden: 0,
       critico: 0,
@@ -999,7 +1010,7 @@ export class GestionInventario {
       producto: productos.get(Number(item.productoId))?.nombre || item.producto || `Producto #${item.productoId}`,
       almacen: almacenes.get(Number(item.almacenId))?.nombre || item.almacen || `Almacén #${item.almacenId}`,
       usuario: item.usuarioId == null
-        ? 'Sin usuario'
+        ? item.usuario?.trim() || 'Sin usuario'
         : usuarios.get(Number(item.usuarioId))?.nombre || item.usuario || `Usuario #${item.usuarioId}`,
     };
   }
@@ -1205,6 +1216,11 @@ export class GestionInventario {
     return Number.isFinite(numero) ? numero : null;
   }
 
+  private idNullable(valor: string | number | undefined): number | null {
+    const numero = this.numeroOpcional(valor);
+    return numero != null && Number.isSafeInteger(numero) && numero > 0 ? numero : null;
+  }
+
   private numeroId(valor: string | number): number {
     const directo = Number(valor);
     if (Number.isFinite(directo)) return directo;
@@ -1235,7 +1251,7 @@ export class GestionInventario {
     return this.fechaMs(normalizada) >= this.fechaMs(actual) ? normalizada : actual;
   }
 
-  private combinarTexto(actual: string, candidato: string): string {
+  private combinarTexto(actual: string, candidato: string | undefined): string {
     const valores = new Set(
       [actual, candidato]
         .flatMap((valor) => String(valor || '').split(','))

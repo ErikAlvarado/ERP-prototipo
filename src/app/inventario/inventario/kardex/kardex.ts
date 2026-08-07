@@ -88,7 +88,7 @@ export class Kardex implements OnInit, AfterViewInit {
       const almacenId = Number(this.route.snapshot.queryParamMap.get('almacen')) || null;
       if (productoId) this.filtros = { ...this.filtros, productoId: String(productoId) };
       if (almacenId) this.filtros = { ...this.filtros, almacenId: String(almacenId) };
-      this.applyFilter();
+      this.ordenar(this.currentSort);
     });
   }
 

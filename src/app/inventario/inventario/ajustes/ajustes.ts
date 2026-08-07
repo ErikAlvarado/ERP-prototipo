@@ -8,6 +8,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { Observable } from 'rxjs';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { Autenticacion } from '../../../shared/services/autenticacion';
 import {
   AjusteFormulario,
   AjusteInventario,
@@ -52,6 +53,7 @@ export class Ajustes implements OnInit, AfterViewInit {
     private dialog: MatDialog,
     private gestion: GestionInventario,
     private route: ActivatedRoute,
+    private autenticacion: Autenticacion,
   ) {}
 
   ngOnInit(): void {
@@ -196,7 +198,17 @@ export class Ajustes implements OnInit, AfterViewInit {
         },
       }).afterClosed().subscribe((confirmado) => {
         if (!confirmado || !this.contexto) return;
-        this.gestion.crearAjuste(resultado, this.contexto);
+        const sesion = this.autenticacion.sesion();
+        if (!sesion) return;
+        const responsable = this.contexto.usuarios.find(usuario =>
+          usuario.idEmpresa === producto?.idEmpresa
+          && usuario.id === Number(sesion.id));
+        this.gestion.crearAjuste({
+          ...resultado,
+          fecha: this.fechaLocal(),
+          usuarioId: responsable?.id ?? null,
+          usuarioNombre: sesion.nombre,
+        }, this.contexto);
         this.cargar();
       });
     });
@@ -223,7 +235,7 @@ export class Ajustes implements OnInit, AfterViewInit {
     this.gestion.cargar().subscribe((contexto) => {
       this.contexto = contexto;
       this.dataSource.data = contexto.ajustes;
-      this.applyFilter();
+      this.ordenar(this.currentSort);
       if (!this.presetProcesado && this.route.snapshot.queryParamMap.get('nuevo') === '1') {
         this.presetProcesado = true;
         this.abrirAgregar(
@@ -244,4 +256,11 @@ export class Ajustes implements OnInit, AfterViewInit {
     const fecha = new Date(`${valor.slice(0, 10)}T00:00:00`);
     return Number.isNaN(fecha.getTime()) ? 0 : fecha.getTime();
   }
+
+  private fechaLocal(): string {
+    const fecha = new Date();
+    fecha.setMinutes(fecha.getMinutes() - fecha.getTimezoneOffset());
+    return fecha.toISOString().slice(0, 10);
+  }
+
 }
