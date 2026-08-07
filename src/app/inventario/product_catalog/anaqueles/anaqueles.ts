@@ -149,9 +149,15 @@ export class Anaqueles implements OnInit, AfterViewInit {
     }).afterClosed().subscribe((resultado?: Omit<AnaquelCatalogo, 'id'>) => {
       if (!resultado) return;
       const registros = this.registrosCatalogo();
+      const hoy = new Date().toISOString().slice(0, 10);
       this.guardarAnaqueles([
         ...registros,
-        { ...resultado, id: this.catalogoAnaqueles.siguienteId(registros) },
+        {
+          ...resultado,
+          id: this.catalogoAnaqueles.siguienteId(registros),
+          fechaCreacion: hoy,
+          fechaActualizacion: hoy,
+        },
       ]);
     });
   }
@@ -169,31 +175,39 @@ export class Anaqueles implements OnInit, AfterViewInit {
       },
     }).afterClosed().subscribe((resultado?: Omit<AnaquelCatalogo, 'id'>) => {
       if (!resultado) return;
-      if (resultado.nombre !== anaquel.nombre) {
-        this.actualizarProductos(anaquel, resultado.nombre);
-      }
       this.guardarAnaqueles(this.registrosCatalogo().map(actual => actual.id === anaquel.id
-        ? { ...actual, ...resultado }
+        ? { ...actual, ...resultado, fechaActualizacion: new Date().toISOString().slice(0, 10) }
         : actual));
     });
   }
 
   eliminar(anaquel: AnaquelVista): void {
-    const mensaje = anaquel.productos
-      ? `¿Deseas borrar “${anaquel.nombre}”? ${anaquel.productos} producto(s) quedarán sin anaquel asignado.`
-      : `¿Deseas borrar “${anaquel.nombre}”? Esta acción quitará el anaquel del catálogo.`;
+    if (anaquel.productos) {
+      this.dialog.open(ConfirmDialog, {
+        width: '420px',
+        data: {
+          title: 'Anaquel en uso',
+          message: `No se puede borrar “${anaquel.nombre}” porque tiene ${anaquel.productos} producto(s) asignado(s). Reasígnalos primero desde Productos.`,
+          confirmText: 'Entendido',
+          cancelText: 'Cerrar',
+        },
+      });
+      return;
+    }
     this.dialog.open(ConfirmDialog, {
       width: '420px',
       data: {
         title: 'Borrar anaquel',
-        message: mensaje,
+        message: `¿Deseas borrar “${anaquel.nombre}”? Esta acción quitará el anaquel del catálogo.`,
         confirmText: 'Borrar',
         cancelText: 'Cancelar',
       },
     }).afterClosed().subscribe(confirmado => {
       if (!confirmado) return;
-      if (anaquel.productos) this.actualizarProductos(anaquel, '');
-      this.guardarAnaqueles(this.registrosCatalogo().filter(actual => actual.id !== anaquel.id));
+      const restantes = this.registrosCatalogo().filter(actual => actual.id !== anaquel.id);
+      this.catalogoAnaqueles.eliminar(anaquel.id, restantes);
+      this.dataSource.data = this.enriquecer(restantes);
+      this.setSort(this.currentSort);
     });
   }
 
@@ -207,19 +221,19 @@ export class Anaqueles implements OnInit, AfterViewInit {
     forkJoin({
       productos: this.catalogoProductos.cargar().pipe(take(1)),
       administracion: this.administracion.cargar().pipe(take(1)),
+      anaqueles: this.catalogoAnaqueles.cargar().pipe(take(1)),
     }).subscribe({
-      next: ({ productos, administracion }) => {
+      next: ({ productos, administracion, anaqueles }) => {
         this.productos = productos;
         this.empresas = administracion.empresas;
         this.almacenes = administracion.almacenes;
-        const registros = this.catalogoAnaqueles.cargar(productos, administracion.almacenes);
-        this.dataSource.data = this.enriquecer(registros);
+        this.dataSource.data = this.enriquecer(anaqueles);
         this.setSort(this.currentSort);
         this.cargando = false;
       },
       error: () => {
         this.dataSource.data = [];
-        this.errorCarga = 'No fue posible cargar los anaqueles y sus relaciones de inventario.';
+        this.errorCarga = 'No fue posible cargar anaqueles.txt y sus relaciones de inventario.';
         this.cargando = false;
       },
     });
@@ -229,30 +243,6 @@ export class Anaqueles implements OnInit, AfterViewInit {
     this.catalogoAnaqueles.guardar(anaqueles);
     this.dataSource.data = this.enriquecer(anaqueles);
     this.setSort(this.currentSort);
-  }
-
-  private actualizarProductos(anaquel: AnaquelCatalogo, nuevoNombre: string): void {
-    const hoy = new Date().toISOString().slice(0, 10);
-    this.productos = this.productos.map(producto => {
-      let actualizado = false;
-      const inventarios = (producto.inventarios || []).map(inventario => {
-        if (!this.catalogoAnaqueles.coinciden(
-          anaquel,
-          inventario.idAlmacen,
-          inventario.anaquel,
-        )) return inventario;
-        actualizado = true;
-        return { ...inventario, anaquel: nuevoNombre, fechaActualizacion: hoy };
-      });
-      if (!actualizado) return producto;
-      return {
-        ...producto,
-        inventarios,
-        anaquel: inventarios.length === 1 ? (inventarios[0].anaquel || '—') : '—',
-        fechaActualizacion: hoy,
-      };
-    });
-    this.catalogoProductos.guardar(this.productos);
   }
 
   private enriquecer(registros: AnaquelCatalogo[]): AnaquelVista[] {
@@ -268,16 +258,20 @@ export class Anaqueles implements OnInit, AfterViewInit {
 
   private contarProductos(anaquel: AnaquelCatalogo): number {
     return this.productos.filter(producto => (producto.inventarios || []).some(inventario =>
-      this.catalogoAnaqueles.coinciden(anaquel, inventario.idAlmacen, inventario.anaquel))).length;
+      inventario.idAnaquel === Number(anaquel.id))).length;
   }
 
   private registrosCatalogo(): AnaquelCatalogo[] {
-    return this.dataSource.data.map(({ id, idEmpresa, idAlmacen, nombre, estado }) => ({
+    return this.dataSource.data.map(({
+      id, idEmpresa, idAlmacen, nombre, estado, fechaCreacion, fechaActualizacion,
+    }) => ({
       id,
       idEmpresa,
       idAlmacen,
       nombre,
       estado,
+      fechaCreacion,
+      fechaActualizacion,
     }));
   }
 

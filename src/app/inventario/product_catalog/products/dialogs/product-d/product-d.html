@@ -45,9 +45,9 @@
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Anaquel</mat-label>
-              <mat-select [(ngModel)]="inventarioInicial.anaquel" (selectionChange)="cambiarAnaquelInicial($event.value)">
+              <mat-select [(ngModel)]="inventarioInicial.idAnaquel" (selectionChange)="cambiarAnaquelInicial($event.value)">
                 @for (anaquel of anaquelesDisponibles; track anaquel.id) {
-                  <mat-option [value]="anaquel.nombre" [disabled]="!anaquel.estado">{{ anaquel.nombre }}</mat-option>
+                  <mat-option [value]="anaquel.id" [disabled]="!anaquel.estado">{{ anaquel.nombre }}</mat-option>
                 }
               </mat-select>
               @if (!anaquelesDisponibles.length) { <mat-hint>Crea un anaquel para este almacén antes de guardar.</mat-hint> }

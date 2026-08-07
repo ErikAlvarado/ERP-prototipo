@@ -29,7 +29,7 @@ describe('ProductD', () => {
               listasPrecios: [],
             },
             almacenes: [{ id: 1, idEmpresa: 1, nombre: 'Central' }],
-            anaqueles: [{ id: '1', idEmpresa: 1, idAlmacen: 1, nombre: 'A1-01', estado: true }],
+            anaqueles: [{ id: 1, idEmpresa: 1, idAlmacen: 1, nombre: 'A1-01', estado: true }],
             productos: [],
           },
         },

@@ -266,8 +266,9 @@ export class Products implements OnInit, AfterViewInit {
       opciones: this.catalogo.cargarOpciones(),
       productos: this.catalogo.cargar(),
       administracion: this.administracion.cargar(),
+      anaqueles: this.catalogoAnaqueles.cargar(),
     }).subscribe({
-      next: ({ opciones, productos, administracion }) => {
+      next: ({ opciones, productos, administracion, anaqueles }) => {
         const empresasActivas = new Map(administracion.empresas
           .filter(empresa => empresa.estado)
           .map(empresa => [Number(empresa.id), empresa.nombre]));
@@ -287,7 +288,13 @@ export class Products implements OnInit, AfterViewInit {
             idEmpresa: Number(almacen.empresaId),
             nombre: almacen.nombre,
           }));
-        this.anaqueles = this.catalogoAnaqueles.cargar(productos, administracion.almacenes);
+        this.anaqueles = anaqueles.map(anaquel => ({
+          id: Number(anaquel.id),
+          idEmpresa: Number(anaquel.idEmpresa),
+          idAlmacen: Number(anaquel.idAlmacen),
+          nombre: anaquel.nombre,
+          estado: anaquel.estado,
+        }));
         this.dataSource.data = productos;
         this.setSort(this.currentSort);
         this.cargando = false;

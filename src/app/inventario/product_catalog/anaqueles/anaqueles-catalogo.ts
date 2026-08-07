@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { AlmacenAdministracion } from '../../administracion/administracion-datos';
-import { PersistenciaLocal } from '../../../shared/services/persistencia-local';
-import { ProductoCatalogo } from '../../../shared/services/catalogo-productos';
+import { forkJoin, map, Observable } from 'rxjs';
+import { DatosDb } from '../../../shared/services/datos-db';
+import { CatalogosPersistencia } from '../catalogos-persistencia';
 
 export function normalizarNombreAnaquel(valor: string): string {
   return String(valor || '')
@@ -17,75 +17,71 @@ export interface AnaquelCatalogo {
   idAlmacen: number;
   nombre: string;
   estado: boolean;
+  fechaCreacion?: string;
+  fechaActualizacion?: string;
 }
 
-interface EstadoAnaqueles {
-  inicializado: boolean;
-  registros: AnaquelCatalogo[];
+interface AnaquelDb {
+  id_anaquel: string;
+  id_almacen: string;
+  nombre_anaquel: string;
+  activo: string;
+  fecha_creacion: string;
+  fecha_actualizacion: string;
+}
+
+interface AlmacenDb {
+  id_almacen: string;
+  id_empresa: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AnaquelesCatalogo {
-  private readonly clave = 'catalogo-anaqueles-v1';
+  private readonly clave = 'catalogo-anaqueles-v2';
+  private eliminados: string[] = [];
 
-  constructor(private persistencia: PersistenciaLocal) {}
+  constructor(
+    private db: DatosDb,
+    private persistencia: CatalogosPersistencia,
+  ) {}
 
-  cargar(
-    productos: ProductoCatalogo[],
-    almacenes: AlmacenAdministracion[],
-  ): AnaquelCatalogo[] {
-    const estado = this.persistencia.leer<EstadoAnaqueles>(this.clave, {
-      inicializado: false,
-      registros: [],
-    });
-    if (estado.inicializado) return this.normalizar(estado.registros);
-
-    const empresaPorAlmacen = new Map(
-      almacenes.map(almacen => [Number(almacen.id), Number(almacen.empresaId)]),
-    );
-    const conocidos = new Set<string>();
-    const registros: AnaquelCatalogo[] = [];
-
-    for (const producto of productos) {
-      for (const inventario of producto.inventarios || []) {
-        const nombre = this.limpiarNombre(inventario.anaquel);
-        const idAlmacen = Number(inventario.idAlmacen);
-        const idEmpresa = empresaPorAlmacen.get(idAlmacen) || Number(producto.idEmpresa);
-        const firma = this.firma(idAlmacen, nombre);
-        if (!nombre || !idAlmacen || !idEmpresa || conocidos.has(firma)) continue;
-        conocidos.add(firma);
-        registros.push({
-          id: String(registros.length + 1),
-          idEmpresa,
-          idAlmacen,
-          nombre,
-          estado: true,
-        });
-      }
-    }
-
-    this.guardar(registros);
-    return registros;
+  cargar(): Observable<AnaquelCatalogo[]> {
+    return forkJoin({
+      anaqueles: this.db.leer<AnaquelDb>('anaqueles.txt', true),
+      almacenes: this.db.leer<AlmacenDb>('almacenes.txt', true),
+    }).pipe(map(({ anaqueles, almacenes }) => {
+      const empresaPorAlmacen = new Map(
+        almacenes.map(almacen => [Number(almacen.id_almacen), Number(almacen.id_empresa)]),
+      );
+      const fuente = anaqueles.map(fila => ({
+        id: fila.id_anaquel,
+        idEmpresa: empresaPorAlmacen.get(Number(fila.id_almacen)) || 0,
+        idAlmacen: Number(fila.id_almacen),
+        nombre: fila.nombre_anaquel,
+        estado: fila.activo !== '0',
+        fechaCreacion: fila.fecha_creacion || '',
+        fechaActualizacion: fila.fecha_actualizacion || '',
+      }));
+      const estado = this.persistencia.combinar(this.clave, fuente, false);
+      this.eliminados = estado.eliminados;
+      return this.normalizar(estado.registros).map(anaquel => ({
+        ...anaquel,
+        idEmpresa: empresaPorAlmacen.get(anaquel.idAlmacen) || anaquel.idEmpresa,
+      }));
+    }));
   }
 
   guardar(registros: AnaquelCatalogo[]): void {
-    this.persistencia.guardar<EstadoAnaqueles>(this.clave, {
-      inicializado: true,
-      registros: this.normalizar(registros),
-    });
+    this.persistencia.guardar(this.clave, this.normalizar(registros), this.eliminados);
   }
 
-  siguienteId(registros: AnaquelCatalogo[]): string {
-    return String(Math.max(0, ...registros.map(registro => Number(registro.id) || 0)) + 1);
+  eliminar(id: string, registros: AnaquelCatalogo[]): void {
+    this.eliminados = [...new Set([...this.eliminados, String(id)])];
+    this.guardar(registros);
   }
 
-  coinciden(
-    anaquel: Pick<AnaquelCatalogo, 'idAlmacen' | 'nombre'>,
-    idAlmacen: number,
-    nombre: string,
-  ): boolean {
-    return Number(anaquel.idAlmacen) === Number(idAlmacen)
-      && this.normalizarTexto(anaquel.nombre) === this.normalizarTexto(nombre);
+  siguienteId(_registros: AnaquelCatalogo[]): string {
+    return this.persistencia.nuevoId();
   }
 
   private normalizar(registros: AnaquelCatalogo[]): AnaquelCatalogo[] {
@@ -96,6 +92,8 @@ export class AnaquelesCatalogo {
       idAlmacen: Number(registro.idAlmacen),
       nombre: this.limpiarNombre(registro.nombre),
       estado: registro.estado !== false,
+      fechaCreacion: registro.fechaCreacion || '',
+      fechaActualizacion: registro.fechaActualizacion || '',
     }));
   }
 
@@ -104,11 +102,4 @@ export class AnaquelesCatalogo {
     return valor === '—' || valor === '-' ? '' : valor;
   }
 
-  private firma(idAlmacen: number, nombre: string): string {
-    return `${Number(idAlmacen)}:${this.normalizarTexto(nombre)}`;
-  }
-
-  private normalizarTexto(valor: string): string {
-    return normalizarNombreAnaquel(valor);
-  }
 }

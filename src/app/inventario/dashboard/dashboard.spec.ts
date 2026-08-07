@@ -63,6 +63,7 @@ describe('Dashboard', () => {
         id: '1',
         productoId: 1,
         almacenId: 1,
+        idAnaquel: 1,
         sku: 'SKU-ASYNC',
         producto: 'Producto cargado',
         unidad: 'pieza',

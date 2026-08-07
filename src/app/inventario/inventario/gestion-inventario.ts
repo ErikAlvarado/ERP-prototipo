@@ -38,6 +38,7 @@ export interface ExistenciaInventario {
   id: string;
   productoId: number;
   almacenId: number;
+  idAnaquel: number | null;
   sku: string;
   producto: string;
   unidad: string;
@@ -168,11 +169,12 @@ interface InventarioDb {
   id_inventario: string;
   id_producto: string;
   id_almacen: string;
+  id_anaquel: string;
   stock: string;
   stock_reorden: string;
   stock_critico: string;
   stock_maximo: string;
-  anaquel: string;
+  anaquel?: string;
   fecha_actualizacion: string;
 }
 
@@ -718,6 +720,7 @@ export class GestionInventario {
       id_inventario: String(inventario.id),
       id_producto: String(producto.id),
       id_almacen: String(inventario.idAlmacen),
+      id_anaquel: inventario.idAnaquel == null ? '' : String(inventario.idAnaquel),
       stock: String(inventario.stock),
       stock_reorden: String(inventario.stockReorden),
       stock_critico: String(inventario.stockCritico),
@@ -789,6 +792,7 @@ export class GestionInventario {
         existente.reorden = Math.max(existente.reorden, this.numero(item.stock_reorden));
         existente.critico = Math.max(existente.critico, this.numero(item.stock_critico));
         existente.maximo = Math.max(existente.maximo, this.numero(item.stock_maximo));
+        existente.idAnaquel ??= this.idNullable(item.id_anaquel);
         existente.anaquel = this.combinarTexto(existente.anaquel, item.anaquel);
         existente.actualizacion = this.fechaMasReciente(existente.actualizacion, item.fecha_actualizacion);
         continue;
@@ -797,6 +801,7 @@ export class GestionInventario {
         id: item.id_inventario || clave,
         productoId,
         almacenId,
+        idAnaquel: this.idNullable(item.id_anaquel),
         sku: producto?.sku || '—',
         producto: producto.nombre,
         unidad: producto.unidad,
@@ -886,6 +891,7 @@ export class GestionInventario {
       producto: producto?.nombre || `Producto #${productoId} (no registrado)`,
       unidad: producto?.unidad || 'unidad',
       almacen: almacenes.get(almacenId)?.nombre || `Almacén #${almacenId} (no registrado)`,
+      idAnaquel: null,
       stock: 0,
       reorden: 0,
       critico: 0,
@@ -1210,6 +1216,11 @@ export class GestionInventario {
     return Number.isFinite(numero) ? numero : null;
   }
 
+  private idNullable(valor: string | number | undefined): number | null {
+    const numero = this.numeroOpcional(valor);
+    return numero != null && Number.isSafeInteger(numero) && numero > 0 ? numero : null;
+  }
+
   private numeroId(valor: string | number): number {
     const directo = Number(valor);
     if (Number.isFinite(directo)) return directo;
@@ -1240,7 +1251,7 @@ export class GestionInventario {
     return this.fechaMs(normalizada) >= this.fechaMs(actual) ? normalizada : actual;
   }
 
-  private combinarTexto(actual: string, candidato: string): string {
+  private combinarTexto(actual: string, candidato: string | undefined): string {
     const valores = new Set(
       [actual, candidato]
         .flatMap((valor) => String(valor || '').split(','))

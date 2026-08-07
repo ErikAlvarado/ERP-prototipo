@@ -18,10 +18,7 @@ import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/conf
 import { switchMap } from 'rxjs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { EstatusProducto } from '../../../../shared/components/estatus-producto/estatus-producto';
-import {
-  AlmacenAdministracion,
-  AdministracionDatos,
-} from '../../../administracion/administracion-datos';
+import { AdministracionDatos } from '../../../administracion/administracion-datos';
 import { AnaquelesCatalogo } from '../../anaqueles/anaqueles-catalogo';
 
 @Component({
@@ -39,7 +36,6 @@ export class ProductDetail implements OnInit {
   private opciones: OpcionesProducto = { empresas: [], categorias: [], marcas: [], unidades: [], listasPrecios: [] };
   private almacenes: OpcionAlmacenProducto[] = [];
   private anaqueles: OpcionAnaquelProducto[] = [];
-  private almacenesAdministracion: AlmacenAdministracion[] = [];
   private empresasAdministracion: OpcionProducto[] = [];
 
   constructor(
@@ -54,8 +50,17 @@ export class ProductDetail implements OnInit {
   ngOnInit(): void {
     const productoNavegacion = history.state?.producto as ProductoCatalogo | undefined;
     if (productoNavegacion) this.producto = productoNavegacion;
+    this.catalogoAnaqueles.cargar().subscribe({
+      next: anaqueles => this.anaqueles = anaqueles.map(anaquel => ({
+        id: Number(anaquel.id),
+        idEmpresa: Number(anaquel.idEmpresa),
+        idAlmacen: Number(anaquel.idAlmacen),
+        nombre: anaquel.nombre,
+        estado: anaquel.estado,
+      })),
+      error: () => this.errorCarga = 'No fue posible cargar anaqueles.txt.',
+    });
     this.administracion.cargar().subscribe(estado => {
-      this.almacenesAdministracion = estado.almacenes;
       const empresasActivas = new Set(estado.empresas
         .filter(empresa => empresa.estado)
         .map(empresa => empresa.id));
@@ -77,7 +82,6 @@ export class ProductDetail implements OnInit {
           idEmpresa: Number(almacen.empresaId),
           nombre: almacen.nombre,
         }));
-      this.actualizarAnaqueles();
     });
 
     this.route.paramMap.pipe(
@@ -88,7 +92,6 @@ export class ProductDetail implements OnInit {
         return this.catalogo.cargar().pipe(
           switchMap(productos => {
             this.productos = productos;
-            this.actualizarAnaqueles();
             this.producto = productos.find(producto => Number(producto.id) === id);
             this.imagenNoDisponible = false;
             this.cargando = false;
@@ -156,11 +159,4 @@ export class ProductDetail implements OnInit {
     });
   }
 
-  private actualizarAnaqueles(): void {
-    if (!this.productos.length || !this.almacenesAdministracion.length) return;
-    this.anaqueles = this.catalogoAnaqueles.cargar(
-      this.productos,
-      this.almacenesAdministracion,
-    );
-  }
 }

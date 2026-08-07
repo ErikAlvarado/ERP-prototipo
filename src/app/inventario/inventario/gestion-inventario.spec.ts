@@ -20,6 +20,7 @@ describe('GestionInventario', () => {
       inventarios: [{
         id: 78,
         idAlmacen: 1,
+        idAnaquel: 1,
         almacen: 'Nombre anterior',
         stock: 12,
         stockReorden: 5,
@@ -99,6 +100,7 @@ describe('GestionInventario', () => {
     expect(contexto.productos.map(item => item.id)).toEqual([74]);
     expect(contexto.existencias[0]).toEqual(expect.objectContaining({
       productoId: 74,
+      idAnaquel: 1,
       almacen: 'Almacén actualizado',
       stock: 12,
       inicializada: true,
