@@ -2,6 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatTableDataSource } from '@angular/material/table';
 import { Observable, forkJoin, take } from 'rxjs';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
@@ -39,7 +40,7 @@ export interface Categoria {
 
 @Component({
   selector: 'app-categorias',
-  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule],
+  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule, MatMenuModule],
   templateUrl: './categorias.html',
   styleUrls: ['../catalog-list.css', './categorias.css'],
 })
@@ -51,6 +52,7 @@ export class Categorias implements OnInit, AfterViewInit {
   dataSource = new MatTableDataSource<Categoria>([]);
   obs!: Observable<Categoria[]>;
   currentSearch = '';
+  currentSort = 'Más antiguos';
   filtros: Record<string, ValorFiltroCatalogo> = { empresa: '', padre: '', tipo: '', estado: '' };
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
@@ -102,7 +104,7 @@ export class Categorias implements OnInit, AfterViewInit {
         productos: productos.filter(producto =>
           producto.idCategoria === Number(categoria.id)).length,
       })));
-      this.applyFilter();
+      this.setSort(this.currentSort);
     });
   }
 
@@ -118,6 +120,17 @@ export class Categorias implements OnInit, AfterViewInit {
       ...this.filtros,
     });
     this.dataSource.paginator?.firstPage();
+  }
+
+  setSort(orden: string): void {
+    this.currentSort = orden;
+    this.dataSource.data = [...this.dataSource.data].sort((a, b) => {
+      if (orden === 'A - Z') return a.nombre.localeCompare(b.nombre, 'es');
+      if (orden === 'Z - A') return b.nombre.localeCompare(a.nombre, 'es');
+      if (orden === 'Más antiguos') return a.id.localeCompare(b.id, 'es', { numeric: true });
+      return b.id.localeCompare(a.id, 'es', { numeric: true });
+    });
+    this.applyFilter();
   }
 
   abrirFiltros(): void {
@@ -240,6 +253,6 @@ export class Categorias implements OnInit, AfterViewInit {
   private guardar(categorias: Categoria[]): void {
     this.dataSource.data = this.actualizarRelaciones(categorias);
     this.persistencia.guardar(this.clave, this.dataSource.data, this.eliminados);
-    this.applyFilter();
+    this.setSort(this.currentSort);
   }
 }

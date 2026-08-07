@@ -18,26 +18,6 @@
       @if (conteoFiltros) { <span class="filter-count">{{ conteoFiltros }}</span> }
     </button>
 
-    <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="almacenMenu">
-      <mat-icon>warehouse</mat-icon>{{ nombreAlmacen }}
-    </button>
-    <mat-menu #almacenMenu="matMenu">
-      <button mat-menu-item (click)="setAlmacen(null)">Todos los almacenes</button>
-      @for (almacen of contexto?.almacenes ?? []; track almacen.id) {
-        <button mat-menu-item (click)="setAlmacen(almacen.id)">{{ almacen.nombre }}</button>
-      }
-    </mat-menu>
-
-    <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="estadoMenu">
-      <mat-icon>inventory_2</mat-icon>{{ currentStock || 'Estado' }}
-    </button>
-    <mat-menu #estadoMenu="matMenu">
-      <button mat-menu-item (click)="setEstado('')">Todos</button>
-      @for (estado of ['Normal', 'Bajo', 'Crítico', 'Agotado', 'Sin inicializar']; track estado) {
-        <button mat-menu-item (click)="setEstado(estado)">{{ estado }}</button>
-      }
-    </mat-menu>
-
     <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="ordenMenu">
       <mat-icon>sort</mat-icon>{{ currentSort }}
     </button>

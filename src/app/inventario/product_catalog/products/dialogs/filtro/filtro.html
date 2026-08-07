@@ -1,13 +1,12 @@
 <div class="dialog-container">
-  <div class="dialog-header"><div><h2>Filtrar productos</h2><p>Combina clasificación, ubicación y disponibilidad.</p></div><button mat-icon-button (click)="cerrar()" aria-label="Cerrar filtros"><mat-icon>close</mat-icon></button></div>
+  <div class="dialog-header"><div><h2>Filtrar productos</h2><p>Combina clasificación, anaquel y disponibilidad.</p></div><button mat-icon-button (click)="cerrar()" aria-label="Cerrar filtros"><mat-icon>close</mat-icon></button></div>
   <mat-dialog-content class="dialog-content">
     <section class="filter-section"><h3>Clasificación</h3><div class="fields-grid">
       <mat-form-field appearance="outline"><mat-label>Empresa</mat-label><mat-select [(ngModel)]="filtros.empresa"><mat-option value="">Todas</mat-option>@for (empresa of data.empresas; track empresa) { <mat-option [value]="empresa">{{ empresa }}</mat-option> }</mat-select></mat-form-field>
       <mat-form-field appearance="outline"><mat-label>Categoría</mat-label><mat-select [(ngModel)]="filtros.categoria"><mat-option value="">Todas</mat-option>@for (categoria of data.categorias; track categoria) { <mat-option [value]="categoria">{{ categoria }}</mat-option> }</mat-select></mat-form-field>
       <mat-form-field appearance="outline"><mat-label>Marca</mat-label><mat-select [(ngModel)]="filtros.marca"><mat-option value="">Todas</mat-option>@for (marca of data.marcas; track marca) { <mat-option [value]="marca">{{ marca }}</mat-option> }</mat-select></mat-form-field>
       <mat-form-field appearance="outline"><mat-label>Unidad</mat-label><mat-select [(ngModel)]="filtros.unidad"><mat-option value="">Todas</mat-option>@for (unidad of data.unidades; track unidad) { <mat-option [value]="unidad">{{ unidad }}</mat-option> }</mat-select></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Ubicación</mat-label><input matInput [(ngModel)]="filtros.ubicacion"><mat-icon matPrefix>location_on</mat-icon></mat-form-field>
-      <mat-form-field appearance="outline" class="full-field"><mat-label>Clave SAT</mat-label><input matInput [(ngModel)]="filtros.claveSat"><mat-icon matPrefix>receipt_long</mat-icon></mat-form-field>
+      <mat-form-field appearance="outline" class="full-field"><mat-label>Anaquel</mat-label><mat-select [(ngModel)]="filtros.anaquel"><mat-option value="">Todos</mat-option>@for (anaquel of data.anaqueles; track anaquel) { <mat-option [value]="anaquel">{{ anaquel }}</mat-option> }</mat-select><mat-icon matPrefix>shelves</mat-icon></mat-form-field>
     </div></section>
     <section class="filter-section"><h3>Disponibilidad y control</h3>
       <div class="toggle-row"><span>Código de barras</span><mat-chip-set><mat-chip-option [selected]="filtros.conCodigo === true" (click)="seleccionar('conCodigo', true)">Con código</mat-chip-option><mat-chip-option [selected]="filtros.conCodigo === false" (click)="seleccionar('conCodigo', false)">Sin código</mat-chip-option></mat-chip-set></div>

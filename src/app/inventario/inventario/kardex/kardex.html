@@ -18,26 +18,6 @@
       @if (conteoFiltros) { <span class="filter-count">{{ conteoFiltros }}</span> }
     </button>
 
-    <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="almacenMenu">
-      <mat-icon>warehouse</mat-icon>{{ nombreAlmacen }}
-    </button>
-    <mat-menu #almacenMenu="matMenu">
-      <button mat-menu-item (click)="setAlmacen(null)">Todos los almacenes</button>
-      @for (almacen of contexto?.almacenes ?? []; track almacen.id) {
-        <button mat-menu-item (click)="setAlmacen(almacen.id)">{{ almacen.nombre }}</button>
-      }
-    </mat-menu>
-
-    <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="movimientoMenu">
-      <mat-icon>swap_vert</mat-icon>{{ currentMovement || 'Movimiento' }}
-    </button>
-    <mat-menu #movimientoMenu="matMenu">
-      <button mat-menu-item (click)="setMovimiento('')">Todos</button>
-      @for (tipo of tiposMovimiento; track tipo) {
-        <button mat-menu-item (click)="setMovimiento(tipo)">{{ tipo }}</button>
-      }
-    </mat-menu>
-
     <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="ordenMenu">
       <mat-icon>sort</mat-icon>{{ currentSort }}
     </button>

@@ -2,6 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Observable, forkJoin, take } from 'rxjs';
@@ -37,7 +38,7 @@ export interface Unidad {
 
 @Component({
   selector: 'app-unidades',
-  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule, MatSnackBarModule],
+  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule, MatSnackBarModule, MatMenuModule],
   templateUrl: './unidades.html',
   styleUrls: ['../catalog-list.css', './unidades.css'],
 })
@@ -49,6 +50,7 @@ export class Unidades implements OnInit, AfterViewInit {
   dataSource = new MatTableDataSource<Unidad>([]);
   obs!: Observable<Unidad[]>;
   currentSearch = '';
+  currentSort = 'Más antiguos';
   filtros: Record<string, ValorFiltroCatalogo> = { empresa: '', decimales: '', uso: '' };
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
@@ -101,7 +103,7 @@ export class Unidades implements OnInit, AfterViewInit {
           producto.idUnidad === Number(unidad.id)).length,
         medidas: medidas.filter(medida => medida.id_unidad === unidad.id).length,
       })));
-      this.applyFilter();
+      this.setSort(this.currentSort);
     });
   }
 
@@ -117,6 +119,17 @@ export class Unidades implements OnInit, AfterViewInit {
       ...this.filtros,
     });
     this.dataSource.paginator?.firstPage();
+  }
+
+  setSort(orden: string): void {
+    this.currentSort = orden;
+    this.dataSource.data = [...this.dataSource.data].sort((a, b) => {
+      if (orden === 'A - Z') return a.nombre.localeCompare(b.nombre, 'es');
+      if (orden === 'Z - A') return b.nombre.localeCompare(a.nombre, 'es');
+      if (orden === 'Más antiguos') return a.id.localeCompare(b.id, 'es', { numeric: true });
+      return b.id.localeCompare(a.id, 'es', { numeric: true });
+    });
+    this.applyFilter();
   }
 
   abrirFiltros(): void {
@@ -215,6 +228,6 @@ export class Unidades implements OnInit, AfterViewInit {
   private guardar(unidades: Unidad[]): void {
     this.dataSource.data = this.actualizarEmpresas(unidades);
     this.persistencia.guardar(this.clave, this.dataSource.data, this.eliminados);
-    this.applyFilter();
+    this.setSort(this.currentSort);
   }
 }

@@ -1,5 +1,8 @@
 <main class="dashboard-shell">
-  @if (error) { <section class="error-panel"><mat-icon>cloud_off</mat-icon><div><strong>No se pudo cargar el dashboard</strong><span>{{ error }}</span></div><button mat-raised-button color="primary" (click)="cargar()">Reintentar</button></section> }
+  <div class="content-header">
+    <h1>Reportes inventario</h1>
+  </div>
+  @if (error) { <section class="error-panel"><mat-icon>cloud_off</mat-icon><div><strong>No se pudieron cargar los reportes de inventario</strong><span>{{ error }}</span></div><button mat-raised-button color="primary" (click)="cargar()">Reintentar</button></section> }
 
   <section class="grid-container">
     <mat-card class="dashboard-card" appearance="outlined">

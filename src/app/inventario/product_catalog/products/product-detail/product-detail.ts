@@ -9,12 +9,20 @@ import {
   OpcionesProducto,
   ProductoCatalogo,
 } from '../../../../shared/services/catalogo-productos';
-import { OpcionAlmacenProducto, ProductD } from '../dialogs/product-d/product-d';
+import {
+  OpcionAlmacenProducto,
+  OpcionAnaquelProducto,
+  ProductD,
+} from '../dialogs/product-d/product-d';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 import { switchMap } from 'rxjs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { EstatusProducto } from '../../../../shared/components/estatus-producto/estatus-producto';
-import { AdministracionDatos } from '../../../administracion/administracion-datos';
+import {
+  AlmacenAdministracion,
+  AdministracionDatos,
+} from '../../../administracion/administracion-datos';
+import { AnaquelesCatalogo } from '../../anaqueles/anaqueles-catalogo';
 
 @Component({
   selector: 'app-product-detail',
@@ -30,6 +38,8 @@ export class ProductDetail implements OnInit {
   private productos: ProductoCatalogo[] = [];
   private opciones: OpcionesProducto = { empresas: [], categorias: [], marcas: [], unidades: [], listasPrecios: [] };
   private almacenes: OpcionAlmacenProducto[] = [];
+  private anaqueles: OpcionAnaquelProducto[] = [];
+  private almacenesAdministracion: AlmacenAdministracion[] = [];
   private empresasAdministracion: OpcionProducto[] = [];
 
   constructor(
@@ -38,12 +48,14 @@ export class ProductDetail implements OnInit {
     private catalogo: CatalogoProductos,
     private dialog: MatDialog,
     private administracion: AdministracionDatos,
+    private catalogoAnaqueles: AnaquelesCatalogo,
   ) {}
 
   ngOnInit(): void {
     const productoNavegacion = history.state?.producto as ProductoCatalogo | undefined;
     if (productoNavegacion) this.producto = productoNavegacion;
     this.administracion.cargar().subscribe(estado => {
+      this.almacenesAdministracion = estado.almacenes;
       const empresasActivas = new Set(estado.empresas
         .filter(empresa => empresa.estado)
         .map(empresa => empresa.id));
@@ -65,6 +77,7 @@ export class ProductDetail implements OnInit {
           idEmpresa: Number(almacen.empresaId),
           nombre: almacen.nombre,
         }));
+      this.actualizarAnaqueles();
     });
 
     this.route.paramMap.pipe(
@@ -75,6 +88,7 @@ export class ProductDetail implements OnInit {
         return this.catalogo.cargar().pipe(
           switchMap(productos => {
             this.productos = productos;
+            this.actualizarAnaqueles();
             this.producto = productos.find(producto => Number(producto.id) === id);
             this.imagenNoDisponible = false;
             this.cargando = false;
@@ -108,6 +122,7 @@ export class ProductDetail implements OnInit {
         product: this.producto,
         opciones: this.opciones,
         almacenes: this.almacenes,
+        anaqueles: this.anaqueles,
         productos: this.productos,
       },
     }).afterClosed().subscribe(resultado => {
@@ -139,5 +154,13 @@ export class ProductDetail implements OnInit {
       this.catalogo.guardar(this.productos);
       this.producto = eliminado;
     });
+  }
+
+  private actualizarAnaqueles(): void {
+    if (!this.productos.length || !this.almacenesAdministracion.length) return;
+    this.anaqueles = this.catalogoAnaqueles.cargar(
+      this.productos,
+      this.almacenesAdministracion,
+    );
   }
 }
