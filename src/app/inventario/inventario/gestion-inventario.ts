@@ -91,6 +91,7 @@ export interface AjusteFormulario {
   ajuste: number;
   motivo: string;
   usuarioId: number | null;
+  usuarioNombre?: string;
 }
 
 export interface PartidaTransferenciaInventario {
@@ -281,12 +282,16 @@ export class GestionInventario {
     );
     const anterior = existencia?.stock ?? 0;
     const cantidadCapturada = Number(formulario.ajuste);
+    const nombreResponsable = usuario?.nombre || formulario.usuarioNombre?.trim() || '';
     if (!producto || !almacen) throw new Error('El producto o el almacén seleccionado no existe.');
     if (producto.idEmpresa !== almacen.idEmpresa) {
       throw new Error('El producto y el almacén deben pertenecer a la misma empresa.');
     }
     if (usuario && usuario.idEmpresa !== producto.idEmpresa) {
       throw new Error('El responsable debe pertenecer a la misma empresa del ajuste.');
+    }
+    if (!nombreResponsable) {
+      throw new Error('No fue posible identificar al usuario responsable del ajuste.');
     }
     if (!producto.permiteDecimales && !Number.isInteger(cantidadCapturada)) {
       throw new Error(`La unidad ${producto.unidad} de "${producto.nombre}" sólo acepta cantidades enteras.`);
@@ -308,7 +313,7 @@ export class GestionInventario {
       existencia: anterior + cantidad,
       motivo: formulario.motivo.trim(),
       usuarioId: formulario.usuarioId == null ? null : Number(formulario.usuarioId),
-      usuario: usuario?.nombre || 'Sin usuario',
+      usuario: nombreResponsable,
     };
     const actuales = this.persistencia.leer<AjusteInventario[]>(this.claveAjustes, []);
     this.persistencia.guardar(this.claveAjustes, [ajuste, ...actuales]);
@@ -999,7 +1004,7 @@ export class GestionInventario {
       producto: productos.get(Number(item.productoId))?.nombre || item.producto || `Producto #${item.productoId}`,
       almacen: almacenes.get(Number(item.almacenId))?.nombre || item.almacen || `Almacén #${item.almacenId}`,
       usuario: item.usuarioId == null
-        ? 'Sin usuario'
+        ? item.usuario?.trim() || 'Sin usuario'
         : usuarios.get(Number(item.usuarioId))?.nombre || item.usuario || `Usuario #${item.usuarioId}`,
     };
   }

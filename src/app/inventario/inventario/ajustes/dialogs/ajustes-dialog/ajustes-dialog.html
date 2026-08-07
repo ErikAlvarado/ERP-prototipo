@@ -4,12 +4,32 @@
     <section class="card-section">
       <span class="section-label">Movimiento</span>
       <div class="grid-layout">
-        <mat-form-field appearance="outline" class="full-width"><mat-label>Producto</mat-label><mat-select [(ngModel)]="formulario.productoId" (selectionChange)="cambiarProducto()" [disabled]="soloLectura">@for (producto of data.productos; track producto.id) { <mat-option [value]="producto.id">{{ producto.sku }} · {{ producto.nombre }}</mat-option> }</mat-select><mat-icon matPrefix>inventory_2</mat-icon></mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Buscar y seleccionar producto</mat-label>
+          <input
+            matInput
+            [ngModel]="productoBusqueda"
+            (ngModelChange)="filtrarProducto($event)"
+            [matAutocomplete]="productosAuto"
+            [disabled]="soloLectura"
+            autocomplete="off">
+          <mat-icon matPrefix>search</mat-icon>
+          <mat-autocomplete #productosAuto="matAutocomplete">
+            @for (producto of productosFiltrados; track producto.id) {
+              <mat-option
+                [value]="etiquetaProducto(producto)"
+                (onSelectionChange)="$event.isUserInput && seleccionarProducto(producto)">
+                {{ producto.sku }} · {{ producto.nombre }}
+              </mat-option>
+            }
+          </mat-autocomplete>
+          <mat-hint>Escribe al menos 2 caracteres del nombre o SKU</mat-hint>
+        </mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Almacén</mat-label><mat-select [(ngModel)]="formulario.almacenId" (selectionChange)="cambiarAlmacen()" [disabled]="soloLectura">@for (almacen of almacenesCompatibles; track almacen.id) { <mat-option [value]="almacen.id">{{ almacen.nombre }}</mat-option> }</mat-select><mat-icon matPrefix>warehouse</mat-icon></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Fecha</mat-label><input matInput type="date" [(ngModel)]="formulario.fecha" [disabled]="soloLectura"><mat-icon matPrefix>event</mat-icon></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Fecha</mat-label><input matInput type="date" [value]="fechaAutomatica" disabled><mat-icon matPrefix>event</mat-icon></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Existencia</mat-label><input matInput type="number" [value]="existenciaAnterior" disabled><mat-icon matPrefix>inventory</mat-icon></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Ajuste</mat-label><input matInput type="number" [step]="pasoCantidad" [(ngModel)]="formulario.ajuste" [disabled]="soloLectura"><mat-hint>Positivo para entrada y negativo para salida</mat-hint></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Responsable</mat-label><mat-select [(ngModel)]="formulario.usuarioId" [disabled]="soloLectura"><mat-option [value]="null">Sin usuario</mat-option>@for (usuario of usuariosCompatibles; track usuario.id) { <mat-option [value]="usuario.id">{{ usuario.nombre }}</mat-option> }</mat-select><mat-icon matPrefix>person</mat-icon></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Responsable</mat-label><input matInput [value]="responsableNombre" disabled><mat-icon matPrefix>person</mat-icon></mat-form-field>
         <mat-form-field appearance="outline" class="full-width"><mat-label>Motivo</mat-label><textarea matInput rows="3" [(ngModel)]="formulario.motivo" [disabled]="soloLectura"></textarea><mat-icon matPrefix>notes</mat-icon></mat-form-field>
       </div>
     </section>

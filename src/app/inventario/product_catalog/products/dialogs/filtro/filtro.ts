@@ -7,8 +7,7 @@ export interface FiltrosProducto {
   categoria: string;
   marca: string;
   unidad: string;
-  ubicacion: string;
-  claveSat: string;
+  anaquel: string;
   conCodigo: boolean | null;
   pos: boolean | null;
   visible: boolean | null;
@@ -23,6 +22,7 @@ export interface DatosFiltroProducto {
   categorias: string[];
   marcas: string[];
   unidades: string[];
+  anaqueles: string[];
 }
 
 const FILTROS_VACIOS: FiltrosProducto = {
@@ -30,8 +30,7 @@ const FILTROS_VACIOS: FiltrosProducto = {
   categoria: '',
   marca: '',
   unidad: '',
-  ubicacion: '',
-  claveSat: '',
+  anaquel: '',
   conCodigo: null,
   pos: null,
   visible: null,
@@ -74,8 +73,7 @@ export class Filtro {
   aplicar(): void {
     this.dialogRef.close({
       ...this.filtros,
-      ubicacion: this.filtros.ubicacion.trim(),
-      claveSat: this.filtros.claveSat.trim(),
+      anaquel: this.filtros.anaquel.trim(),
     });
   }
 

@@ -2,13 +2,13 @@ import { AsyncPipe, CurrencyPipe, DatePipe } from '@angular/common';
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatTableDataSource } from '@angular/material/table';
 import { Observable, forkJoin } from 'rxjs';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import {
   CatalogoProductos,
-  OpcionListaPrecio,
   OpcionesProducto,
   PrecioProductoCatalogo,
   ProductoCatalogo,
@@ -16,6 +16,10 @@ import {
   precioEstaVigente,
 } from '../../../shared/services/catalogo-productos';
 import { PrecioDialog, PrecioDialogResult } from './dialogs/precio-dialog/precio-dialog';
+import {
+  CatalogFilterDialog,
+  ValorFiltroCatalogo,
+} from '../dialogs/catalog-filter-dialog/catalog-filter-dialog';
 
 export interface PrecioFila {
   idPrecio: number;
@@ -38,7 +42,7 @@ export interface PrecioFila {
 
 @Component({
   selector: 'app-precios',
-  imports: [...SHARED_IMPORTS, AsyncPipe, CurrencyPipe, DatePipe, MatPaginatorModule],
+  imports: [...SHARED_IMPORTS, AsyncPipe, CurrencyPipe, DatePipe, MatPaginatorModule, MatMenuModule],
   templateUrl: './precios.html',
   styleUrls: ['../catalog-list.css', './precios.css'],
 })
@@ -49,9 +53,8 @@ export class Precios implements OnInit, AfterViewInit {
   productos: ProductoCatalogo[] = [];
   opciones: OpcionesProducto = { empresas: [], categorias: [], marcas: [], unidades: [], listasPrecios: [] };
   currentSearch = '';
-  empresaFiltro = '';
-  listaFiltro = '';
-  estadoFiltro = '';
+  currentSort = 'Más antiguos';
+  filtros: Record<string, ValorFiltroCatalogo> = { empresa: '', lista: '', estado: '' };
   cargando = true;
   errorCarga = '';
 
@@ -79,21 +82,78 @@ export class Precios implements OnInit, AfterViewInit {
     this.dataSource.paginator = this.paginator;
   }
 
-  get listasFiltradas(): OpcionListaPrecio[] {
-    return this.opciones.listasPrecios.filter(lista => !this.empresaFiltro || lista.idEmpresa === Number(this.empresaFiltro));
+  get filtrosActivos(): number {
+    return Object.values(this.filtros).filter(valor => valor !== '' && valor !== null).length;
   }
 
   applyFilter(): void {
-    if (this.listaFiltro && !this.listasFiltradas.some(lista => lista.id === Number(this.listaFiltro))) {
-      this.listaFiltro = '';
-    }
     this.dataSource.filter = JSON.stringify({
       texto: this.currentSearch.trim().toLocaleLowerCase(),
-      empresa: this.empresaFiltro,
-      lista: this.listaFiltro,
-      estado: this.estadoFiltro,
+      empresa: String(this.filtros['empresa'] ?? ''),
+      lista: String(this.filtros['lista'] ?? ''),
+      estado: String(this.filtros['estado'] ?? ''),
     });
     this.dataSource.paginator?.firstPage();
+  }
+
+  setSort(orden: string): void {
+    this.currentSort = orden;
+    this.dataSource.data = [...this.dataSource.data].sort((a, b) => {
+      if (orden === 'Más recientes') return b.idPrecio - a.idPrecio;
+      if (orden === 'Producto A - Z') {
+        return a.producto.localeCompare(b.producto, 'es') || a.lista.localeCompare(b.lista, 'es');
+      }
+      if (orden === 'Producto Z - A') {
+        return b.producto.localeCompare(a.producto, 'es') || a.lista.localeCompare(b.lista, 'es');
+      }
+      return a.idPrecio - b.idPrecio;
+    });
+    this.applyFilter();
+  }
+
+  abrirFiltros(): void {
+    const empresas = new Map(this.opciones.empresas.map(empresa => [empresa.id, empresa.nombre]));
+    this.dialog.open(CatalogFilterDialog, {
+      width: '580px',
+      maxWidth: '96vw',
+      data: {
+        titulo: 'Filtrar precios',
+        filtros: this.filtros,
+        campos: [
+          {
+            clave: 'empresa',
+            etiqueta: 'Empresa',
+            icono: 'business',
+            opciones: this.opciones.empresas.map(empresa => ({
+              valor: empresa.id.toString(),
+              etiqueta: empresa.nombre,
+            })),
+          },
+          {
+            clave: 'lista',
+            etiqueta: 'Lista de precios',
+            icono: 'format_list_bulleted',
+            opciones: this.opciones.listasPrecios.map(lista => ({
+              valor: lista.id.toString(),
+              etiqueta: `${lista.nombre} · ${empresas.get(lista.idEmpresa) || 'Empresa no disponible'}`,
+            })),
+          },
+          {
+            clave: 'estado',
+            etiqueta: 'Vigencia',
+            icono: 'event_available',
+            opciones: [
+              { valor: 'vigente', etiqueta: 'Vigentes' },
+              { valor: 'fuera', etiqueta: 'Fuera de vigencia' },
+            ],
+          },
+        ],
+      },
+    }).afterClosed().subscribe((resultado?: Record<string, ValorFiltroCatalogo>) => {
+      if (!resultado) return;
+      this.filtros = resultado;
+      this.applyFilter();
+    });
   }
 
   agregar(): void {
@@ -229,7 +289,7 @@ export class Precios implements OnInit, AfterViewInit {
       fechaInicio: precio.fechaInicio,
       fechaFin: precio.fechaFin,
       vigente: precioEstaVigente(precio),
-    }))).sort((a, b) => a.producto.localeCompare(b.producto, 'es') || a.lista.localeCompare(b.lista, 'es'));
-    this.applyFilter();
+    })));
+    this.setSort(this.currentSort);
   }
 }

@@ -1,19 +1,11 @@
 <div class="content-header">
   <div>
     <h1>Recepción de inventario</h1>
-    <p>Registra y da seguimiento a la mercancía recibida de proveedores.</p>
   </div>
   <button mat-raised-button color="primary" (click)="nuevaRecepcion()">
     <mat-icon>add</mat-icon>Nueva recepción
   </button>
 </div>
-
-<section class="summary-grid">
-  <mat-card appearance="outlined"><mat-icon>pending_actions</mat-icon><div><span>Pendientes</span><strong>{{ pendientes }}</strong></div></mat-card>
-  <mat-card appearance="outlined"><mat-icon>task_alt</mat-icon><div><span>Recibidas</span><strong>{{ recibidas }}</strong></div></mat-card>
-  <mat-card appearance="outlined"><mat-icon>warning</mat-icon><div><span>Con incidencias</span><strong>{{ incidencias }}</strong></div></mat-card>
-  <mat-card appearance="outlined"><mat-icon>inventory_2</mat-icon><div><span>Unidades registradas</span><strong>{{ unidades }}</strong></div></mat-card>
-</section>
 
 <div class="content-search">
   <div class="custom-search">
@@ -21,14 +13,17 @@
     <input matInput [(ngModel)]="busqueda" (input)="filtrar()" placeholder="Buscar por folio, orden, proveedor, almacén o responsable">
   </div>
   <div class="custom-filters">
-    <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="estadoMenu">
-      <mat-icon>filter_alt</mat-icon>{{ estado || 'Todos los estados' }}
+    <button mat-stroked-button class="filter-btn" (click)="abrirFiltros()">
+      <mat-icon>tune</mat-icon>Filtrar
+      @if (conteoFiltros) { <span class="filter-count">{{ conteoFiltros }}</span> }
     </button>
-    <mat-menu #estadoMenu="matMenu">
-      <button mat-menu-item (click)="setEstado('')">Todos los estados</button>
-      @for (opcion of ['Pendiente', 'En revisión', 'Recibida', 'Con incidencias']; track opcion) {
-        <button mat-menu-item (click)="setEstado(opcion)">{{ opcion }}</button>
-      }
+    <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="ordenMenu">
+      <mat-icon>sort</mat-icon>{{ currentSort }}
+    </button>
+    <mat-menu #ordenMenu="matMenu">
+      <button mat-menu-item (click)="ordenar('Más antiguos')">Más antiguos</button>
+      <button mat-menu-item (click)="ordenar('Más recientes')">Más recientes</button>
+      <button mat-menu-item (click)="ordenar('Folio')">Por folio</button>
     </mat-menu>
   </div>
 </div>
@@ -56,7 +51,7 @@
     </ng-container>
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-    <tr class="empty-row" *matNoDataRow><td [attr.colspan]="displayedColumns.length">No hay recepciones que coincidan con la búsqueda.</td></tr>
+    <tr class="empty-row" *matNoDataRow><td [attr.colspan]="displayedColumns.length">No hay recepciones que coincidan con la búsqueda o los filtros.</td></tr>
   </table>
 </div>
 

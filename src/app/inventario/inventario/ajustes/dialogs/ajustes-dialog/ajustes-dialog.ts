@@ -1,6 +1,7 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SHARED_IMPORTS } from '../../../../../shared/imports/shared-imports';
+import { Autenticacion } from '../../../../../shared/services/autenticacion';
 import {
   AjusteFormulario,
   AjusteInventario,
@@ -11,7 +12,7 @@ import {
 } from '../../../gestion-inventario';
 
 export interface AjustesDialogData {
-  mode?: 'add' | 'view';
+  mode?: 'add' | 'edit' | 'view';
   ajuste?: AjusteInventario;
   productos: ProductoInventarioRef[];
   almacenes: AlmacenInventarioRef[];
@@ -28,8 +29,13 @@ export interface AjustesDialogData {
   styleUrl: './ajustes-dialog.css',
 })
 export class AjustesDialog {
+  private readonly autenticacion = inject(Autenticacion);
   formulario: AjusteFormulario;
   existenciaAnterior = 0;
+  productoBusqueda = '';
+  productosFiltrados: ProductoInventarioRef[] = [];
+  fechaAutomatica = '';
+  responsableNombre = '';
   error = '';
 
   constructor(
@@ -37,20 +43,26 @@ export class AjustesDialog {
     @Inject(MAT_DIALOG_DATA) public data: AjustesDialogData,
   ) {
     const actual = data.ajuste;
+    const productoId = actual?.productoId ?? data.productoId ?? 0;
+    const producto = data.productos.find(item => item.id === productoId);
+    const usuarioSesion = this.usuarioSesion(producto?.idEmpresa);
+    const sesion = this.autenticacion.sesion();
+    this.fechaAutomatica = this.soloLectura && actual ? actual.fecha : this.fechaLocal();
+    this.responsableNombre = this.soloLectura && actual ? actual.usuario : sesion?.nombre || '';
     this.formulario = {
-      fecha: actual?.fecha || this.fechaLocal(),
-      productoId: actual?.productoId ?? data.productoId ?? data.productos[0]?.id ?? 0,
+      fecha: this.fechaAutomatica,
+      productoId,
       almacenId: actual?.almacenId ?? data.almacenId ?? 0,
       ajuste: actual?.ajuste ?? 0,
       motivo: actual?.motivo || '',
-      usuarioId: actual?.usuarioId ?? data.usuarios[0]?.id ?? null,
+      usuarioId: this.soloLectura ? actual?.usuarioId ?? null : usuarioSesion?.id ?? null,
+      usuarioNombre: this.responsableNombre,
     };
-    if (!this.formulario.almacenId) {
+    if (!this.formulario.almacenId && this.formulario.productoId) {
       this.formulario.almacenId = this.almacenesCompatibles[0]?.id ?? 0;
     }
-    if (!this.usuariosCompatibles.some(usuario => usuario.id === this.formulario.usuarioId)) {
-      this.formulario.usuarioId = this.usuariosCompatibles[0]?.id ?? null;
-    }
+    this.productoBusqueda = this.etiquetaProducto(producto);
+    this.actualizarProductosFiltrados();
     if (actual) this.existenciaAnterior = actual.existencia;
     else this.actualizarExistencia();
   }
@@ -82,6 +94,25 @@ export class AjustesDialog {
       : this.data.productos;
   }
 
+  private actualizarProductosFiltrados(): void {
+    const termino = this.normalizar(this.productoBusqueda);
+    if (termino.length < 2) {
+      this.productosFiltrados = [];
+      return;
+    }
+    const almacen = this.data.almacenes.find(
+      item => item.id === Number(this.formulario.almacenId),
+    );
+    const encontrados: ProductoInventarioRef[] = [];
+    for (const producto of this.data.productos) {
+      if (almacen && producto.idEmpresa !== almacen.idEmpresa) continue;
+      if (termino && !this.normalizar(`${producto.sku} ${producto.nombre}`).includes(termino)) continue;
+      encontrados.push(producto);
+      if (encontrados.length === 50) break;
+    }
+    this.productosFiltrados = encontrados;
+  }
+
   get almacenesCompatibles(): AlmacenInventarioRef[] {
     const producto = this.data.productos.find(
       item => item.id === Number(this.formulario.productoId),
@@ -91,34 +122,55 @@ export class AjustesDialog {
       : this.data.almacenes;
   }
 
-  get usuariosCompatibles(): UsuarioInventarioRef[] {
-    const producto = this.data.productos.find(
-      item => item.id === Number(this.formulario.productoId),
-    );
-    return producto
-      ? this.data.usuarios.filter(usuario => usuario.idEmpresa === producto.idEmpresa)
-      : this.data.usuarios;
-  }
-
   cambiarProducto(): void {
     if (!this.almacenesCompatibles.some(
       almacen => almacen.id === Number(this.formulario.almacenId),
     )) {
       this.formulario.almacenId = this.almacenesCompatibles[0]?.id ?? 0;
     }
-    if (!this.usuariosCompatibles.some(usuario => usuario.id === this.formulario.usuarioId)) {
-      this.formulario.usuarioId = this.usuariosCompatibles[0]?.id ?? null;
-    }
+    const producto = this.data.productos.find(
+      item => item.id === Number(this.formulario.productoId),
+    );
+    const sesion = this.autenticacion.sesion();
+    this.formulario.usuarioId = this.usuarioSesion(producto?.idEmpresa)?.id ?? null;
+    this.formulario.usuarioNombre = sesion?.nombre || '';
+    this.responsableNombre = sesion?.nombre || '';
+    this.productoBusqueda = this.etiquetaProducto(producto);
+    this.actualizarProductosFiltrados();
     this.actualizarExistencia();
   }
 
   cambiarAlmacen(): void {
-    if (!this.productosCompatibles.some(
+    if (this.formulario.productoId && !this.productosCompatibles.some(
       producto => producto.id === Number(this.formulario.productoId),
     )) {
-      this.formulario.productoId = this.productosCompatibles[0]?.id ?? 0;
+      this.formulario.productoId = 0;
+      this.productoBusqueda = '';
+      this.existenciaAnterior = 0;
     }
+    if (this.formulario.productoId) this.cambiarProducto();
+    else this.actualizarProductosFiltrados();
+  }
+
+  filtrarProducto(valor: string): void {
+    this.productoBusqueda = valor;
+    this.actualizarProductosFiltrados();
+    const seleccionado = this.data.productos.find(
+      item => item.id === Number(this.formulario.productoId),
+    );
+    if (this.etiquetaProducto(seleccionado) === valor) return;
+    this.formulario.productoId = 0;
+    this.existenciaAnterior = 0;
+  }
+
+  seleccionarProducto(producto: ProductoInventarioRef): void {
+    this.formulario.productoId = producto.id;
+    this.productoBusqueda = this.etiquetaProducto(producto);
     this.cambiarProducto();
+  }
+
+  etiquetaProducto(producto?: ProductoInventarioRef): string {
+    return producto ? `${producto.sku} · ${producto.nombre}` : '';
   }
 
   actualizarExistencia(): void {
@@ -145,8 +197,8 @@ export class AjustesDialog {
     const ajuste = producto?.permiteDecimales
       ? Math.round(valor * 100) / 100
       : Math.round(valor);
-    if (!this.formulario.productoId || !this.formulario.almacenId || !this.formulario.fecha) {
-      this.error = 'Selecciona el producto, el almacén y la fecha.';
+    if (!this.formulario.productoId || !this.formulario.almacenId) {
+      this.error = 'Selecciona el producto y el almacén.';
       return;
     }
     if (!producto || !almacen || producto.idEmpresa !== almacen.idEmpresa) {
@@ -165,12 +217,36 @@ export class AjustesDialog {
       this.error = 'Escribe el motivo del ajuste para conservar la trazabilidad.';
       return;
     }
-    this.dialogRef.close({ ...this.formulario, fecha: this.formulario.fecha.slice(0, 10), ajuste });
+    const sesion = this.autenticacion.sesion();
+    if (!sesion) {
+      this.error = 'No fue posible identificar al usuario responsable del ajuste.';
+      return;
+    }
+    const responsable = this.usuarioSesion(producto.idEmpresa);
+    this.dialogRef.close({
+      ...this.formulario,
+      fecha: this.fechaLocal(),
+      ajuste,
+      usuarioId: responsable?.id ?? null,
+      usuarioNombre: sesion.nombre,
+    });
   }
 
   private fechaLocal(): string {
     const fecha = new Date();
     fecha.setMinutes(fecha.getMinutes() - fecha.getTimezoneOffset());
     return fecha.toISOString().slice(0, 10);
+  }
+
+  private normalizar(valor: string): string {
+    return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  private usuarioSesion(idEmpresa?: number): UsuarioInventarioRef | undefined {
+    const sesion = this.autenticacion.sesion();
+    if (!sesion) return undefined;
+    return this.data.usuarios.find(usuario =>
+      usuario.idEmpresa === idEmpresa
+      && usuario.id === Number(sesion.id));
   }
 }

@@ -35,5 +35,10 @@ export const product_catalogRoutes: Routes = [
         path: 'unidades',
         loadComponent: () =>
             import('./unidades/unidades').then(c => c.Unidades)   
+    },
+    {
+        path: 'anaqueles',
+        loadComponent: () =>
+            import('./anaqueles/anaqueles').then(c => c.Anaqueles)
     }
 ];

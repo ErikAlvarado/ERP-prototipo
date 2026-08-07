@@ -2,6 +2,7 @@ import { AsyncPipe, CurrencyPipe, DatePipe } from '@angular/common';
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatTableDataSource } from '@angular/material/table';
 import { Observable, forkJoin } from 'rxjs';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
@@ -59,7 +60,7 @@ export interface Kit {
 
 @Component({
   selector: 'app-kits',
-  imports: [...SHARED_IMPORTS, AsyncPipe, CurrencyPipe, DatePipe, MatPaginatorModule],
+  imports: [...SHARED_IMPORTS, AsyncPipe, CurrencyPipe, DatePipe, MatPaginatorModule, MatMenuModule],
   templateUrl: './kits.html',
   styleUrls: ['../catalog-list.css', './kits.css'],
 })
@@ -75,6 +76,7 @@ export class Kits implements OnInit, AfterViewInit {
   dataSource = new MatTableDataSource<Kit>([]);
   obs!: Observable<Kit[]>;
   currentSearch = '';
+  currentSort = 'Más antiguos';
   filtros: Record<string, ValorFiltroCatalogo> = { producto: '', estado: '', precioMinimo: null, precioMaximo: null };
   cargando = true;
   errorCarga = '';
@@ -117,6 +119,17 @@ export class Kits implements OnInit, AfterViewInit {
       ...this.filtros,
     });
     this.dataSource.paginator?.firstPage();
+  }
+
+  setSort(orden: string): void {
+    this.currentSort = orden;
+    this.dataSource.data = [...this.dataSource.data].sort((a, b) => {
+      if (orden === 'A - Z') return a.nombre.localeCompare(b.nombre, 'es');
+      if (orden === 'Z - A') return b.nombre.localeCompare(a.nombre, 'es');
+      if (orden === 'Más antiguos') return a.id - b.id;
+      return b.id - a.id;
+    });
+    this.applyFilter();
   }
 
   abrirFiltros(): void {
@@ -269,7 +282,7 @@ export class Kits implements OnInit, AfterViewInit {
           }),
           cantidad: Math.max(1, Number(definicion.cantidad) || 1),
         }));
-        const costoComponentes = elementos.reduce((total, elemento) => total + elemento.costo * elemento.cantidad, 0);
+        const costoComponentes = this.calcularCostoElementos(elementos);
         return {
           id: producto.id,
           idEmpresa: producto.idEmpresa,
@@ -284,9 +297,9 @@ export class Kits implements OnInit, AfterViewInit {
           nombre: producto.producto,
           descripcion: producto.descripcion,
           precio: producto.precio,
-          costo: producto.costo,
+          costo: costoComponentes,
           costoComponentes,
-          margen: calcularMargenPrecio(producto.costo, producto.precio),
+          margen: calcularMargenPrecio(costoComponentes, producto.precio),
           elementos,
           fechaCreacion: producto.fechaCreacion,
           fechaActualizacion: producto.fechaActualizacion,
@@ -294,18 +307,20 @@ export class Kits implements OnInit, AfterViewInit {
         };
       })
       .sort((a, b) => a.id - b.id);
-    this.applyFilter();
+    this.setSort(this.currentSort);
   }
 
   private crearProductoKit(resultado: KitDialogResult): ProductoCatalogo {
     const fecha = new Date().toISOString().slice(0, 10);
     const id = Math.max(0, ...this.productosCatalogo.map(producto => producto.id)) + 1;
-    const precios = this.crearOActualizarPrecio(undefined, resultado, id);
+    const costo = this.calcularCostoElementos(resultado.elementos);
+    const resultadoCalculado = { ...resultado, costo };
+    const precios = this.crearOActualizarPrecio(undefined, resultadoCalculado, id);
     const empresa = this.opciones.empresas.find(opcion => opcion.id === resultado.idEmpresa);
     const marca = this.opciones.marcas.find(opcion => opcion.id === resultado.idMarca);
     const categoria = this.opciones.categorias.find(opcion => opcion.id === resultado.idCategoria);
     const unidad = this.opciones.unidades.find(opcion => opcion.id === resultado.idUnidad);
-    return this.catalogo.actualizarResumenPrecio({
+    const productoKit = this.catalogo.actualizarResumenPrecio({
       id,
       idEmpresa: resultado.idEmpresa,
       empresa: empresa?.nombre || 'Empresa no disponible',
@@ -322,8 +337,8 @@ export class Kits implements OnInit, AfterViewInit {
       medida: unidad?.nombre || 'Unidad no disponible',
       estatus: resultado.estado ? 'Vigente' : 'Descontinuado',
       precio: resultado.precio,
-      costo: resultado.costo,
-      margen: calcularMargenPrecio(resultado.costo, resultado.precio),
+      costo,
+      margen: calcularMargenPrecio(costo, resultado.precio),
       listaPrecio: 'Sin precio vigente',
       precios,
       pos: true,
@@ -346,6 +361,11 @@ export class Kits implements OnInit, AfterViewInit {
       fechaActualizacion: fecha,
       fechaCreacion: fecha,
     });
+    return {
+      ...productoKit,
+      costo,
+      margen: calcularMargenPrecio(costo, productoKit.precio),
+    };
   }
 
   private actualizarProductoKit(producto: ProductoCatalogo, resultado: KitDialogResult): ProductoCatalogo {
@@ -353,8 +373,9 @@ export class Kits implements OnInit, AfterViewInit {
     const marca = this.opciones.marcas.find(opcion => opcion.id === resultado.idMarca);
     const categoria = this.opciones.categorias.find(opcion => opcion.id === resultado.idCategoria);
     const unidad = this.opciones.unidades.find(opcion => opcion.id === resultado.idUnidad);
-    const precios = this.crearOActualizarPrecio(producto, resultado, producto.id);
-    return this.catalogo.actualizarResumenPrecio({
+    const costo = this.calcularCostoElementos(resultado.elementos);
+    const precios = this.crearOActualizarPrecio(producto, { ...resultado, costo }, producto.id);
+    const productoKit = this.catalogo.actualizarResumenPrecio({
       ...producto,
       idEmpresa: resultado.idEmpresa,
       empresa: empresa?.nombre || producto.empresa,
@@ -369,9 +390,16 @@ export class Kits implements OnInit, AfterViewInit {
       medida: unidad?.nombre || producto.medida,
       estatus: resultado.estado ? 'Vigente' : 'Descontinuado',
       estado: resultado.estado,
+      costo,
+      margen: calcularMargenPrecio(costo, resultado.precio),
       precios,
       fechaActualizacion: new Date().toISOString().slice(0, 10),
     });
+    return {
+      ...productoKit,
+      costo,
+      margen: calcularMargenPrecio(costo, productoKit.precio),
+    };
   }
 
   private crearOActualizarPrecio(
@@ -419,6 +447,15 @@ export class Kits implements OnInit, AfterViewInit {
       })),
     };
     this.persistencia.guardar(this.claveComponentes, this.componentesLocales);
+  }
+
+  private calcularCostoElementos(elementos: KitElemento[]): number {
+    const productosPorId = new Map(this.productos.map(producto => [producto.idProducto, producto]));
+    const total = elementos.reduce((acumulado, elemento) => {
+      const costo = productosPorId.get(elemento.idProducto)?.costo ?? elemento.costo;
+      return acumulado + Number(costo) * Math.max(1, Math.floor(Number(elemento.cantidad) || 1));
+    }, 0);
+    return Number(total.toFixed(2));
   }
 
   private agruparComponentes(componentes: ComponenteKitDb[]): Map<number, ComponenteKitGuardado[]> {

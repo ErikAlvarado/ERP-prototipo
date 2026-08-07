@@ -1,6 +1,7 @@
 import { firstValueFrom, of } from 'rxjs';
 import { ProductoCatalogo } from '../../shared/services/catalogo-productos';
 import {
+  AjusteInventario,
   comprometeStockTransferencia,
   GestionInventario,
 } from './gestion-inventario';
@@ -107,6 +108,42 @@ describe('GestionInventario', () => {
       cantidad: 12,
       existencia: 12,
     }));
+  });
+
+  it('conserva el responsable de sesión cuando no existe un ID numérico de usuario', () => {
+    const servicio = Object.create(GestionInventario.prototype) as GestionInventario;
+    const ajuste: AjusteInventario = {
+      id: 'AJ-1',
+      fecha: '2026-08-06',
+      productoId: 1,
+      almacenId: 1,
+      sku: 'SKU-1',
+      producto: 'Producto',
+      almacen: 'Central',
+      ajuste: 2,
+      existencia: 7,
+      motivo: 'Conteo físico',
+      usuarioId: null,
+      usuario: 'Erika Administradora',
+    };
+    const relacionar = (servicio as unknown as {
+      actualizarRelacionAjuste: (
+        item: AjusteInventario,
+        productos: Map<number, unknown>,
+        almacenes: Map<number, unknown>,
+        usuarios: Map<number, unknown>,
+      ) => AjusteInventario;
+    }).actualizarRelacionAjuste.bind(servicio);
+
+    const resultado = relacionar(
+      ajuste,
+      new Map<number, unknown>(),
+      new Map<number, unknown>(),
+      new Map<number, unknown>(),
+    );
+
+    expect(resultado.usuarioId).toBeNull();
+    expect(resultado.usuario).toBe('Erika Administradora');
   });
 });
 

@@ -10,6 +10,11 @@ import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { CatalogoProductos, ProductoCatalogo } from '../../../shared/services/catalogo-productos';
 import { PersistenciaLocal } from '../../../shared/services/persistencia-local';
 import { Autenticacion } from '../../../shared/services/autenticacion';
+import {
+  CampoFiltroInventario,
+  FiltrosInventarioDialog,
+  ValorFiltroInventario,
+} from '../filtros-inventario-dialog/filtros-inventario-dialog';
 
 type EstadoRecepcion = 'Pendiente' | 'En revisión' | 'Recibida' | 'Con incidencias';
 
@@ -69,19 +74,48 @@ export class Recepcion implements OnInit, AfterViewInit {
   private readonly autenticacion = inject(Autenticacion);
   private productosDb: ProductoCatalogo[] = [];
   busqueda = '';
-  estado = '';
+  currentSort = 'Más antiguos';
+  filtros: Record<string, ValorFiltroInventario> = {
+    estado: '',
+    proveedor: '',
+    almacen: '',
+    responsable: '',
+    fechaDesde: '',
+    fechaHasta: '',
+    unidadesMinimas: null,
+    unidadesMaximas: null,
+  };
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   constructor(private dialog: MatDialog, private snackBar: MatSnackBar) {
     this.dataSource.filterPredicate = (item, raw) => {
-      const filtro = JSON.parse(raw) as { busqueda: string; estado: string };
+      const filtro = JSON.parse(raw) as {
+        busqueda: string;
+        estado: string;
+        proveedor: string;
+        almacen: string;
+        responsable: string;
+        fechaDesde: string;
+        fechaHasta: string;
+        unidadesMinimas: number | null;
+        unidadesMaximas: number | null;
+      };
       const texto = `${item.folio} ${item.orden} ${item.proveedor} ${item.almacen} ${item.responsable}`.toLowerCase();
-      return texto.includes(filtro.busqueda) && (!filtro.estado || item.estado === filtro.estado);
+      return texto.includes(filtro.busqueda)
+        && (!filtro.estado || item.estado === filtro.estado)
+        && (!filtro.proveedor || item.proveedor === filtro.proveedor)
+        && (!filtro.almacen || item.almacen === filtro.almacen)
+        && (!filtro.responsable || item.responsable === filtro.responsable)
+        && (!filtro.fechaDesde || item.fecha >= filtro.fechaDesde)
+        && (!filtro.fechaHasta || item.fecha <= filtro.fechaHasta)
+        && (filtro.unidadesMinimas == null || item.unidades >= Number(filtro.unidadesMinimas))
+        && (filtro.unidadesMaximas == null || item.unidades <= Number(filtro.unidadesMaximas));
     };
   }
 
   ngOnInit(): void {
+    this.ordenar(this.currentSort);
     this.catalogoProductos.cargar().subscribe({
       next: productos => this.productosDb = productos.filter(producto => producto.estado),
       error: () => this.snackBar.open('No fue posible cargar los productos de la base de datos', 'Cerrar', { duration: 4000 }),
@@ -92,18 +126,67 @@ export class Recepcion implements OnInit, AfterViewInit {
     this.dataSource.paginator = this.paginator;
   }
 
-  get pendientes(): number { return this.dataSource.data.filter(item => item.estado === 'Pendiente' || item.estado === 'En revisión').length; }
-  get recibidas(): number { return this.dataSource.data.filter(item => item.estado === 'Recibida').length; }
-  get incidencias(): number { return this.dataSource.data.filter(item => item.estado === 'Con incidencias').length; }
-  get unidades(): number { return this.dataSource.data.reduce((total, item) => total + item.unidades, 0); }
+  get conteoFiltros(): number {
+    return Object.values(this.filtros).filter(value => value !== '' && value !== null).length;
+  }
 
   filtrar(): void {
-    this.dataSource.filter = JSON.stringify({ busqueda: this.busqueda.trim().toLowerCase(), estado: this.estado });
+    this.dataSource.filter = JSON.stringify({
+      busqueda: this.busqueda.trim().toLowerCase(),
+      ...this.filtros,
+    });
     this.paginator?.firstPage();
   }
 
-  setEstado(estado: string): void {
-    this.estado = estado;
+  abrirFiltros(): void {
+    const opciones = (valores: string[]) => [...new Set(valores)]
+      .sort((a, b) => a.localeCompare(b, 'es'))
+      .map(value => ({ value, label: value }));
+    const fields: CampoFiltroInventario[] = [
+      {
+        key: 'estado', label: 'Estado', icon: 'flag', type: 'select', emptyLabel: 'Todos los estados',
+        options: opciones(this.dataSource.data.map(item => item.estado)),
+      },
+      {
+        key: 'proveedor', label: 'Proveedor', icon: 'local_shipping', type: 'select', emptyLabel: 'Todos los proveedores',
+        options: opciones(this.dataSource.data.map(item => item.proveedor)),
+      },
+      {
+        key: 'almacen', label: 'Almacén destino', icon: 'warehouse', type: 'select', emptyLabel: 'Todos los almacenes',
+        options: opciones(this.dataSource.data.map(item => item.almacen)),
+      },
+      {
+        key: 'responsable', label: 'Responsable', icon: 'person', type: 'select', emptyLabel: 'Todos los responsables',
+        options: opciones(this.dataSource.data.map(item => item.responsable)),
+      },
+      { key: 'fechaDesde', label: 'Fecha desde', icon: 'calendar_today', type: 'date' },
+      { key: 'fechaHasta', label: 'Fecha hasta', icon: 'event', type: 'date' },
+      { key: 'unidadesMinimas', label: 'Unidades mínimas', icon: 'south', type: 'number', defaultValue: null, min: 0, step: 1 },
+      { key: 'unidadesMaximas', label: 'Unidades máximas', icon: 'north', type: 'number', defaultValue: null, min: 0, step: 1 },
+    ];
+    this.dialog.open(FiltrosInventarioDialog, {
+      width: '680px',
+      maxWidth: '96vw',
+      panelClass: 'custom-dialog',
+      data: { title: 'Filtrar recepciones', filters: this.filtros, fields },
+    }).afterClosed().subscribe((filters?: Record<string, ValorFiltroInventario>) => {
+      if (!filters) return;
+      this.filtros = filters;
+      this.filtrar();
+    });
+  }
+
+  ordenar(orden: string): void {
+    this.currentSort = orden;
+    const datos = [...this.dataSource.data];
+    if (orden === 'Más recientes') {
+      datos.sort((a, b) => b.fecha.localeCompare(a.fecha) || b.folio.localeCompare(a.folio));
+    } else if (orden === 'Folio') {
+      datos.sort((a, b) => a.folio.localeCompare(b.folio));
+    } else {
+      datos.sort((a, b) => a.fecha.localeCompare(b.fecha) || a.folio.localeCompare(b.folio));
+    }
+    this.dataSource.data = datos;
     this.filtrar();
   }
 
@@ -126,7 +209,7 @@ export class Recepcion implements OnInit, AfterViewInit {
       if (!recepcion) return;
       const siguiente = String(this.dataSource.data.length + 1).padStart(4, '0');
       this.dataSource.data = [{ ...recepcion, folio: `REC-${siguiente}`, estado: 'Pendiente' }, ...this.dataSource.data];
-      this.filtrar();
+      this.ordenar(this.currentSort);
       this.snackBar.open('Recepción registrada correctamente', 'Cerrar', { duration: 3500 });
     });
   }

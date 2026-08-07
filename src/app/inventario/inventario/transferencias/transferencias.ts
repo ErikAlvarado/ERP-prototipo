@@ -53,7 +53,7 @@ export class Transferencias implements OnInit, AfterViewInit {
   obs!: Observable<TransferenciaInventario[]>;
   contexto?: ContextoInventario;
   currentSearch = '';
-  currentSort = 'Más antiguas';
+  currentSort = 'Más antiguos';
   filtros: Record<string, ValorFiltroInventario> = {
     productoId: '',
     almacenId: '',

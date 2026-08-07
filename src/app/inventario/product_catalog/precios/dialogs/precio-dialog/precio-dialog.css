@@ -6,6 +6,8 @@
 .margin-preview small { grid-column: 1 / -1; color: #667085; }
 .error-text { margin: 0; color: #b42318; font-size: 12px; }
 
+mat-option strong { font-weight: 700; }
+
 @media (max-width: 600px) {
   .formulario { grid-template-columns: 1fr; }
   .full-width { grid-column: auto; }

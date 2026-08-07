@@ -12,12 +12,16 @@ import {
   OpcionesProducto,
   ProductoCatalogo,
 } from '../../../shared/services/catalogo-productos';
-import { ProductD } from './dialogs/product-d/product-d';
+import {
+  OpcionAlmacenProducto,
+  OpcionAnaquelProducto,
+  ProductD,
+} from './dialogs/product-d/product-d';
 import { Filtro, FiltrosProducto } from './dialogs/filtro/filtro';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { EstatusProducto } from '../../../shared/components/estatus-producto/estatus-producto';
 import { AdministracionDatos } from '../../administracion/administracion-datos';
-import { OpcionAlmacenProducto } from './dialogs/product-d/product-d';
+import { AnaquelesCatalogo } from '../anaqueles/anaqueles-catalogo';
 
 export type PeriodicElement = ProductoCatalogo;
 
@@ -34,8 +38,7 @@ const FILTROS_VACIOS: FiltrosProducto = {
   categoria: '',
   marca: '',
   unidad: '',
-  ubicacion: '',
-  claveSat: '',
+  anaquel: '',
   conCodigo: null,
   pos: null,
   visible: null,
@@ -58,6 +61,7 @@ export class Products implements OnInit, AfterViewInit {
   filtrosAvanzados: FiltrosProducto = { ...FILTROS_VACIOS };
   opciones: OpcionesProducto = { ...OPCIONES_VACIAS };
   almacenes: OpcionAlmacenProducto[] = [];
+  anaqueles: OpcionAnaquelProducto[] = [];
   cargando = true;
   errorCarga = '';
   obs!: Observable<PeriodicElement[]>;
@@ -69,6 +73,7 @@ export class Products implements OnInit, AfterViewInit {
     private catalogo: CatalogoProductos,
     private router: Router,
     private administracion: AdministracionDatos,
+    private catalogoAnaqueles: AnaquelesCatalogo,
   ) {}
 
   ngOnInit(): void {
@@ -85,8 +90,7 @@ export class Products implements OnInit, AfterViewInit {
         producto.marca,
         producto.categoria,
         producto.medida,
-        producto.ubicacionDefault,
-        producto.claveSat,
+        ...(producto.inventarios || []).map(inventario => inventario.anaquel),
       ].some(valor => this.normalizar(valor).includes(texto));
       const avanzados = datos.adv;
 
@@ -95,8 +99,8 @@ export class Products implements OnInit, AfterViewInit {
         && (!avanzados.categoria || producto.categoria === avanzados.categoria)
         && (!avanzados.marca || producto.marca === avanzados.marca)
         && (!avanzados.unidad || producto.medida === avanzados.unidad)
-        && (!avanzados.ubicacion || this.normalizar(producto.ubicacionDefault).includes(this.normalizar(avanzados.ubicacion)))
-        && (!avanzados.claveSat || this.normalizar(producto.claveSat).includes(this.normalizar(avanzados.claveSat)))
+        && (!avanzados.anaquel || (producto.inventarios || []).some(
+          inventario => inventario.anaquel === avanzados.anaquel))
         && (avanzados.conCodigo == null || (avanzados.conCodigo ? !!producto.codigo : !producto.codigo))
         && (avanzados.pos == null || producto.pos === avanzados.pos)
         && (avanzados.visible == null || producto.linea === avanzados.visible)
@@ -150,6 +154,8 @@ export class Products implements OnInit, AfterViewInit {
         categorias: this.opciones.categorias.map(opcion => opcion.nombre),
         marcas: this.opciones.marcas.map(opcion => opcion.nombre),
         unidades: this.opciones.unidades.map(opcion => opcion.nombre),
+        anaqueles: [...new Set(this.anaqueles.filter(anaquel => anaquel.estado).map(anaquel => anaquel.nombre))]
+          .sort((a, b) => a.localeCompare(b, 'es')),
       },
     }).afterClosed().subscribe((resultado?: FiltrosProducto) => {
       if (!resultado) return;
@@ -167,6 +173,7 @@ export class Products implements OnInit, AfterViewInit {
         mode: 'add',
         opciones: this.opciones,
         almacenes: this.almacenes,
+        anaqueles: this.anaqueles,
         productos: this.dataSource.data,
       },
     }).afterClosed().subscribe((resultado?: ProductoCatalogo) => {
@@ -211,6 +218,7 @@ export class Products implements OnInit, AfterViewInit {
         product: producto,
         opciones: this.opciones,
         almacenes: this.almacenes,
+        anaqueles: this.anaqueles,
         productos: this.dataSource.data,
       },
     }).afterClosed().subscribe((resultado?: ProductoCatalogo) => {
@@ -279,6 +287,7 @@ export class Products implements OnInit, AfterViewInit {
             idEmpresa: Number(almacen.empresaId),
             nombre: almacen.nombre,
           }));
+        this.anaqueles = this.catalogoAnaqueles.cargar(productos, administracion.almacenes);
         this.dataSource.data = productos;
         this.setSort(this.currentSort);
         this.cargando = false;

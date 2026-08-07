@@ -182,7 +182,7 @@ export class Autenticacion {
       return false;
     }
     if (!this.puedeVerInventario()) return false;
-    const rutasCatalogo = ['/products', '/kits', '/precios', '/marcas', '/categorias', '/unidades'];
+    const rutasCatalogo = ['/products', '/kits', '/precios', '/marcas', '/categorias', '/unidades', '/anaqueles'];
     if (rutasCatalogo.some(ruta => url.startsWith(ruta))) return this.esJefeInventarios();
     if (url === '/dashboard' || url.startsWith('/dashboard?')) return false;
     return true;
