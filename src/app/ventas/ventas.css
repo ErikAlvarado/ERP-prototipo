@@ -1,5 +1,6 @@
 /* Sistema visual de Ventas, alineado con Inventario y Angular Material. */
 :root {
+  color-scheme: light;
   --navbar-height: 64px;
   --primary-color: #175cd3;
   --accent-color: #175cd3;

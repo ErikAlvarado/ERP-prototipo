@@ -1,9 +1,19 @@
-import { Component, EventEmitter, Output, ElementRef, HostListener } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Output,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { Product } from '../../models/product.model';
-import { MOCK_PRODUCTS } from '../../services/mock-data';
+import { InventoryService, warehouseSummary } from '../../services/inventory.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-searchbar',
@@ -19,7 +29,7 @@ import { MOCK_PRODUCTS } from '../../services/mock-data';
           class="form-control barcode-input" 
           [(ngModel)]="searchQuery"
           (input)="onSearchInput()"
-          (focus)="onSearchInput()"
+          (focus)="onSearchInput(true)"
           (keydown.enter)="onEnterPressed()"
         />
         <button class="btn-premium btn-accent add-btn" (click)="onEnterPressed()">
@@ -33,6 +43,7 @@ import { MOCK_PRODUCTS } from '../../services/mock-data';
           class="suggestion-item" 
           *ngFor="let prod of filteredProducts" 
           (mousedown)="selectProduct(prod)"
+          [class.disabled]="prod.tracksInventory !== false && prod.stock <= 0"
         >
           <div class="prod-badge" [class.no-stock]="prod.stock === 0">
             {{ prod.stock > 0 ? prod.stock + ' pz' : 'Agotado' }}
@@ -45,6 +56,7 @@ import { MOCK_PRODUCTS } from '../../services/mock-data';
             <span class="prod-meta">
               SKU: {{ prod.sku }} | Cód: {{ prod.code }} | Modelo: {{ prod.model || 'N/A' }} | Cat: {{ prod.category }}
             </span>
+            <span class="warehouse-stock">{{ getWarehouseSummary(prod) }}</span>
           </div>
           <div class="prod-price font-bold">
             \${{ prod.price | number:'1.2-2' }}
@@ -57,6 +69,14 @@ import { MOCK_PRODUCTS } from '../../services/mock-data';
           <i class="fa-solid fa-circle-exclamation"></i>
           <span>No se encontraron productos coincidentes.</span>
         </div>
+      </div>
+
+      <div class="catalog-state" *ngIf="loadingProducts">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        Cargando productos y existencias...
+      </div>
+      <div class="catalog-state catalog-error" *ngIf="catalogError">
+        No fue posible cargar el catálogo de inventario.
       </div>
     </div>
   `,
@@ -124,6 +144,11 @@ import { MOCK_PRODUCTS } from '../../services/mock-data';
         background-color: var(--bg-color);
         transform: translateX(2px);
       }
+
+      &.disabled {
+        opacity: 0.62;
+        cursor: not-allowed;
+      }
     }
 
     .prod-badge {
@@ -167,6 +192,12 @@ import { MOCK_PRODUCTS } from '../../services/mock-data';
       color: var(--text-secondary);
     }
 
+    .warehouse-stock {
+      color: var(--text-secondary);
+      font-size: 0.72rem;
+      line-height: 1.35;
+    }
+
     .prod-price {
       font-size: 1rem;
       color: var(--accent-color);
@@ -180,16 +211,65 @@ import { MOCK_PRODUCTS } from '../../services/mock-data';
       color: var(--text-secondary);
       font-size: 0.9rem;
     }
+
+    .catalog-state {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding-top: 8px;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+    }
+
+    .catalog-error {
+      color: var(--danger-color);
+    }
   `]
 })
-export class SearchbarComponent {
+export class SearchbarComponent implements OnInit, OnDestroy {
   @Output() productSelected = new EventEmitter<Product>();
 
   searchQuery = '';
   filteredProducts: Product[] = [];
   showSuggestions = false;
+  loadingProducts = true;
+  catalogError = false;
+  private products: Product[] = [];
+  private readonly subscriptions = new Subscription();
 
-  constructor(private elementRef: ElementRef) {}
+  constructor(
+    private elementRef: ElementRef,
+    private inventoryService: InventoryService,
+    private changeDetector: ChangeDetectorRef,
+  ) {}
+
+  ngOnInit(): void {
+    this.subscriptions.add(
+      this.inventoryService.products$.subscribe(products => {
+        this.products = products;
+        if (this.showSuggestions) this.onSearchInput(true);
+        this.changeDetector.markForCheck();
+      }),
+    );
+    this.subscriptions.add(
+      this.inventoryService.loadProducts().subscribe({
+        next: () => {
+          this.loadingProducts = false;
+          this.catalogError = false;
+          this.changeDetector.markForCheck();
+        },
+        error: () => {
+          this.loadingProducts = false;
+          this.catalogError = true;
+          this.changeDetector.markForCheck();
+        },
+      }),
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
 
   @HostListener('document:click', ['$event'])
   onClickOutside(event: Event): void {
@@ -205,17 +285,18 @@ export class SearchbarComponent {
       .replace(/[\u0300-\u036f]/g, '');
   }
 
-  onSearchInput(): void {
+  onSearchInput(showAll = false): void {
     const rawTerm = this.normalizeStr(this.searchQuery).trim();
     if (!rawTerm) {
-      this.filteredProducts = [];
-      this.showSuggestions = false;
+      this.filteredProducts = showAll ? this.products.slice(0, 30) : [];
+      // Conserva la intención del primer foco mientras termina la lectura HTTP.
+      this.showSuggestions = showAll;
       return;
     }
 
     const tokens = rawTerm.split(/\s+/).filter(t => t.length > 0);
 
-    this.filteredProducts = MOCK_PRODUCTS.filter(p => {
+    this.filteredProducts = this.products.filter(p => {
       const fullText = this.normalizeStr(
         `${p.name} ${p.brand || ''} ${p.model || ''} ${p.sku} ${p.code} ${p.category}`
       );
@@ -225,6 +306,7 @@ export class SearchbarComponent {
   }
 
   selectProduct(product: Product): void {
+    if (product.tracksInventory !== false && product.stock <= 0) return;
     this.productSelected.emit(product);
     this.searchQuery = '';
     this.showSuggestions = false;
@@ -235,7 +317,7 @@ export class SearchbarComponent {
     if (!rawTerm) return;
 
     // Direct match check (by SKU or Code first)
-    const directMatch = MOCK_PRODUCTS.find(p => 
+    const directMatch = this.products.find(p =>
       this.normalizeStr(p.sku) === rawTerm ||
       this.normalizeStr(p.code) === rawTerm
     );
@@ -245,5 +327,9 @@ export class SearchbarComponent {
     } else if (this.filteredProducts.length > 0) {
       this.selectProduct(this.filteredProducts[0]);
     }
+  }
+
+  getWarehouseSummary(product: Product): string {
+    return warehouseSummary(product);
   }
 }

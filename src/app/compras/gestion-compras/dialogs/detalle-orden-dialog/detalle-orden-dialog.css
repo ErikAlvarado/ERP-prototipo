@@ -11,5 +11,10 @@ dt { margin-bottom: 4px; }
 dd { margin: 0; overflow-wrap: anywhere; font-weight: 600; }
 .total { color: #1d4ed8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 18px; }
 .ancho { grid-column: 1 / -1; }
+.partidas { margin-top: 22px; padding-top: 18px; border-top: 1px solid #e4e7ec; }
+.partidas h3 { margin: 0 0 10px; font-size: 14px; }
+.partidas article { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
+.partidas article div { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
+.partidas small { color: #667085; }
 mat-dialog-actions { padding: 8px 24px 20px; }
 @media (max-width: 560px) { dl { grid-template-columns: 1fr; } .ancho { grid-column: auto; } mat-dialog-content { min-width: 0; } }

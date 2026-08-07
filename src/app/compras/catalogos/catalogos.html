@@ -25,7 +25,7 @@
       @if (categoriaActiva() !== 'Todos') { <span class="contador-filtro">1</span> }
     </button>
     <mat-menu #menuCategorias="matMenu">
-      @for (categoria of categorias; track categoria.valor) {
+      @for (categoria of categorias(); track categoria.valor) {
         <button mat-menu-item type="button" (click)="seleccionarCategoria(categoria.valor)">
           @if (categoriaActiva() === categoria.valor) { <mat-icon>check</mat-icon> }
           <span>{{ categoria.etiqueta }}</span>
@@ -90,9 +90,26 @@
                 <strong [class]="stockClase(producto.stock)">{{ producto.stock }}</strong>
               </div>
             </div>
-            <button mat-stroked-button type="button" class="comprar" (click)="comprar(producto.proveedor)">
+            <div class="stock-almacenes">
+              @for (existencia of producto.existencias; track existencia.almacenId) {
+                <span>
+                  {{ existencia.almacen }}:
+                  <strong [class]="stockClase(existencia.stock)">{{ existencia.stock }}</strong>
+                  <small>(reorden {{ existencia.stockReorden }})</small>
+                </span>
+              } @empty {
+                <span>Sin existencias por almacén</span>
+              }
+            </div>
+            <button
+              mat-stroked-button
+              type="button"
+              class="comprar"
+              [disabled]="producto.proveedorId === null"
+              (click)="comprar(producto.proveedor)"
+            >
               <mat-icon>shopping_cart</mat-icon>
-              Comprar
+              {{ producto.proveedorId === null ? 'Sin proveedor' : 'Comprar' }}
             </button>
           </mat-card-content>
         </mat-card>

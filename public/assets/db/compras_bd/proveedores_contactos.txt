@@ -6,3 +6,8 @@ id_contacto|id_proveedor|nombre|puesto|correo|telefono|es_principal|activo
 5|4|Adriana León|Ejecutiva mayorista|adriana.leon@textilbajio.mx|5551102005|1|1
 6|5|Jorge Campos|Representante médico|jorge.campos@medicaomega.mx|5551102006|1|1
 7|6|Patricia Mora|Ventas corporativas|patricia.mora@limpiezauniversal.mx|5551102007|1|1
+8|7|Roberto Salgado|Ejecutivo mayorista|roberto.salgado@ferrejardin.mx|5551102008|1|1
+9|8|Daniela Rios|Gerente comercial|daniela.rios@deporteyjuguete.mx|5551102009|1|1
+10|9|Sofia Trejo|Ventas mayoristas|sofia.trejo@mascotascentro.mx|5551102010|1|1
+11|10|Arturo Vidal|Ejecutivo de cuenta|arturo.vidal@autopartesnacionales.mx|5551102011|1|1
+12|11|Elena Paredes|Coordinadora de pedidos|elena.paredes@abarrotesybebidas.mx|5551102012|1|1

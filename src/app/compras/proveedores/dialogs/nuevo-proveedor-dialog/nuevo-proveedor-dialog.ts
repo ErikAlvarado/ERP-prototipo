@@ -8,11 +8,11 @@ import {
 export interface NuevoProveedor {
   razonSocial: string;
   nombreComercial: string;
+  rfc: string;
   direccionFiscal: string;
   contacto: string;
   correo: string;
   telefono: string;
-  categoria: string;
 }
 
 @Component({
@@ -26,15 +26,17 @@ export class NuevoProveedorDialog {
   private readonly constructorFormulario = inject(FormBuilder);
   private readonly referenciaDialogo = inject(MatDialogRef<NuevoProveedorDialog, NuevoProveedor>);
 
-  readonly categorias = ['Tecnología', 'Papelería', 'Industrial', 'Mobiliario', 'Consumibles', 'Logística'];
   readonly formulario = this.constructorFormulario.nonNullable.group({
     razonSocial: ['', [Validators.required, Validators.minLength(3)]],
     nombreComercial: ['', [Validators.required, Validators.minLength(2)]],
+    rfc: ['', [
+      Validators.required,
+      Validators.pattern(/^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/i),
+    ]],
     direccionFiscal: ['', [Validators.required, Validators.minLength(10)]],
     contacto: [''],
     correo: ['', [Validators.required, Validators.email]],
     telefono: [''],
-    categoria: ['Tecnología', Validators.required],
   });
 
   cancelar(): void {
@@ -47,6 +49,10 @@ export class NuevoProveedorDialog {
       return;
     }
 
-    this.referenciaDialogo.close(this.formulario.getRawValue());
+    const valor = this.formulario.getRawValue();
+    this.referenciaDialogo.close({
+      ...valor,
+      rfc: valor.rfc.trim().toLocaleUpperCase('es-MX'),
+    });
   }
 }

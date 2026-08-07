@@ -22,6 +22,16 @@
               <h2>{{ producto.nombre }}</h2>
               <span>{{ producto.categoria }}</span>
               <strong>{{ producto.precio | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+              <small>
+                Stock total {{ producto.stock }} · Reorden {{ producto.stockReorden }}
+              </small>
+              <small class="almacenes">
+                @for (existencia of producto.existencias; track existencia.almacenId) {
+                  {{ existencia.almacen }}: {{ existencia.stock }}@if (!$last) { · }
+                } @empty {
+                  Sin stock por almacén
+                }
+              </small>
             </div>
 
             <button

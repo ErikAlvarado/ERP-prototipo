@@ -1,69 +1,25 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { CurrencyPipe, DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { PageEvent } from '@angular/material/paginator';
 import { RouterLink } from '@angular/router';
 import { ChartConfiguration, ChartOptions } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
-import { IMPORTACIONES_MATERIAL_COMPRAS } from '../../shared/material/importaciones-material';
 import { Card } from '../../shared/components/card/card';
 import { EncabezadoPagina } from '../../shared/components/encabezado-pagina/encabezado-pagina';
 import { Estado } from '../../shared/components/estado/estado';
-import { PageEvent } from '@angular/material/paginator';
-
-export interface OrdenCompra {
-  folio: string;
-  proveedor: string;
-  solicitante: string;
-  total: string;
-  estado: string;
-}
-
-const ORDENES_COMPRA: OrdenCompra[] = [
-  {
-    folio: 'OC-2025-0087',
-    proveedor: 'TechnoInsumos SA de CV',
-    solicitante: 'Laura Hernandez',
-    total: '$84,500',
-    estado: 'Completado',
-  },
-  {
-    folio: 'OC-2025-0088',
-    proveedor: 'Electronica Empresarial MX',
-    solicitante: 'Marco Jimenez',
-    total: '$42,300',
-    estado: 'En transito',
-  },
-  {
-    folio: 'OC-2025-0089',
-    proveedor: 'Materiales del Norte SA',
-    solicitante: 'Diana Ruiz',
-    total: '$156,800',
-    estado: 'Activo',
-  },
-  {
-    folio: 'OC-2025-0090',
-    proveedor: 'Grupo Distribuidora Nacional',
-    solicitante: 'Carlos Vega',
-    total: '$23,400',
-    estado: 'Pendiente',
-  },
-  {
-    folio: 'OC-2025-0091',
-    proveedor: 'Soluciones Logisticas Omega',
-    solicitante: 'Andrea Morales',
-    total: '$67,200',
-    estado: 'Activo',
-  },
-  { folio: 'OC-2025-0092', proveedor: 'Oficinas y Diseño MX', solicitante: 'Roberto Sánchez', total: '$31,850', estado: 'Completado' },
-  { folio: 'OC-2025-0093', proveedor: 'Distribuidora DirectTech', solicitante: 'Elena Romero', total: '$98,200', estado: 'En transito' },
-  { folio: 'OC-2025-0094', proveedor: 'Muebles Corporativos SA', solicitante: 'Miguel Sánchez', total: '$54,600', estado: 'Pendiente' },
-  { folio: 'OC-2025-0095', proveedor: 'Papelería Metropolitana', solicitante: 'Laura Torres', total: '$18,975', estado: 'Activo' },
-  { folio: 'OC-2025-0096', proveedor: 'Seguridad Industrial Bajío', solicitante: 'Diego Navarro', total: '$76,340', estado: 'Completado' },
-  { folio: 'OC-2025-0097', proveedor: 'Redes y Sistemas Omega', solicitante: 'Fernanda Castillo', total: '$112,500', estado: 'Pendiente' },
-  { folio: 'OC-2025-0098', proveedor: 'Logística Nacional Express', solicitante: 'Jorge Ramírez', total: '$29,780', estado: 'En transito' },
-];
+import { IMPORTACIONES_MATERIAL_COMPRAS } from '../../shared/material/importaciones-material';
+import { perteneceAlPeriodo } from '../../shared/utils/periodos-consulta';
+import { InventarioComprasService } from '../services/inventario-compras.service';
+import {
+  OrdenCompra,
+  OrdenesCompraService,
+} from '../services/ordenes-compra.service';
 
 @Component({
   selector: 'app-dashboard',
   imports: [
+    CurrencyPipe,
+    DatePipe,
     RouterLink,
     Card,
     EncabezadoPagina,
@@ -76,85 +32,134 @@ const ORDENES_COMPRA: OrdenCompra[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Dashboard {
-  readonly displayedColumns = ['folio', 'proveedor', 'solicitante', 'total', 'estado'];
-  readonly dataSource = ORDENES_COMPRA;
+  readonly ordenesCompra = inject(OrdenesCompraService);
+  readonly inventario = inject(InventarioComprasService);
+  readonly displayedColumns = [
+    'folio',
+    'proveedor',
+    'articulos',
+    'total',
+    'solicitante',
+    'fecha',
+    'estado',
+  ];
   pagina = 0;
   readonly tamanoPagina = 10;
 
-  get ordenesPagina(): OrdenCompra[] {
+  /** Misma signal y mismos registros que Gestión de compras > Órdenes. */
+  get dataSource(): readonly OrdenCompra[] {
+    return this.ordenesCompra.ordenesRecientes();
+  }
+
+  get ordenesPagina(): readonly OrdenCompra[] {
     const inicio = this.pagina * this.tamanoPagina;
     return this.dataSource.slice(inicio, inicio + this.tamanoPagina);
+  }
+
+  get ordenesDelMes(): OrdenCompra[] {
+    return this.dataSource.filter(orden => perteneceAlPeriodo(orden.fecha, 'mes'));
+  }
+
+  get comprasDelMes(): number {
+    return this.ordenesDelMes
+      .filter(orden => orden.estado !== 'Cancelado')
+      .reduce((total, orden) => total + importeNumerico(orden.total), 0);
+  }
+
+  get ordenesEnProceso(): number {
+    return this.dataSource.filter(orden =>
+      orden.estado !== 'Completado' && orden.estado !== 'Cancelado').length;
+  }
+
+  get proveedoresConOrdenes(): number {
+    return new Set(
+      this.dataSource
+        .filter(orden => orden.estado !== 'Cancelado')
+        .map(orden => orden.proveedor),
+    ).size;
+  }
+
+  get actividadReciente() {
+    return this.ordenesCompra.actividadReciente();
   }
 
   cambiarPagina(evento: PageEvent): void {
     this.pagina = evento.pageIndex;
   }
 
-  readonly comprasData: ChartConfiguration<'line'>['data'] = {
-    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-    datasets: [
-      {
+  get comprasData(): ChartConfiguration<'line'>['data'] {
+    const meses = this.ultimosMeses(6);
+    return {
+      labels: meses.map(mes => mes.etiqueta),
+      datasets: [{
         label: 'Compras',
-        data: [280, 290, 520, 410, 460, 375],
+        data: meses.map(mes => this.dataSource
+          .filter(orden =>
+            orden.estado !== 'Cancelado'
+            && claveMes(orden.fecha) === mes.clave)
+          .reduce((total, orden) => total + importeNumerico(orden.total), 0) / 1000),
         borderColor: '#172554',
         backgroundColor: 'rgba(23, 37, 84, 0.12)',
         borderWidth: 2,
         tension: 0.4,
         fill: true,
         pointRadius: 0,
-      },
-      {
-        label: 'Presupuesto',
-        data: [395, 380, 455, 420, 475, 500],
-        borderColor: '#60a5fa',
-        backgroundColor: 'transparent',
-        borderDash: [5, 4],
-        borderWidth: 1.5,
-        tension: 0.4,
-        fill: false,
-        pointRadius: 0,
-      },
-    ],
-  };
+      }],
+    };
+  }
+
+  get periodoGrafica(): string {
+    const meses = this.ultimosMeses(6);
+    return `${meses[0].etiqueta} – ${meses.at(-1)?.etiqueta} · miles MXN`;
+  }
 
   readonly comprasOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-    },
+    plugins: { legend: { display: false } },
     scales: {
       x: {
-        grid: {
-          color: '#eef2f7',
-          drawTicks: false,
-        },
-        border: {
-          color: '#9ca3af',
-        },
-        ticks: {
-          color: '#94a3b8',
-          padding: 8,
-        },
+        grid: { color: '#eef2f7', drawTicks: false },
+        border: { color: '#9ca3af' },
+        ticks: { color: '#94a3b8', padding: 8 },
       },
       y: {
         beginAtZero: true,
-        max: 600,
-        ticks: {
-          stepSize: 150,
-          color: '#94a3b8',
-          padding: 8,
-        },
-        grid: {
-          color: '#eef2f7',
-          drawTicks: false,
-        },
-        border: {
-          color: '#9ca3af',
-        },
+        ticks: { color: '#94a3b8', padding: 8 },
+        grid: { color: '#eef2f7', drawTicks: false },
+        border: { color: '#9ca3af' },
       },
     },
   };
+
+  private ultimosMeses(cantidad: number): Array<{ clave: string; etiqueta: string }> {
+    const hoy = new Date();
+    return Array.from({ length: cantidad }, (_, indice) => {
+      const fecha = new Date(
+        hoy.getFullYear(),
+        hoy.getMonth() - (cantidad - 1 - indice),
+        1,
+      );
+      return {
+        clave: `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`,
+        etiqueta: new Intl.DateTimeFormat('es-MX', {
+          month: 'short',
+          year: '2-digit',
+        }).format(fecha).replace('.', '').replace(/^\w/, letra =>
+          letra.toLocaleUpperCase('es-MX')),
+      };
+    });
+  }
+}
+
+export function importeNumerico(valor: string): number {
+  const limpio = valor.replace(/[^\d.-]/g, '');
+  const numero = Number(limpio);
+  return Number.isFinite(numero) ? numero : 0;
+}
+
+function claveMes(valor: string): string {
+  const fecha = new Date(valor);
+  if (Number.isNaN(fecha.getTime())) return '';
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
 }

@@ -1,0 +1,350 @@
+<header class="encabezado-dialogo">
+  <div>
+    <h2 mat-dialog-title>Agregar producto</h2>
+    <p>Nuevo producto para {{ datos.proveedor.nombre }}</p>
+  </div>
+  <button
+    mat-icon-button
+    type="button"
+    aria-label="Cerrar alta de producto"
+    [disabled]="guardando()"
+    (click)="cancelar()"
+  >
+    <mat-icon>close</mat-icon>
+  </button>
+</header>
+
+@if (cargando()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Cargando catálogos" />
+}
+
+<mat-dialog-content>
+  @if (errorCarga()) {
+    <div class="mensaje error" role="alert">
+      <mat-icon>cloud_off</mat-icon>
+      <span>{{ errorCarga() }}</span>
+    </div>
+  } @else if (!cargando()) {
+    <form [formGroup]="formulario" id="alta-producto-form" (ngSubmit)="guardar()">
+      <section class="seccion-formulario" aria-labelledby="datos-generales">
+        <div class="titulo-seccion">
+          <mat-icon>inventory_2</mat-icon>
+          <div>
+            <h3 id="datos-generales">Datos generales</h3>
+            <p>Identificación y descripción del producto.</p>
+          </div>
+        </div>
+        <div class="grid-formulario">
+          <mat-form-field appearance="outline" class="campo-doble">
+            <mat-label>Nombre del producto</mat-label>
+            <input matInput formControlName="nombre" maxlength="160" required />
+            <mat-icon matPrefix>sell</mat-icon>
+            @if (formulario.controls.nombre.hasError('required')) {
+              <mat-error>El nombre es obligatorio.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>SKU interno</mat-label>
+            <input matInput formControlName="sku" maxlength="60" required />
+            <mat-icon matPrefix>qr_code_2</mat-icon>
+            @if (formulario.controls.sku.hasError('required')) {
+              <mat-error>El SKU es obligatorio.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Código de barras</mat-label>
+            <input matInput formControlName="codigo" maxlength="80" />
+            <mat-icon matPrefix>barcode_reader</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo</mat-label>
+            <mat-select formControlName="tipo">
+              <mat-option value="Físico">Físico</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="campo-doble">
+            <mat-label>Descripción</mat-label>
+            <textarea
+              matInput
+              formControlName="descripcion"
+              rows="3"
+              maxlength="500"
+            ></textarea>
+            <mat-icon matPrefix>description</mat-icon>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <section class="seccion-formulario" aria-labelledby="clasificacion">
+        <div class="titulo-seccion">
+          <mat-icon>category</mat-icon>
+          <div>
+            <h3 id="clasificacion">Clasificación</h3>
+            <p>Empresa, marca, categoría y unidad del catálogo de Inventario.</p>
+          </div>
+        </div>
+        <div class="grid-formulario cuatro-columnas">
+          <mat-form-field appearance="outline">
+            <mat-label>Empresa</mat-label>
+            <mat-select
+              formControlName="idEmpresa"
+              required
+              (selectionChange)="cambiarEmpresa()"
+            >
+              @for (empresa of opciones().empresas; track empresa.id) {
+                <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Marca</mat-label>
+            <mat-select formControlName="idMarca" required>
+              @for (marca of marcasDisponibles; track marca.id) {
+                <mat-option [value]="marca.id">{{ marca.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Categoría</mat-label>
+            <mat-select formControlName="idCategoria" required>
+              @for (categoria of categoriasDisponibles; track categoria.id) {
+                <mat-option [value]="categoria.id">{{ categoria.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Unidad</mat-label>
+            <mat-select formControlName="idUnidad" required>
+              @for (unidad of unidadesDisponibles; track unidad.id) {
+                <mat-option [value]="unidad.id">{{ unidad.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <section class="seccion-formulario" aria-labelledby="datos-proveedor">
+        <div class="titulo-seccion">
+          <mat-icon>local_shipping</mat-icon>
+          <div>
+            <h3 id="datos-proveedor">Compra a este proveedor</h3>
+            <p>Datos necesarios para poder solicitar el producto cuando falte stock.</p>
+          </div>
+        </div>
+        <div class="grid-formulario cuatro-columnas">
+          <mat-form-field appearance="outline">
+            <mat-label>SKU del proveedor</mat-label>
+            <input
+              matInput
+              formControlName="skuProveedor"
+              maxlength="80"
+              required
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Precio de referencia</mat-label>
+            <span matTextPrefix>$&nbsp;</span>
+            <input
+              matInput
+              formControlName="precioReferencia"
+              type="number"
+              min="0.01"
+              step="0.01"
+              required
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Días de entrega</mat-label>
+            <input
+              matInput
+              formControlName="diasEntrega"
+              type="number"
+              min="0"
+              step="1"
+              required
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Compra mínima</mat-label>
+            <input
+              matInput
+              formControlName="cantidadMinima"
+              type="number"
+              min="1"
+              step="1"
+              required
+            />
+          </mat-form-field>
+        </div>
+      </section>
+
+      <section class="seccion-formulario" aria-labelledby="precio-configuracion">
+        <div class="titulo-seccion">
+          <mat-icon>tune</mat-icon>
+          <div>
+            <h3 id="precio-configuracion">Precio y configuración</h3>
+            <p>Valores comerciales, fiscales y disponibilidad.</p>
+          </div>
+        </div>
+        <div class="grid-formulario cuatro-columnas">
+          <mat-form-field appearance="outline">
+            <mat-label>Costo</mat-label>
+            <span matTextPrefix>$&nbsp;</span>
+            <input matInput formControlName="costo" type="number" min="0" step="0.01" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Precio de venta</mat-label>
+            <span matTextPrefix>$&nbsp;</span>
+            <input matInput formControlName="precio" type="number" min="0" step="0.01" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Estatus</mat-label>
+            <mat-select formControlName="estatus">
+              <mat-option value="Vigente">Vigente</mat-option>
+              <mat-option value="Descontinuado">Descontinuado</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Clave SAT</mat-label>
+            <input matInput formControlName="claveSat" maxlength="30" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="campo-doble">
+            <mat-label>Ubicación predeterminada</mat-label>
+            <input matInput formControlName="ubicacionDefault" maxlength="120" />
+            <mat-icon matPrefix>location_on</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="opciones-producto">
+          <mat-checkbox formControlName="pos">Disponible en punto de venta</mat-checkbox>
+          <mat-checkbox formControlName="linea">Visible en catálogo en línea</mat-checkbox>
+          <mat-checkbox formControlName="requiereReceta">Requiere receta</mat-checkbox>
+          <mat-checkbox [checked]="true" disabled>
+            Controlar existencias
+          </mat-checkbox>
+        </div>
+      </section>
+
+      @if (formulario.controls.usarExistencias.value) {
+        <section class="seccion-formulario" aria-labelledby="inventario-inicial">
+          <div class="titulo-con-accion">
+            <div class="titulo-seccion">
+              <mat-icon>warehouse</mat-icon>
+              <div>
+                <h3 id="inventario-inicial">Inventario inicial</h3>
+                <p>Captura stock y límites por cada almacén.</p>
+              </div>
+            </div>
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="agregarInventario()"
+              [disabled]="inventarios.length >= almacenesDisponibles.length"
+            >
+              <mat-icon>add</mat-icon>
+              Agregar almacén
+            </button>
+          </div>
+
+          <div formArrayName="inventarios" class="inventarios">
+            @for (inventario of inventarios.controls; track $index; let indice = $index) {
+              <div class="fila-inventario" [formGroupName]="indice">
+                <mat-form-field appearance="outline" class="almacen">
+                  <mat-label>Almacén</mat-label>
+                  <mat-select formControlName="idAlmacen" required>
+                    @for (almacen of almacenesParaFila(indice); track almacen.id) {
+                      <mat-option [value]="almacen.id">{{ almacen.nombre }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Stock inicial</mat-label>
+                  <input
+                    matInput
+                    formControlName="stock"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                  />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Stock crítico</mat-label>
+                  <input matInput formControlName="stockCritico" type="number" min="0" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Punto de reorden</mat-label>
+                  <input matInput formControlName="stockReorden" type="number" min="0" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Stock máximo</mat-label>
+                  <input matInput formControlName="stockMaximo" type="number" min="0" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Anaquel</mat-label>
+                  <input matInput formControlName="anaquel" maxlength="80" />
+                </mat-form-field>
+
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="quitar-almacen"
+                  aria-label="Quitar almacén"
+                  [disabled]="inventarios.length === 1"
+                  (click)="quitarInventario(indice)"
+                >
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      @if (errorFormulario()) {
+        <div class="mensaje error" role="alert">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ errorFormulario() }}</span>
+        </div>
+      }
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button
+    mat-stroked-button
+    type="button"
+    [disabled]="guardando()"
+    (click)="cancelar()"
+  >
+    Cancelar
+  </button>
+  <button
+    mat-flat-button
+    type="submit"
+    form="alta-producto-form"
+    [disabled]="cargando() || !!errorCarga() || guardando()"
+  >
+    <mat-icon>add_box</mat-icon>
+    {{ guardando() ? 'Guardando...' : 'Crear y vincular producto' }}
+  </button>
+</mat-dialog-actions>

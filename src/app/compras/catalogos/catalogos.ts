@@ -20,14 +20,15 @@ type OrdenCatalogo = 'Nombre A - Z' | 'Nombre Z - A' | 'Menor precio' | 'Mayor p
 export class Catalogos {
   private readonly catalogo = inject(CatalogoCompras);
   private readonly router = inject(Router);
-  readonly categorias: Array<{ valor: Categoria; etiqueta: string }> = [
-    { valor: 'Todos', etiqueta: 'Todos' },
-    { valor: 'Tecnologia', etiqueta: 'Tecnología' },
-    { valor: 'Papeleria', etiqueta: 'Papelería' },
-    { valor: 'Industrial', etiqueta: 'Industrial' },
-    { valor: 'Mobiliario', etiqueta: 'Mobiliario' },
-    { valor: 'Consumibles', etiqueta: 'Consumibles' },
-  ];
+  readonly categorias = computed<Array<{ valor: Categoria; etiqueta: string }>>(
+    () => [
+      { valor: 'Todos', etiqueta: 'Todos' },
+      ...this.catalogo.categorias().map(categoria => ({
+        valor: categoria,
+        etiqueta: categoria,
+      })),
+    ],
+  );
   readonly busqueda = signal('');
   readonly categoriaActiva = signal<Categoria>('Todos');
   readonly ordenCatalogo = signal<OrdenCatalogo>('Nombre A - Z');
@@ -38,7 +39,9 @@ export class Catalogos {
     'Mayor precio',
   ];
   readonly etiquetaCategoriaActiva = computed(
-    () => this.categorias.find((categoria) => categoria.valor === this.categoriaActiva())?.etiqueta ?? 'Todas',
+    () => this.categorias().find(
+      categoria => categoria.valor === this.categoriaActiva(),
+    )?.etiqueta ?? 'Todas',
   );
   readonly productos = this.catalogo.productos;
 
@@ -47,7 +50,9 @@ export class Catalogos {
     const categoria = this.categoriaActiva();
     const productos = this.productos().filter((producto) => {
       const coincideCategoria = categoria === 'Todos' || producto.categoria === categoria;
-      const texto = this.normalizar(`${producto.nombre} ${producto.proveedor}`);
+      const texto = this.normalizar(
+        `${producto.nombre} ${producto.sku} ${producto.codigo} ${producto.proveedor}`,
+      );
       return coincideCategoria && (!termino || texto.includes(termino));
     });
     return [...productos].sort((a, b) => {

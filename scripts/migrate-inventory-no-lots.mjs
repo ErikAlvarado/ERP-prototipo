@@ -1,7 +1,13 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const dbDirectory = resolve(process.cwd(), 'public', 'assets', 'db');
+const dbDirectory = resolve(
+  process.cwd(),
+  'public',
+  'assets',
+  'db',
+  'inventari_db',
+);
 const migrationDate = '2026-07-23';
 
 function readTable(fileName) {

@@ -15,6 +15,7 @@ import { PaymentMethod, PaymentDetails, Venta } from '../../models/venta.model';
 import { SearchbarComponent } from '../../components/searchbar/searchbar.component';
 import { TicketComponent } from '../../components/ticket/ticket.component';
 import { Observable, BehaviorSubject } from 'rxjs';
+import { warehouseSummary } from '../../services/inventory.service';
 
 @Component({
   selector: 'app-pdv',
@@ -105,6 +106,10 @@ import { Observable, BehaviorSubject } from 'rxjs';
                       <span class="prod-sku text-secondary">
                         SKU: {{ item.product.sku }} 
                         <span *ngIf="item.product.brand">| {{ item.product.brand }}</span>
+                      </span>
+                      <span class="prod-stock text-secondary">
+                        Stock total: {{ item.product.stock }} {{ item.product.unit }} ·
+                        {{ getWarehouseSummary(item.product) }}
                       </span>
                     </div>
                   </td>
@@ -624,6 +629,13 @@ import { Observable, BehaviorSubject } from 'rxjs';
     .cart-header-actions {
       display: flex;
       gap: 12px;
+    }
+
+    .prod-stock {
+      display: block;
+      max-width: 390px;
+      font-size: 0.68rem;
+      line-height: 1.3;
     }
 
     /* Discount Badge */
@@ -1182,7 +1194,7 @@ export class PdvComponent implements OnInit {
     });
 
     this.showTicket$ = this.ventaService.showTicket$;
-    this.completedSale$.subscribe();
+    this.completedSale$ = this.ventaService.lastCompletedSale$;
   }
 
   @HostListener('document:click', ['$event'])
@@ -1239,6 +1251,10 @@ export class PdvComponent implements OnInit {
   // Cart operations
   onProductSelected(product: Product): void {
     this.ventaService.addToCart(product);
+  }
+
+  getWarehouseSummary(product: Product): string {
+    return warehouseSummary(product);
   }
 
   increaseQty(sku: string, currentQty: number): void {

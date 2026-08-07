@@ -3,49 +3,69 @@
 
   <mat-tab-group class="tabs-consultas" animationDuration="200ms">
     <mat-tab label="Seguimiento">
-      <div class="barra-periodo">
-        <button mat-stroked-button type="button" class="boton-filtro-inventario filtro-periodo-consultas" [matMenuTriggerFor]="menuPeriodoSeguimiento">
-          <mat-icon>date_range</mat-icon>
-          {{ etiquetaPeriodo() }}
+      <div class="selector-seguimiento">
+        <button
+          mat-stroked-button
+          type="button"
+          [class.seleccionado]="vistaSeguimiento() === 'activos'"
+          (click)="cambiarVistaSeguimiento('activos')"
+        >
+          Pedidos activos ({{ pedidosActivos().length }})
         </button>
-        <mat-menu #menuPeriodoSeguimiento="matMenu">
-          @for (opcion of periodos; track opcion.valor) {
-            <button mat-menu-item type="button" (click)="periodo.set(opcion.valor)">
-              @if (periodo() === opcion.valor) { <mat-icon>check</mat-icon> }
-              <span>{{ opcion.etiqueta }}</span>
-            </button>
-          }
-        </mat-menu>
+        <button
+          mat-stroked-button
+          type="button"
+          [class.seleccionado]="vistaSeguimiento() === 'seguimiento'"
+          (click)="cambiarVistaSeguimiento('seguimiento')"
+        >
+          Aprobadas / en tránsito ({{ ordenesSeguimiento().length }})
+        </button>
+        <small>Los pedidos sin entregar se muestran sin límite de periodo.</small>
       </div>
       <div class="seguimiento-grid">
         <mat-card appearance="outlined" class="panel pedidos-panel">
-          <mat-card-header><mat-card-title>PEDIDOS ACTIVOS</mat-card-title></mat-card-header>
+          <mat-card-header>
+            <mat-card-title>{{ vistaSeguimiento() === 'activos' ? 'PEDIDOS ACTIVOS' : 'EN SEGUIMIENTO' }}</mat-card-title>
+          </mat-card-header>
           <mat-card-content>
-            @for (orden of pedidosActivos(); track orden.folio) {
+            @for (orden of pedidosMostrados(); track orden.folio) {
               <button type="button" class="pedido-item" [class.seleccionado]="detalleOrden().folio === orden.folio" [attr.aria-pressed]="detalleOrden().folio === orden.folio" (click)="seleccionarOrden(orden)">
                 <span class="pedido-linea"><strong>{{ orden.folio }}</strong><mat-chip [class]="'estado ' + orden.estadoClase">{{ orden.estado }}</mat-chip></span>
                 <span class="proveedor">{{ orden.proveedor }}</span>
                 <span class="fecha-lista">{{ orden.fecha | date:'dd MMM yyyy' }}</span>
               </button>
-            }
-          </mat-card-content>
-        </mat-card>
-
-        @let orden = detalleOrden();
-        <mat-card appearance="outlined" class="panel detalle-panel" aria-live="polite">
-          <mat-card-header>
-            <div><mat-card-title>{{ orden.folio }}</mat-card-title><mat-card-subtitle>{{ orden.proveedor }}</mat-card-subtitle></div>
-            <div class="orden-resumen"><mat-chip [class]="'estado ' + orden.estadoClase">{{ orden.estado }}</mat-chip><strong>{{ orden.total | currency:'MXN':'symbol':'1.0-0' }}</strong></div>
-          </mat-card-header>
-          <mat-card-content class="linea-tiempo">
-            @for (etapa of orden.etapas; track etapa.nombre; let ultima = $last) {
-              <div class="etapa" [class.pendiente]="!etapa.completada">
-                <div class="marcador"><span class="circulo">@if (etapa.completada) { <mat-icon>check</mat-icon> } @else { <span></span> }</span>@if (!ultima) { <i></i> }</div>
-                <span class="etapa-nombre">{{ etapa.nombre }}</span><span class="etapa-fecha">{{ etapa.fecha }}</span>
+            } @empty {
+              <div class="estado-vacio">
+                <mat-icon>local_shipping</mat-icon>
+                <strong>No hay pedidos para mostrar</strong>
+                <span>Todas las órdenes están completadas o canceladas.</span>
               </div>
             }
           </mat-card-content>
         </mat-card>
+
+        @if (pedidosMostrados().length) {
+          @let orden = detalleOrden();
+          <mat-card appearance="outlined" class="panel detalle-panel" aria-live="polite">
+            <mat-card-header>
+              <div><mat-card-title>{{ orden.folio }}</mat-card-title><mat-card-subtitle>{{ orden.proveedor }}</mat-card-subtitle></div>
+              <div class="orden-resumen"><mat-chip [class]="'estado ' + orden.estadoClase">{{ orden.estado }}</mat-chip><strong>{{ orden.totalNumerico | currency:'MXN':'symbol':'1.0-0' }}</strong></div>
+            </mat-card-header>
+            <mat-card-content class="linea-tiempo">
+              @for (etapa of orden.etapas; track etapa.nombre; let ultima = $last) {
+                <div class="etapa" [class.pendiente]="!etapa.completada">
+                  <div class="marcador"><span class="circulo">@if (etapa.completada) { <mat-icon>check</mat-icon> } @else { <span></span> }</span>@if (!ultima) { <i></i> }</div>
+                  <span class="etapa-nombre">{{ etapa.nombre }}</span><span class="etapa-fecha">{{ etapa.fecha }}</span>
+                </div>
+              }
+            </mat-card-content>
+          </mat-card>
+        } @else {
+          <mat-card appearance="outlined" class="panel detalle-panel estado-vacio">
+            <mat-icon>timeline</mat-icon>
+            <strong>Sin seguimiento pendiente</strong>
+          </mat-card>
+        }
       </div>
     </mat-tab>
 
@@ -54,7 +74,7 @@
         <mat-card-header>
           <div class="titulo-historial">
             <mat-card-title>Historial de compras</mat-card-title>
-            <mat-card-subtitle>{{ ordenesFiltradas().length }} órdenes en el periodo seleccionado</mat-card-subtitle>
+            <mat-card-subtitle>{{ ordenesFiltradas().length }} compras completadas en el periodo seleccionado</mat-card-subtitle>
           </div>
           <div class="acciones-historial">
             <button mat-stroked-button type="button" class="boton-filtro-inventario filtro-periodo-consultas" [matMenuTriggerFor]="menuPeriodoHistorial">
@@ -63,7 +83,7 @@
             </button>
             <mat-menu #menuPeriodoHistorial="matMenu">
               @for (opcion of periodos; track opcion.valor) {
-                <button mat-menu-item type="button" (click)="periodo.set(opcion.valor)">
+                <button mat-menu-item type="button" (click)="cambiarPeriodo(opcion.valor)">
                   @if (periodo() === opcion.valor) { <mat-icon>check</mat-icon> }
                   <span>{{ opcion.etiqueta }}</span>
                 </button>
@@ -77,20 +97,28 @@
         </mat-card-header>
         <mat-card-content class="tabla-scroll">
           <!-- Columnas del historial de compras -->
-          <table mat-table [dataSource]="ordenesPaginadas()" class="tabla-compartida tabla-inventario vista-escritorio">
+          @if (ordenesFiltradas().length) {
+            <table mat-table [dataSource]="ordenesPaginadas()" class="tabla-compartida tabla-inventario vista-escritorio">
             <ng-container matColumnDef="folio"><th mat-header-cell *matHeaderCellDef>Folio</th><td mat-cell *matCellDef="let o" class="mono">{{ o.folio }}</td></ng-container>
             <ng-container matColumnDef="proveedor"><th mat-header-cell *matHeaderCellDef>Proveedor</th><td mat-cell *matCellDef="let o">{{ o.proveedor }}</td></ng-container>
             <ng-container matColumnDef="solicitante"><th mat-header-cell *matHeaderCellDef>Solicitante</th><td mat-cell *matCellDef="let o" class="secundario">{{ o.solicitante }}</td></ng-container>
             <ng-container matColumnDef="articulos"><th mat-header-cell *matHeaderCellDef>Artículos</th><td mat-cell *matCellDef="let o" class="secundario">{{ o.articulos }}</td></ng-container>
-            <ng-container matColumnDef="total"><th mat-header-cell *matHeaderCellDef>Total</th><td mat-cell *matCellDef="let o" class="mono">{{ o.total | currency:'MXN':'symbol':'1.0-0' }}</td></ng-container>
+            <ng-container matColumnDef="total"><th mat-header-cell *matHeaderCellDef>Total</th><td mat-cell *matCellDef="let o" class="mono">{{ o.totalNumerico | currency:'MXN':'symbol':'1.0-0' }}</td></ng-container>
             <ng-container matColumnDef="fecha"><th mat-header-cell *matHeaderCellDef>Fecha</th><td mat-cell *matCellDef="let o" class="fecha-tabla">{{ o.fecha | date:'dd MMM yyyy' }}</td></ng-container>
             <ng-container matColumnDef="estado"><th mat-header-cell *matHeaderCellDef>Estado</th><td mat-cell *matCellDef="let o"><app-estado [texto]="o.estado" /></td></ng-container>
             <ng-container matColumnDef="acciones"><th mat-header-cell *matHeaderCellDef>Acciones</th><td mat-cell *matCellDef="let o"><button mat-icon-button type="button" class="recomprar" matTooltip="Recomprar" [attr.aria-label]="'Recomprar orden ' + o.folio" (click)="recomprar(o)"><mat-icon>refresh</mat-icon></button></td></ng-container>
             <tr mat-header-row *matHeaderRowDef="columnas"></tr><tr mat-row *matRowDef="let row; columns: columnas"></tr>
-          </table>
-          <mat-paginator [length]="ordenesFiltradas().length" [pageSize]="10" [pageSizeOptions]="[10]" showFirstLastButtons (page)="cambiarPaginaHistorial($event)"></mat-paginator>
+            </table>
+            <mat-paginator [length]="ordenesFiltradas().length" [pageSize]="10" [pageSizeOptions]="[10]" showFirstLastButtons (page)="cambiarPaginaHistorial($event)"></mat-paginator>
+          } @else {
+            <div class="estado-vacio vista-escritorio">
+              <mat-icon>history</mat-icon>
+              <strong>No hay compras completadas en este periodo</strong>
+              <span>Las órdenes pendientes o en tránsito permanecen en seguimiento.</span>
+            </div>
+          }
           <div class="lista-historial vista-movil">
-            @for (o of ordenesFiltradas(); track o.folio) {
+            @for (o of ordenesPaginadas(); track o.folio) {
               <mat-card appearance="outlined" class="tarjeta-historial">
                 <mat-card-header>
                   <div class="encabezado-registro">
@@ -103,13 +131,18 @@
                     <div><span>Solicitante</span><strong>{{ o.solicitante }}</strong></div>
                     <div><span>Artículos</span><strong>{{ o.articulos }}</strong></div>
                     <div><span>Fecha</span><strong>{{ o.fecha | date:'dd MMM yyyy' }}</strong></div>
-                    <div><span>Total</span><strong class="mono">{{ o.total | currency:'MXN':'symbol':'1.0-0' }}</strong></div>
+                    <div><span>Total</span><strong class="mono">{{ o.totalNumerico | currency:'MXN':'symbol':'1.0-0' }}</strong></div>
                   </div>
                 </mat-card-content>
                 <mat-card-actions align="end">
                   <button mat-stroked-button type="button" class="recomprar" (click)="recomprar(o)"><mat-icon>refresh</mat-icon> Recomprar</button>
                 </mat-card-actions>
               </mat-card>
+            } @empty {
+              <div class="estado-vacio">
+                <mat-icon>history</mat-icon>
+                <strong>No hay compras completadas</strong>
+              </div>
             }
           </div>
         </mat-card-content>
@@ -122,7 +155,7 @@
           <mat-card-header><mat-card-title>Generar Reporte</mat-card-title></mat-card-header>
           <mat-card-content>
             <label>TIPO DE REPORTE</label><mat-form-field appearance="outline"><mat-select [(ngModel)]="tipoReporte"><mat-option value="periodo">Reporte de compras por período</mat-option><mat-option value="proveedor">Reporte por proveedor</mat-option><mat-option value="estado">Reporte por estado</mat-option></mat-select></mat-form-field>
-            <label>PERIODO</label><mat-form-field appearance="outline"><mat-select [value]="periodo()" (selectionChange)="periodo.set($event.value)">@for (opcion of periodos; track opcion.valor) { <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option> }</mat-select></mat-form-field>
+            <label>PERIODO</label><mat-form-field appearance="outline"><mat-select [value]="periodo()" (selectionChange)="cambiarPeriodo($event.value)">@for (opcion of periodos; track opcion.valor) { <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option> }</mat-select></mat-form-field>
             <label>FORMATO DE SALIDA</label><mat-form-field appearance="outline"><mat-select [(ngModel)]="formatoReporte"><mat-option value="pdf">PDF</mat-option><mat-option value="xlsx">Excel compatible</mat-option><mat-option value="csv">CSV</mat-option></mat-select></mat-form-field>
             <label for="descripcion-reporte">DESCRIPCIÓN</label>
             <mat-form-field appearance="outline" class="descripcion-reporte">
@@ -140,10 +173,10 @@
           </mat-card-content>
         </mat-card>
         <section class="resumen-periodo"><h2>Resumen del Período</h2>
-          <mat-card appearance="outlined" class="panel resumen-card"><span>TOTAL DE COMPRAS</span><strong>{{ totalPeriodo() | currency:'MXN':'symbol':'1.0-0' }}</strong><small>{{ ordenesFiltradas().length }} órdenes en el periodo</small></mat-card>
-          <mat-card appearance="outlined" class="panel resumen-card"><span>AHORRO VS. PRESUPUESTO</span><strong>$28,400</strong><small>5.7% bajo el presupuesto</small></mat-card>
+          <mat-card appearance="outlined" class="panel resumen-card"><span>TOTAL DE COMPRAS COMPLETADAS</span><strong>{{ totalPeriodo() | currency:'MXN':'symbol':'1.0-0' }}</strong><small>{{ ordenesFiltradas().length }} órdenes recibidas</small></mat-card>
+          <mat-card appearance="outlined" class="panel resumen-card"><span>PEDIDOS ACTIVOS</span><strong>{{ pedidosActivos().length }}</strong><small>Sin límite de periodo</small></mat-card>
           <mat-card appearance="outlined" class="panel resumen-card"><span>ÓRDENES CANCELADAS</span><strong>{{ canceladasPeriodo() }}</strong><small>En el periodo seleccionado</small></mat-card>
-          <mat-card appearance="outlined" class="panel resumen-card"><span>PROVEEDOR CON MAYOR VOLUMEN</span><strong>Materiales del Norte</strong><small>$890,200 acumulado</small></mat-card>
+          <mat-card appearance="outlined" class="panel resumen-card"><span>PROVEEDOR CON MAYOR VOLUMEN COMPLETADO</span><strong>{{ proveedorMayor()[0] }}</strong><small>{{ proveedorMayor()[1] | currency:'MXN':'symbol':'1.0-0' }}</small></mat-card>
         </section>
       </div>
     </mat-tab>

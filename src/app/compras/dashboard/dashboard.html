@@ -1,41 +1,44 @@
 <section class="pagina-contenido pagina-dashboard">
-  <app-encabezado-pagina titulo="Dashboard" subtitulo="Resumen ejecutivo - Junio 2025" />
+  <app-encabezado-pagina titulo="Dashboard de compras" subtitulo="Información actualizada desde Gestión de compras e Inventario" />
 
   <div class="grid-resumen1">
     <!-- Card de compras del mes -->
     <app-card class="tarjeta-resumen">
       <div class="info-resumen">
-        <span class="etiqueta-resumen">Compras del Mes</span>
-        <strong class="valor-resumen">$374,900</strong>
-        <span class="subtitulo-resumen">Junio 2025</span>
+        <span class="etiqueta-resumen">Compras del mes</span>
+        <strong class="valor-resumen">{{ comprasDelMes | currency:'MXN':'symbol':'1.0-0' }}</strong>
+        <span class="subtitulo-resumen">Sin órdenes canceladas</span>
       </div>
     </app-card>
 
     <!-- Card: ordenes del mes -->
     <app-card class="tarjeta-resumen">
       <div class="info-resumen">
-        <span class="etiqueta-resumen">Ordenes del Mes</span>
-        <strong class="valor-resumen">4</strong>
-        <span class="subtitulo-resumen">En Proceso</span>
+        <span class="etiqueta-resumen">Órdenes del mes</span>
+        <strong class="valor-resumen">{{ ordenesDelMes.length }}</strong>
+        <span class="subtitulo-resumen">{{ ordenesEnProceso }} pendientes de entrega</span>
       </div>
     </app-card>
 
     <!-- Card: proveedores activos -->
     <app-card class="tarjeta-resumen">
       <div class="info-resumen">
-        <span class="etiqueta-resumen">Proveedores Activos</span>
-        <strong class="valor-resumen">5</strong>
-        <span class="subtitulo-resumen">6 totales</span>
+        <span class="etiqueta-resumen">Proveedores con órdenes</span>
+        <strong class="valor-resumen">{{ proveedoresConOrdenes }}</strong>
+        <span class="subtitulo-resumen">En la misma fuente de Gestión</span>
       </div>
     </app-card>
 
     <!-- Card: ahorros del mes -->
     <app-card class="tarjeta-resumen">
-      <div class="info-resumen">
-        <span class="etiqueta-resumen">Ahorros del Mes</span>
-        <strong class="valor-resumen">$28,400</strong>
-        <span class="subtitulo-resumen">Vs.Presupuesto</span>
-      </div>
+      <a class="acceso-stock" routerLink="/compras/bajo-stock">
+        <div class="info-resumen">
+          <span class="etiqueta-resumen">Stock bajo</span>
+          <strong class="valor-resumen">{{ inventario.cargando() ? '—' : inventario.bajoStock().length }}</strong>
+          <span class="subtitulo-resumen">Ubicaciones bajo mínimo · Ver por almacén</span>
+        </div>
+        <mat-icon>arrow_forward</mat-icon>
+      </a>
     </app-card>
   </div>
 
@@ -44,8 +47,8 @@
     <!-- Card: grafica de compras contra presupuesto -->
     <app-card class="tarjeta-grafica">
       <div class="encabezado-grafica">
-        <h2>Compras vs. Presupuesto</h2>
-        <span>ENE-JUN 2025 - MILES MXN</span>
+        <h2>Compras de los últimos 6 meses</h2>
+        <span>{{ periodoGrafica }}</span>
       </div>
 
       <div class="contenedor-grafica">
@@ -58,10 +61,6 @@
           <span class="cuadro-leyenda compras"></span>
           Compras
         </span>
-        <span class="item-leyenda">
-          <span class="cuadro-leyenda presupuesto"></span>
-          Presupuesto
-        </span>
       </div>
     </app-card>
 
@@ -70,50 +69,21 @@
       <h2>Actividad Reciente</h2>
 
       <div class="lista-actividad">
-        <div class="item-actividad">
-          <span class="punto-actividad verde"></span>
-          <div>
-            <strong>Orden aprobada</strong>
-            <p>OC-2025-0089 fue aprobada por Direccion General</p>
-            <small>Hace 5 min</small>
+        @for (evento of actividadReciente; track evento.id) {
+          <div class="item-actividad">
+            <span class="punto-actividad" [class.verde]="evento.estado === 'Completado'" [class.azul]="evento.estado !== 'Completado'"></span>
+            <div>
+              <strong>{{ evento.folio }} · {{ evento.estado }}</strong>
+              <p>{{ evento.comentario }}</p>
+              <small>{{ evento.fecha | date:'dd/MM/yyyy HH:mm' }}</small>
+            </div>
           </div>
-        </div>
-
-        <div class="item-actividad">
-          <span class="punto-actividad azul"></span>
-          <div>
-            <strong>Entrega en camino</strong>
-            <p>OC-2025-0088 esta en transito, entrega estimada m...</p>
-            <small>Hace 23 min</small>
+        } @empty {
+          <div class="item-actividad">
+            <span class="punto-actividad azul"></span>
+            <div><strong>Sin actividad</strong><p>Los cambios de Gestión aparecerán aquí.</p></div>
           </div>
-        </div>
-
-        <div class="item-actividad">
-          <span class="punto-actividad azul-fuerte"></span>
-          <div>
-            <strong>Solicitud cancelada</strong>
-            <p>SC-2026-0238 cancelada. Motivo: Sin presupuesto</p>
-            <small>Hace 2 h</small>
-          </div>
-        </div>
-
-        <div class="item-actividad">
-          <span class="punto-actividad verde"></span>
-          <div>
-            <strong>Proveedor registrado</strong>
-            <p>Soluciones Logisticas Omega registrado exitosamente</p>
-            <small>Hace 3 h</small>
-          </div>
-        </div>
-
-        <div class="item-actividad">
-          <span class="punto-actividad azul"></span>
-          <div>
-            <strong>Cotizacion recibida</strong>
-            <p>TechnoInsumos respondio la cotizacion de laptops</p>
-            <small>Ayer 14:38</small>
-          </div>
-        </div>
+        }
       </div>
     </app-card>
   </div>
@@ -121,7 +91,7 @@
   <!-- Card: tabla de ultimas ordenes de compra -->
   <app-card class="ultimas-ordenes">
     <div class="encabezado-ordenes">
-      <h2>Ultimas Ordenes de Compra</h2>
+      <h2>Últimas órdenes de compra</h2>
       <a routerLink="/compras/gestion-compras">Ver todas <mat-icon>arrow_forward</mat-icon></a>
     </div>
 
@@ -141,6 +111,11 @@
           <td mat-cell *matCellDef="let orden">{{ orden.proveedor }}</td>
         </ng-container>
 
+        <ng-container matColumnDef="articulos">
+          <th mat-header-cell *matHeaderCellDef>Artículos</th>
+          <td mat-cell *matCellDef="let orden">{{ orden.articulos }}</td>
+        </ng-container>
+
         <!-- Columna: solicitante -->
         <ng-container matColumnDef="solicitante">
           <th mat-header-cell *matHeaderCellDef>Solicitante</th>
@@ -151,6 +126,11 @@
         <ng-container matColumnDef="total">
           <th mat-header-cell *matHeaderCellDef>Total</th>
           <td mat-cell *matCellDef="let orden" class="total">{{ orden.total }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="fecha">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+          <td mat-cell *matCellDef="let orden" class="texto-suave">{{ orden.fecha | date:'dd/MM/yyyy' }}</td>
         </ng-container>
 
         <!-- Columna: estado -->
@@ -166,7 +146,7 @@
       </table>
       <mat-paginator [length]="dataSource.length" [pageSize]="10" [pageSizeOptions]="[10]" showFirstLastButtons (page)="cambiarPagina($event)"></mat-paginator>
       <div class="lista-ordenes-movil vista-movil">
-        @for (orden of dataSource; track orden.folio) {
+        @for (orden of ordenesPagina; track orden.folio) {
           <mat-card appearance="outlined" class="tarjeta-orden">
             <mat-card-header>
               <div class="encabezado-registro">
@@ -176,6 +156,8 @@
             </mat-card-header>
             <mat-card-content>
               <div><span>Solicitante</span><strong>{{ orden.solicitante }}</strong></div>
+              <div><span>Artículos</span><strong>{{ orden.articulos }}</strong></div>
+              <div><span>Fecha</span><strong>{{ orden.fecha | date:'dd/MM/yyyy' }}</strong></div>
               <div><span>Total</span><strong class="total">{{ orden.total }}</strong></div>
             </mat-card-content>
           </mat-card>

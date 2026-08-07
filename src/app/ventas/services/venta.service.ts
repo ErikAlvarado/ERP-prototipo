@@ -86,7 +86,7 @@ export class VentaService {
     const item = current.find(i => i.product.sku === sku);
 
     if (item) {
-      this.inventoryService.checkStock(sku).subscribe(stock => {
+      this.inventoryService.checkStock(sku, item.product.stock).subscribe(stock => {
         if (qty > stock) {
           this.notificationService.warning(
             `Existencias insuficientes. Stock máximo: ${stock} pzas.`, 
@@ -183,7 +183,11 @@ export class VentaService {
     const payment = this.selectedPaymentSubject.value;
     const totals = this.getTotals();
 
-    const reservationItems = items.map(i => ({ sku: i.product.sku, quantity: i.quantity }));
+    const reservationItems = items.map(i => ({
+      sku: i.product.sku,
+      quantity: i.quantity,
+      fallbackStock: i.product.stock,
+    }));
 
     return this.inventoryService.reserveProducts(reservationItems).pipe(
       switchMap(success => {

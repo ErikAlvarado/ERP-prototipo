@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
@@ -587,7 +587,8 @@ export class HistorialComponent implements OnInit {
 
   constructor(
     private historialService: HistorialService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private changeDetector: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -598,12 +599,14 @@ export class HistorialComponent implements OnInit {
     this.historialService.getSales().subscribe(sales => {
       this.sales = sales;
       this.filteredSales = sales;
+      this.changeDetector.markForCheck();
     });
   }
 
   onFilterChange(): void {
     this.historialService.getFilteredSales(this.filters).subscribe(res => {
       this.filteredSales = res;
+      this.changeDetector.markForCheck();
     });
   }
 

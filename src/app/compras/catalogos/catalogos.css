@@ -30,6 +30,9 @@
 .precio span, .stock span { color: #667085; font-size: 11px; }
 .stock { align-items: flex-end; }
 .stock strong { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; }
+.stock-almacenes { display: grid; gap: 4px; max-height: 72px; margin-top: 13px; padding: 9px 10px; overflow: auto; border-radius: 7px; background: #f8fafc; color: #64748b; font-size: 11px; }
+.stock-almacenes span { display: flex; gap: 4px; justify-content: space-between; }
+.stock-almacenes small { color: #94a3b8; }
 .stock-alto { color: #047857; }.stock-medio { color: #1d4ed8; }.stock-bajo { color: #b42318; }
 .sin-resultados { display: grid; justify-items: center; padding: 70px 20px; color: #8d98ac; text-align: center; }
 .sin-resultados > mat-icon { width: 48px; height: 48px; font-size: 48px; color: #cbd2dc; }

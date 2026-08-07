@@ -1,0 +1,188 @@
+:host {
+  display: block;
+  width: 1040px;
+  max-width: 100%;
+  color: #172033;
+}
+
+.encabezado-dialogo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.encabezado-dialogo h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.encabezado-dialogo p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+mat-dialog-content {
+  max-height: min(74vh, 760px);
+  padding: 20px 24px !important;
+  background: #f8fafc;
+}
+
+form {
+  display: grid;
+  gap: 16px;
+}
+
+.seccion-formulario {
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.titulo-seccion {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.titulo-seccion > mat-icon {
+  color: #1d4ed8;
+}
+
+.titulo-seccion h3,
+.titulo-seccion p {
+  margin: 0;
+}
+
+.titulo-seccion h3 {
+  font-size: 15px;
+}
+
+.titulo-seccion p {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.titulo-con-accion {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.grid-formulario {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 14px;
+}
+
+.grid-formulario.cuatro-columnas {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.campo-doble {
+  grid-column: span 2;
+}
+
+.opciones-producto {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 18px;
+  padding-top: 4px;
+}
+
+.inventarios {
+  display: grid;
+  gap: 10px;
+}
+
+.fila-inventario {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.5fr) repeat(5, minmax(104px, 1fr)) 40px;
+  align-items: start;
+  gap: 10px;
+  padding: 12px 12px 0;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  background: #f8fbff;
+}
+
+.quitar-almacen {
+  margin-top: 7px;
+  color: #b91c1c;
+}
+
+.mensaje {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 14px;
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+.mensaje.error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+mat-dialog-actions {
+  padding: 14px 24px 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+mat-dialog-actions [mat-flat-button] {
+  background: #1e3a8a;
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .grid-formulario.cuatro-columnas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .opciones-producto {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fila-inventario {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .fila-inventario .almacen {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 620px) {
+  .encabezado-dialogo,
+  mat-dialog-content,
+  mat-dialog-actions {
+    padding-right: 16px !important;
+    padding-left: 16px !important;
+  }
+
+  .grid-formulario,
+  .grid-formulario.cuatro-columnas,
+  .opciones-producto,
+  .fila-inventario {
+    grid-template-columns: 1fr;
+  }
+
+  .campo-doble,
+  .fila-inventario .almacen {
+    grid-column: auto;
+  }
+
+  .titulo-con-accion {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

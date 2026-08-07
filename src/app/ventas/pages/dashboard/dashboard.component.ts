@@ -1,15 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HistorialService } from '../../services/historial.service';
 import { CotizacionService } from '../../services/cotizacion.service';
 import { DevolucionService } from '../../services/devolucion.service';
-import { InventoryService } from '../../services/inventory.service';
+import { InventoryService, warehouseSummary } from '../../services/inventory.service';
 import { Product } from '../../models/product.model';
 import { Venta } from '../../models/venta.model';
 import { Cotizacion } from '../../models/cotizacion.model';
 import { Devolucion } from '../../models/devolucion.model';
-import { MOCK_PRODUCTS } from '../../services/mock-data';
 
 @Component({
   selector: 'app-dashboard',
@@ -143,7 +142,7 @@ import { MOCK_PRODUCTS } from '../../services/mock-data';
             <div class="stock-item" *ngFor="let item of lowStockProducts">
               <div class="stock-main">
                 <span class="stock-name font-semibold">{{ item.name }}</span>
-                <span class="stock-meta">SKU: {{ item.sku }} | Pasillo: {{ itemLocations[item.sku] || 'Consultando...' }}</span>
+                <span class="stock-meta">SKU: {{ item.sku }} | {{ itemLocations[item.sku] || 'Consultando almacenes...' }}</span>
               </div>
               <div class="stock-val-wrap">
                 <span class="stock-badge font-bold" [class.badge-danger]="item.stock === 0" [class.badge-warning]="item.stock > 0">
@@ -625,39 +624,43 @@ export class DashboardComponent implements OnInit {
     private historialService: HistorialService,
     private devolucionService: DevolucionService,
     private cotizacionService: CotizacionService,
-    private inventoryService: InventoryService
+    private inventoryService: InventoryService,
+    private changeDetector: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
     // 1. Load Sales Metrics
     this.stats = this.historialService.getSalesStats();
 
-    // 2. Load low stock items (calling InventoryService for verification)
-    this.lowStockProducts = MOCK_PRODUCTS.filter(p => p.stock < 5);
-    this.lowStockCount = this.lowStockProducts.length;
-
-    // Load locations asynchronously via InventoryService
-    this.lowStockProducts.forEach(item => {
-      this.inventoryService.getProductLocation(item.sku).subscribe(loc => {
-        this.itemLocations[item.sku] = loc;
-      });
+    // 2. El stock vivo proviene del catálogo central de Inventario.
+    this.inventoryService.products$.subscribe(products => {
+      this.lowStockProducts = products.filter(product => this.isLowStock(product));
+      this.lowStockCount = this.lowStockProducts.length;
+      this.itemLocations = Object.fromEntries(
+        this.lowStockProducts.map(product => [product.sku, warehouseSummary(product)]),
+      );
+      this.changeDetector.markForCheck();
+    });
+    this.inventoryService.loadProducts().subscribe({
+      error: () => this.changeDetector.markForCheck(),
     });
 
     // 3. Load Recent records
     this.historialService.getSales().subscribe(sales => {
       this.recentSales = sales.slice(0, 6);
+      this.calculateTopProducts(sales);
+      this.changeDetector.markForCheck();
     });
 
     this.devolucionService.getReturns().subscribe(returns => {
       this.recentReturns = returns.slice(0, 6);
+      this.changeDetector.markForCheck();
     });
 
     this.cotizacionService.getQuotes().subscribe(quotes => {
       this.recentQuotes = quotes.slice(0, 6);
+      this.changeDetector.markForCheck();
     });
-
-    // 4. Calculate top selling products from recent completed sales
-    this.calculateTopProducts();
   }
 
   getPriorityClass(priority: string): string {
@@ -668,15 +671,27 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  private calculateTopProducts(): void {
-    // Simple mock calculation
-    this.topProducts = [
-      { product: MOCK_PRODUCTS[0], soldQty: 18 },
-      { product: MOCK_PRODUCTS[1], soldQty: 12 },
-      { product: MOCK_PRODUCTS[3], soldQty: 25 },
-      { product: MOCK_PRODUCTS[5], soldQty: 10 },
-      { product: MOCK_PRODUCTS[6], soldQty: 9 },
-      { product: MOCK_PRODUCTS[7], soldQty: 31 }
-    ];
+  private isLowStock(product: Product): boolean {
+    const warehouses = product.warehouseStocks || [];
+    return warehouses.length
+      ? warehouses.some(stock => stock.stock <= stock.reorderPoint)
+      : product.tracksInventory !== false && product.stock < 5;
+  }
+
+  private calculateTopProducts(sales: Venta[]): void {
+    const totals = new Map<string, { product: Product; soldQty: number }>();
+    for (const sale of sales) {
+      if (sale.status === 'Cancelada') continue;
+      for (const item of sale.items) {
+        const current = totals.get(item.product.sku);
+        totals.set(item.product.sku, {
+          product: item.product,
+          soldQty: (current?.soldQty || 0) + item.quantity,
+        });
+      }
+    }
+    this.topProducts = [...totals.values()]
+      .sort((a, b) => b.soldQty - a.soldQty)
+      .slice(0, 6);
   }
 }

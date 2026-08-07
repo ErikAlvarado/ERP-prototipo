@@ -1,7 +1,13 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const dbDirectory = resolve(process.cwd(), 'public', 'assets', 'db');
+const dbDirectory = resolve(
+  process.cwd(),
+  'public',
+  'assets',
+  'db',
+  'inventari_db',
+);
 const failures = [];
 const tables = new Map();
 

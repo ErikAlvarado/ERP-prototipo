@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
@@ -596,7 +596,8 @@ export class GestionDevolucionesComponent implements OnInit {
   constructor(
     private devolucionService: DevolucionService,
     private authService: AuthService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private changeDetector: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -613,6 +614,7 @@ export class GestionDevolucionesComponent implements OnInit {
         const fresh = list.find(r => r.id === this.selectedReturn!.id);
         if (fresh) this.selectedReturn = fresh;
       }
+      this.changeDetector.markForCheck();
     });
   }
 

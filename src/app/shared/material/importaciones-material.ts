@@ -30,6 +30,8 @@ export const IMPORTACIONES_MATERIAL_FORMULARIOS = [
 
 export const IMPORTACIONES_MATERIAL_PROVEEDORES = [
   MatButtonModule,
+  MatCardModule,
+  MatChipsModule,
   MatDialogModule,
   MatFormFieldModule,
   MatIconModule,

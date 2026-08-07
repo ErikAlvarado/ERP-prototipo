@@ -1,4 +1,0 @@
-id_moneda|codigo|nombre|simbolo
-1|MXN|Peso mexicano|$
-2|USD|Dólar estadounidense|USD
-3|EUR|Euro|EUR

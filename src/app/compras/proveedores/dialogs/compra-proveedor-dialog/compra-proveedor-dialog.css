@@ -1,21 +1,57 @@
-:host { display: block; width: 1050px; max-width: 100%; color: #172033; }
+:host { display: block; width: 1120px; max-width: 100%; color: #172033; }
 .cabecera-dialogo { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid #e8ecf1; }
-.cabecera-dialogo h2 { margin: 0; font-size: 20px; }.cabecera-dialogo p { margin: 2px 0 0; color: #8e99ab; }
-mat-dialog-content { display: grid; gap: 14px; max-height: 76vh; padding: 18px 22px !important; background: #f8fafc; }
+.cabecera-dialogo h2 { margin: 0; font-size: 20px; }
+.cabecera-dialogo p { margin: 2px 0 0; color: #8e99ab; }
+mat-dialog-content { display: grid; gap: 14px; max-height: 74vh; padding: 18px 22px !important; background: #f8fafc; }
 mat-card { border-color: #e1e6ed; border-radius: 12px; background: #fff; }
+.aviso-folio { display: flex; align-items: center; gap: 12px; padding: 13px 17px; border-color: #bfdbfe; background: #eff6ff; color: #1e3a8a; }
+.aviso-folio div { display: grid; gap: 3px; }
+.aviso-folio span { color: #475569; font-size: 12px; }
 .resumen-proveedor { display: grid; grid-template-columns: auto 1.7fr repeat(3, 1fr); align-items: center; gap: 18px; padding: 18px 22px; }
 .avatar { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 12px; background: #172442; color: #fff; font-weight: 800; }
-.identidad,.dato { display: flex; flex-direction: column; gap: 5px; min-width: 0; }.identidad span,.dato span { color: #98a2b4; font-size: 12px; }.dato { padding-left: 18px; border-left: 1px solid #e7ebf0; }.dato strong { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
-.seccion-compra,.seccion-productos { padding: 18px; }.seccion-compra h3,.seccion-productos h3 { margin: 0 0 16px; font-size: 15px; }
-.formulario-compra { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 12px 18px; }.formulario-compra .notas { grid-column: 3; grid-row: 1 / span 2; }.formulario-compra mat-form-field { width: 100%; }
-:host ::ng-deep .formulario-compra .mat-mdc-form-field-subscript-wrapper,:host ::ng-deep .tabla-productos .mat-mdc-form-field-subscript-wrapper { display: none; }
-.titulo-productos { display: flex; align-items: center; justify-content: space-between; }.boton-agregar { color: #2563eb; }
+.identidad, .dato { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.identidad span, .dato span { color: #98a2b4; font-size: 12px; }
+.dato { padding-left: 18px; border-left: 1px solid #e7ebf0; }
+.dato strong { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.seccion-compra, .seccion-productos { padding: 18px; }
+.seccion-compra h3, .seccion-productos h3 { margin: 0 0 16px; font-size: 15px; }
+.formulario-compra { display: grid; grid-template-columns: minmax(220px, .7fr) 2fr; gap: 14px; }
+.formulario-compra mat-form-field { width: 100%; }
+:host ::ng-deep .formulario-compra .mat-mdc-form-field-subscript-wrapper,
+:host ::ng-deep .tabla-productos .mat-mdc-form-field-subscript-wrapper { display: none; }
 .titulo-productos p { margin: -10px 0 14px; color: #8e99ab; font-size: 12px; }
 .busqueda-producto { width: 100%; }
 .resultados-productos { margin: -12px 0 14px; border: 1px solid #e1e6ed; border-radius: 10px; }
-.resultados-productos mat-list-item { height: auto; min-height: 64px; }
+.resultados-productos mat-list-item { height: auto; min-height: 76px; }
 .resultados-productos button { margin-left: 12px; color: #2563eb; }
-.tabla-productos { overflow-x: auto; }.fila { display: grid; grid-template-columns: minmax(190px,2fr) 125px 120px 110px 120px 125px 42px; align-items: center; gap: 10px; min-width: 850px; padding: 8px 4px; border-bottom: 1px solid #edf0f3; }.fila.encabezados { padding: 9px 8px; background: #f5f7f9; color: #5f697a; font-size: 11px; font-weight: 700; }.fila mat-form-field { width: 100%; }.producto { display: flex; flex-direction: column; }.producto small { margin-top: 3px; color: #9aa4b5; }.cantidad { display: flex; align-items: center; justify-content: space-between; border: 1px solid #dce2e9; border-radius: 7px; }.cantidad button { width: 34px; height: 34px; }.cantidad mat-icon { width: 16px; height: 16px; font-size: 16px; }.importe { text-align: right; font-size: 13px; }.eliminar { color: #f05252; }
-.totales { width: 310px; margin: 12px 0 0 auto; padding: 12px 16px; border-radius: 9px; background: #f8fafc; }.totales p { display: flex; justify-content: space-between; margin: 6px 0; color: #667085; }.totales .total { margin-top: 12px; padding-top: 12px; border-top: 1px solid #dfe4ea; color: #172033; font-size: 17px; }
-mat-dialog-actions { padding: 12px 22px 18px; }.guardar { background: #1e3a8a !important; color: #fff !important; }
-@media (max-width: 800px) { .resumen-proveedor { grid-template-columns: auto 1fr; }.dato { display: none; }.formulario-compra { grid-template-columns: 1fr; }.formulario-compra .notas { grid-column: auto; grid-row: auto; }.totales { width: auto; }.cabecera-dialogo { padding-inline: 16px; } }
+.stock-resultados { color: #2563eb !important; font-size: 11px !important; }
+.tabla-productos { overflow-x: auto; }
+.fila { display: grid; grid-template-columns: minmax(190px, 1.4fr) 120px minmax(310px, 2.1fr) 110px 125px 42px; align-items: start; gap: 10px; min-width: 940px; padding: 10px 4px; border-bottom: 1px solid #edf0f3; }
+.fila.encabezados { align-items: center; padding: 9px 8px; background: #f5f7f9; color: #5f697a; font-size: 11px; font-weight: 700; }
+.fila mat-form-field { width: 100%; }
+.producto { display: flex; flex-direction: column; }
+.producto small { margin-top: 3px; color: #7c8799; }
+.distribuciones { display: grid; gap: 7px; }
+.destino { display: grid; grid-template-columns: minmax(130px, 1fr) 92px 38px; align-items: center; gap: 6px; }
+.destino small { grid-column: 1 / -1; margin-top: -4px; color: #2563eb; font-size: 11px; }
+.destino button { color: #dc2626; }
+.agregar-destino { justify-self: start; color: #1d4ed8; }
+.total-unidades { color: #475569; font-weight: 700; }
+.importe { padding-top: 14px; text-align: right; font-size: 13px; }
+.eliminar { margin-top: 2px; color: #f05252; }
+.sin-partidas { min-width: 940px; padding: 24px; color: #94a3b8; text-align: center; }
+.totales { width: 310px; margin: 12px 0 0 auto; padding: 12px 16px; border-radius: 9px; background: #f8fafc; }
+.totales p { display: flex; justify-content: space-between; margin: 6px 0; color: #667085; }
+.totales .total { margin-top: 12px; padding-top: 12px; border-top: 1px solid #dfe4ea; color: #172033; font-size: 17px; }
+.ultima-compra-accion { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 22px 0; color: #64748b; font-size: 12px; }
+.ultima-compra-accion strong { color: #0f172a; }
+mat-dialog-actions { padding: 8px 22px 18px; }
+.guardar { background: #1e3a8a !important; color: #fff !important; }
+@media (max-width: 800px) {
+  .resumen-proveedor { grid-template-columns: auto 1fr; }
+  .dato { display: none; }
+  .formulario-compra { grid-template-columns: 1fr; }
+  .totales { width: auto; }
+  .cabecera-dialogo { padding-inline: 16px; }
+  .ultima-compra-accion { justify-content: flex-start; }
+}

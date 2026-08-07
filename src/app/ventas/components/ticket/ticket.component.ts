@@ -594,25 +594,28 @@ export class TicketComponent {
   }
 
   downloadPdf(): void {
-    const pdf = new jsPDF({ unit: 'mm', format: [80, 180] });
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(14);
-    pdf.text('ZYROIT', 40, 12, { align: 'center' });
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(9);
-    pdf.text(`${this.sale.operationType || 'Venta'} ${this.sale.folio}`, 40, 20, { align: 'center' });
-    pdf.text(`Fecha: ${this.sale.date} ${this.sale.time}`, 8, 28);
-    pdf.text(`Cliente: ${this.sale.client.name}`, 8, 34);
-    let y = 43;
-    for (const item of this.sale.items) {
-      pdf.text(`${item.quantity} x ${item.product.name}`.slice(0, 38), 8, y);
-      pdf.text(`$${item.subtotal.toFixed(2)}`, 72, y, { align: 'right' });
-      y += 6;
+    const lines = buildTicketPdfLines(this.sale);
+    const estimatedRows = lines.reduce(
+      (total, line) => total + Math.max(1, Math.ceil(line.text.length / 36)),
+      0,
+    );
+    const height = Math.max(190, 24 + estimatedRows * 4.4);
+    const pdf = new jsPDF({ unit: 'mm', format: [80, height], orientation: 'portrait' });
+    let y = 8;
+
+    for (const line of lines) {
+      y += line.gapBefore || 0;
+      pdf.setFont('helvetica', line.bold ? 'bold' : 'normal');
+      pdf.setFontSize(line.size || 8.5);
+      const wrapped = pdf.splitTextToSize(line.text, 68) as string[];
+      const align = line.align || 'left';
+      const x = align === 'center' ? 40 : align === 'right' ? 74 : 6;
+      for (const row of wrapped) {
+        pdf.text(row, x, y, { align });
+        y += line.size && line.size >= 12 ? 5.2 : 4.1;
+      }
     }
-    pdf.line(8, y, 72, y);
-    y += 7;
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(`TOTAL: $${this.sale.total.toFixed(2)} MXN`, 72, y, { align: 'right' });
+
     pdf.save(`comprobante_${this.sale.folio}.pdf`);
     this.notificationService.success('Comprobante PDF descargado.');
   }
@@ -620,4 +623,137 @@ export class TicketComponent {
   close(): void {
     this.closeTicket.emit();
   }
+}
+
+export interface TicketPdfLine {
+  text: string;
+  bold?: boolean;
+  align?: 'left' | 'center' | 'right';
+  size?: number;
+  gapBefore?: number;
+}
+
+/**
+ * Fuente única del contenido del PDF. Incluye toda la información disponible
+ * que se presenta en el ticket de pantalla y los datos específicos del pago.
+ */
+export function buildTicketPdfLines(sale: Venta): TicketPdfLine[] {
+  const lines: TicketPdfLine[] = [];
+  const add = (
+    label: string,
+    value: unknown,
+    options: Omit<TicketPdfLine, 'text'> = {},
+  ) => {
+    if (value === undefined || value === null || value === '') return;
+    lines.push({ text: `${label}${String(value)}`, ...options });
+  };
+  const separator = () => lines.push({ text: '------------------------------------------' });
+
+  lines.push({ text: 'ZYRO POS', bold: true, align: 'center', size: 15 });
+  lines.push({ text: 'SISTEMA POS PROFESIONAL', bold: true, align: 'center' });
+  lines.push({ text: 'Av. Insurgentes Sur 1420, Col. Juárez, CDMX', align: 'center' });
+  lines.push({ text: 'RFC: ZYR260101XYZ | Tel: (55) 5555-9900', align: 'center' });
+  separator();
+  lines.push({
+    text: sale.operationType === 'Cotización'
+      ? '*** COTIZACIÓN (NO FISCAL) ***'
+      : '*** TICKET DE VENTA ***',
+    bold: true,
+    align: 'center',
+    gapBefore: 1,
+  });
+  separator();
+  add('FOLIO: ', sale.folio, { bold: true });
+  add('FECHA: ', `${sale.date} ${sale.time}`);
+  add('CAJA / TURNO: ', 'CAJA-01 (MATUTINO)');
+  add('EMPLEADO / CAJERO: ', `EMP-001 - ${sale.cashier}`);
+  add('CLIENTE: ', sale.client.name, { bold: true });
+  add('RFC CLIENTE: ', sale.client.rfc);
+  add('EMAIL CLIENTE: ', sale.client.email);
+  add('TELÉFONO CLIENTE: ', sale.client.phone);
+  add('DOMICILIO CLIENTE: ', sale.client.address);
+  add('ESTADO: ', sale.status);
+  add('ARTÍCULOS: ', sale.numProducts);
+
+  separator();
+  lines.push({ text: 'PARTIDAS', bold: true, align: 'center' });
+  sale.items.forEach((item, index) => {
+    const base = item.product.price * item.quantity;
+    const discountAmount = base * (item.discount / 100);
+    lines.push({
+      text: `${index + 1}. ${item.product.name}`,
+      bold: true,
+      gapBefore: index ? 2 : 0,
+    });
+    add('SKU: ', item.product.sku);
+    add('CÓDIGO: ', item.product.code);
+    add('UNIDAD: ', item.product.unit);
+    add(
+      'CANTIDAD / PRECIO U.: ',
+      `${item.quantity} x ${money(item.product.price)}`,
+    );
+    if (item.discount > 0) {
+      add(
+        `DESCUENTO CATÁLOGO (${item.discount}%): `,
+        `-${money(discountAmount)}`,
+      );
+    }
+    add('IMPORTE: ', money(item.subtotal), { bold: true });
+  });
+
+  separator();
+  add('SUBTOTAL: ', money(sale.subtotal), { align: 'right' });
+  if (sale.discount > 0) {
+    add('DESCUENTO APLICADO: ', `-${money(sale.discount)}`, { align: 'right' });
+  }
+  add('IVA (16%): ', money(sale.tax), { align: 'right' });
+  add('TOTAL: ', `${money(sale.total)} MXN`, {
+    align: 'right',
+    bold: true,
+    size: 11,
+    gapBefore: 1,
+  });
+
+  if (sale.operationType !== 'Cotización') {
+    separator();
+    add('FORMA DE PAGO: ', sale.paymentMethod.toUpperCase(), {
+      bold: true,
+      align: 'center',
+    });
+    const payment = sale.paymentDetails;
+    if (payment) {
+      add('EFECTIVO RECIBIDO: ', optionalMoney(payment.cashReceived));
+      add('CAMBIO ENTREGADO: ', optionalMoney(payment.changeGiven), { bold: true });
+      add('BANCO EMISOR: ', payment.cardBank);
+      add('TIPO DE TARJETA: ', payment.cardType);
+      add('TITULAR: ', payment.cardHolderName);
+      add('ÚLTIMOS 4 DÍGITOS: ', payment.cardLast4 ? `**** ${payment.cardLast4}` : '');
+      add('NÚMERO DE AUTORIZACIÓN: ', payment.authorizationCode);
+      add('BANCO TRANSFERENCIA: ', payment.transferBank);
+      add('REFERENCIA: ', payment.transferReference);
+      add('FOLIO TRANSFERENCIA: ', payment.transferFolio);
+      add('EMPRESA EMISORA DEL VALE: ', payment.voucherCompany);
+      add('NÚMERO DE VALE: ', payment.voucherNumber);
+      add('DÍAS DE CRÉDITO: ', payment.creditDays);
+      add('OBSERVACIONES DE CRÉDITO: ', payment.creditNotes);
+    }
+  }
+
+  add('OBSERVACIÓN: ', sale.observation, { gapBefore: 2 });
+  separator();
+  lines.push({ text: '¡GRACIAS POR SU COMPRA EN ZYRO POS!', bold: true, align: 'center' });
+  lines.push({ text: `CÓDIGO DE COMPROBANTE: ${sale.folio}`, align: 'center' });
+  lines.push({
+    text: 'Comprobante emitido por ZYRO POS. Para facturación electrónica visite facturas.zyropos.com.mx dentro del mes en curso.',
+    align: 'center',
+  });
+  return lines;
+}
+
+function money(value: number): string {
+  return `$${(Number(value) || 0).toFixed(2)}`;
+}
+
+function optionalMoney(value?: number): string {
+  return value === undefined || value === null ? '' : money(value);
 }

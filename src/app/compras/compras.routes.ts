@@ -24,6 +24,11 @@ export const comprasRoutes: Routes = [
       import('./catalogos/catalogos').then((component) => component.Catalogos),
   },
   {
+    path: 'bajo-stock',
+    loadComponent: () =>
+      import('./bajo-stock/bajo-stock').then((component) => component.BajoStock),
+  },
+  {
     path: 'preferencias',
     loadComponent: () =>
       import('./preferencias/preferencias').then((component) => component.Preferencias),

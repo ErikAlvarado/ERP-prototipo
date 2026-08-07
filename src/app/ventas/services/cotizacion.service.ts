@@ -19,7 +19,7 @@ export class CotizacionService {
   ) {}
 
   getQuotes(): Observable<Cotizacion[]> {
-    return this.quotes$.pipe(delay(200));
+    return this.quotes$;
   }
 
   getQuoteById(id: string): Observable<Cotizacion | undefined> {

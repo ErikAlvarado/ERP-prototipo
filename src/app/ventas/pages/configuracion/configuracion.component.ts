@@ -68,18 +68,6 @@ import { Observable } from 'rxjs';
 
           <div class="pref-item">
             <div class="pref-txt">
-              <span class="pref-title font-semibold">Modo Oscuro</span>
-              <span class="pref-sub text-secondary">Ajusta los contrastes de pantalla para turnos nocturnos o baja luminosidad.</span>
-            </div>
-            <div class="pref-action">
-              <button [class]="'btn-premium ' + (isDarkMode ? 'btn-accent' : 'btn-secondary')" (click)="toggleTheme()">
-                {{ isDarkMode ? 'Activado' : 'Desactivado' }}
-              </button>
-            </div>
-          </div>
-
-          <div class="pref-item mt-3">
-            <div class="pref-txt">
               <span class="pref-title font-semibold">Impresión Automática</span>
               <span class="pref-sub text-secondary">Disparar la cola de impresión térmica de tickets al cerrar cobro en POS.</span>
             </div>
@@ -213,7 +201,6 @@ import { Observable } from 'rxjs';
 export class ConfiguracionComponent implements OnInit {
   currentUser$!: Observable<User>;
   
-  isDarkMode = false;
   printAuto = true;
   pdfAuto = false;
 
@@ -223,12 +210,9 @@ export class ConfiguracionComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    document.body.classList.remove('dark-theme');
+    localStorage.removeItem('theme');
     this.currentUser$ = this.authService.currentUser$;
-    
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      this.isDarkMode = true;
-    }
   }
 
   onRoleSelect(role: UserRole): void {
@@ -240,18 +224,6 @@ export class ConfiguracionComponent implements OnInit {
     this.authService.toggleOnlineStatus();
     const user = this.authService.getCurrentUser();
     this.notificationService.info(`Sesión de Caja: ${user.status}`);
-  }
-
-  toggleTheme(): void {
-    this.isDarkMode = !this.isDarkMode;
-    if (this.isDarkMode) {
-      document.body.classList.add('dark-theme');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.body.classList.remove('dark-theme');
-      localStorage.setItem('theme', 'light');
-    }
-    this.notificationService.success('Tema visual actualizado.');
   }
 
   togglePref(type: string): void {

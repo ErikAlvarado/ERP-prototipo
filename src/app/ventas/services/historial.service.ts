@@ -14,7 +14,7 @@ export class HistorialService {
   constructor() {}
 
   getSales(): Observable<Venta[]> {
-    return this.sales$.pipe(delay(200));
+    return this.sales$;
   }
 
   getSaleByFolio(folio: string): Observable<Venta | undefined> {

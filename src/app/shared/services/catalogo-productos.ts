@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { forkJoin, map, Observable } from 'rxjs';
+import { forkJoin, map, Observable, Subject } from 'rxjs';
 import { PersistenciaLocal } from './persistencia-local';
 import { DatosDb } from './datos-db';
 
@@ -181,6 +181,8 @@ export class CatalogoProductos {
    */
   private readonly claveCambios = 'catalogo-productos-cambios-v3';
   private origenPorId = new Map<number, ProductoCatalogo>();
+  private readonly cambiosInternos = new Subject<void>();
+  readonly cambios$ = this.cambiosInternos.asObservable();
 
   constructor(private db: DatosDb, private persistencia: PersistenciaLocal) {}
 
@@ -294,6 +296,7 @@ export class CatalogoProductos {
     const idsActuales = new Set(productos.map(producto => producto.id));
     const eliminados = [...this.origenPorId.keys()].filter(id => !idsActuales.has(id));
     this.persistencia.guardar<CambiosLocalesProducto>(this.claveCambios, { actualizaciones, agregados, eliminados });
+    this.cambiosInternos.next();
   }
 
   actualizarResumenPrecio(producto: ProductoCatalogo, fecha = this.hoy()): ProductoCatalogo {

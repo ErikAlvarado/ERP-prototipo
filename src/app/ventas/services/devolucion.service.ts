@@ -21,7 +21,7 @@ export class DevolucionService {
   ) {}
 
   getReturns(): Observable<Devolucion[]> {
-    return this.returns$.pipe(delay(200));
+    return this.returns$;
   }
 
   getReturnById(id: string): Observable<Devolucion | undefined> {

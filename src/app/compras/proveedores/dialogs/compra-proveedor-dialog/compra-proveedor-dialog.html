@@ -1,70 +1,248 @@
 <div class="dialogo-compra">
   <header class="cabecera-dialogo">
     <div>
-      <h2>Registrar compra</h2>
-      <p>{{ proveedor.nombre }}</p>
+      <h2>Realizar compra</h2>
+      <p>{{ proveedor.nombre }} · Pago de contado</p>
     </div>
-    <button mat-icon-button type="button" aria-label="Cerrar" (click)="cancelar()"><mat-icon>close</mat-icon></button>
+    <button mat-icon-button type="button" aria-label="Cerrar" (click)="cancelar()">
+      <mat-icon>close</mat-icon>
+    </button>
   </header>
 
   <mat-dialog-content>
+    <mat-card appearance="outlined" class="aviso-folio">
+      <mat-icon>receipt_long</mat-icon>
+      <div>
+        <strong>El folio interno se genera automáticamente</strong>
+        <span>La factura, remisión o folio del proveedor se captura al recibir la mercancía.</span>
+      </div>
+    </mat-card>
+
     <mat-card appearance="outlined" class="resumen-proveedor">
       <div class="avatar">{{ proveedor.nombre.charAt(0) }}</div>
-      <div class="identidad"><strong>{{ proveedor.nombre }}</strong><span>{{ proveedor.categoria }}</span></div>
+      <div class="identidad">
+        <strong>{{ proveedor.nombre }}</strong>
+        <span>{{ proveedor.categoria }}</span>
+      </div>
       <div class="dato"><span>Tiempo de surtido</span><strong>{{ proveedor.tiempoSurtido }}</strong></div>
-      <div class="dato"><span>Unidad de compra</span><strong>{{ proveedor.unidadCompra }}</strong></div>
-      <div class="dato"><span>Cancelar hasta</span><strong>{{ fechaLimiteCancelacion() | date: 'dd/MM/yyyy' }}</strong></div>
+      <div class="dato"><span>Productos vinculados</span><strong>{{ catalogoProductos.length }}</strong></div>
+      <div class="dato"><span>Forma de pago</span><strong>Contado</strong></div>
     </mat-card>
 
     <mat-card appearance="outlined" class="seccion-compra">
-      <h3>Datos de la compra</h3>
+      <h3>Datos de entrega</h3>
       <form [formGroup]="formulario" class="formulario-compra">
-        <mat-form-field appearance="outline"><mat-label>Fecha de compra</mat-label><input matInput [matDatepicker]="calendario" formControlName="fecha" /><mat-datepicker-toggle matIconSuffix [for]="calendario" /><mat-datepicker #calendario /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Folio (opcional)</mat-label><input matInput formControlName="folio" placeholder="Ej. OC-000123" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Almacén / Sucursal</mat-label><mat-select formControlName="almacen"><mat-option value="Almacén Central">Almacén Central</mat-option><mat-option value="Sucursal Norte">Sucursal Norte</mat-option><mat-option value="Sucursal Sur">Sucursal Sur</mat-option></mat-select></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Condiciones de pago</mat-label><mat-select formControlName="condicionesPago"><mat-option value="Contado">Contado</mat-option><mat-option value="Crédito a 15 días">Crédito a 15 días</mat-option><mat-option value="Crédito a 30 días">Crédito a 30 días</mat-option></mat-select></mat-form-field>
-        <mat-form-field appearance="outline" class="notas"><mat-label>Notas / Observaciones</mat-label><textarea matInput rows="4" formControlName="notas" placeholder="Agregar notas u observaciones..."></textarea></mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha requerida</mat-label>
+          <input matInput [matDatepicker]="calendario" formControlName="fechaEntrega" />
+          <mat-datepicker-toggle matIconSuffix [for]="calendario" />
+          <mat-datepicker #calendario />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="notas">
+          <mat-label>Notas / observaciones</mat-label>
+          <textarea
+            matInput
+            rows="3"
+            formControlName="notas"
+            placeholder="Indicaciones para el proveedor o los almacenes"
+          ></textarea>
+        </mat-form-field>
       </form>
     </mat-card>
 
     <mat-card appearance="outlined" class="seccion-productos">
-      <div class="titulo-productos"><div><h3>Agregar productos por búsqueda</h3><p>Busca por nombre o código; cada resultado incluye la información del producto.</p></div></div>
+      <div class="titulo-productos">
+        <div>
+          <h3>Productos y distribución por almacén</h3>
+          <p>Las existencias mostradas provienen del inventario actual de cada almacén.</p>
+        </div>
+      </div>
+
       <mat-form-field appearance="outline" class="busqueda-producto">
         <mat-icon matPrefix>search</mat-icon>
-        <mat-label>Buscar producto</mat-label>
-        <input matInput [value]="busquedaProducto()" (input)="buscarProducto($any($event.target).value)" placeholder="Ej. teclado o PRO-00075" />
+        <mat-label>Buscar producto vinculado</mat-label>
+        <input
+          matInput
+          [value]="busquedaProducto()"
+          (input)="buscarProducto($any($event.target).value)"
+          placeholder="Nombre, SKU interno, código o SKU del proveedor"
+        />
       </mat-form-field>
+
       @if (busquedaProducto()) {
         <mat-list class="resultados-productos">
           @for (producto of productosEncontrados(); track producto.id) {
             <mat-list-item>
               <mat-icon matListItemIcon>inventory_2</mat-icon>
               <span matListItemTitle>{{ producto.nombre }}</span>
-              <span matListItemLine>{{ producto.codigo }} · {{ producto.precio | currency: 'MXN' }} · {{ producto.unidad }} · Máximo {{ producto.cantidadMaxima }}</span>
-              <button mat-stroked-button matListItemMeta type="button" (click)="agregarProducto(producto)"><mat-icon>add</mat-icon>Agregar</button>
+              <span matListItemLine>
+                {{ producto.sku }} · {{ producto.precio | currency: 'MXN' }} ·
+                mínimo {{ producto.cantidadMinima }} {{ producto.unidad }}
+              </span>
+              <span matListItemLine class="stock-resultados">{{ resumenExistencias(producto) }}</span>
+              <button
+                mat-stroked-button
+                matListItemMeta
+                type="button"
+                (click)="agregarProducto(producto)"
+              >
+                <mat-icon>add</mat-icon>Agregar
+              </button>
             </mat-list-item>
           } @empty {
-            <mat-list-item><mat-icon matListItemIcon>search_off</mat-icon><span matListItemTitle>Sin resultados disponibles</span></mat-list-item>
+            <mat-list-item>
+              <mat-icon matListItemIcon>search_off</mat-icon>
+              <span matListItemTitle>Sin resultados disponibles</span>
+            </mat-list-item>
           }
         </mat-list>
       }
+
       <div class="tabla-productos">
-        <div class="fila encabezados"><span>Producto</span><span>Precio unitario</span><span>Cantidad</span><span>Unidad</span><span>Impuestos</span><span>Importe</span><span></span></div>
+        <div class="fila encabezados">
+          <span>Producto</span>
+          <span>Precio unitario</span>
+          <span>Distribución y stock actual</span>
+          <span>Impuestos</span>
+          <span>Importe</span>
+          <span></span>
+        </div>
         @for (producto of productos(); track producto.id) {
           <div class="fila">
-            <div class="producto"><strong>{{ producto.nombre }}</strong><small>CÓD: {{ producto.codigo }}</small></div>
-            <mat-form-field appearance="outline"><span matTextPrefix>$&nbsp;</span><input matInput type="number" min="0" [value]="producto.precio" (change)="actualizarProducto(producto.id, 'precio', +$any($event.target).value)" /></mat-form-field>
-            <div class="cantidad"><button mat-icon-button type="button" [disabled]="producto.cantidad === 1" (click)="cambiarCantidad(producto.id, -1)"><mat-icon>remove</mat-icon></button><strong title="Máximo: {{ producto.cantidadMaxima }}">{{ producto.cantidad }}/{{ producto.cantidadMaxima }}</strong><button mat-icon-button type="button" [disabled]="producto.cantidad === producto.cantidadMaxima" (click)="cambiarCantidad(producto.id, 1)"><mat-icon>add</mat-icon></button></div>
-            <mat-form-field appearance="outline"><mat-select [value]="producto.unidad" (selectionChange)="actualizarProducto(producto.id, 'unidad', $event.value)"><mat-option value="Pieza">Pieza</mat-option><mat-option value="Caja">Caja</mat-option><mat-option value="Paquete">Paquete</mat-option></mat-select></mat-form-field>
-            <mat-form-field appearance="outline"><mat-select [value]="producto.impuesto" (selectionChange)="actualizarProducto(producto.id, 'impuesto', $event.value)"><mat-option [value]="0">Sin IVA</mat-option><mat-option [value]="8">IVA 8%</mat-option><mat-option [value]="16">IVA 16%</mat-option></mat-select></mat-form-field>
-            <strong class="importe">{{ producto.precio * producto.cantidad * (1 + producto.impuesto / 100) | currency: 'MXN' : 'symbol' : '1.2-2' }}</strong>
-            <button mat-icon-button type="button" class="eliminar" aria-label="Eliminar producto" (click)="eliminarProducto(producto.id)"><mat-icon>delete_outline</mat-icon></button>
+            <div class="producto">
+              <strong>{{ producto.nombre }}</strong>
+              <small>{{ producto.sku }} · Proveedor: {{ producto.skuProveedor }}</small>
+              <small>
+                Mínimo del proveedor: {{ producto.cantidadMinima }} {{ producto.unidad }}
+              </small>
+            </div>
+
+            <mat-form-field appearance="outline">
+              <span matTextPrefix>$&nbsp;</span>
+              <input
+                matInput
+                type="number"
+                min="0.01"
+                step="0.01"
+                [value]="producto.precio"
+                (change)="actualizarPrecio(producto.id, +$any($event.target).value)"
+              />
+            </mat-form-field>
+
+            <div class="distribuciones">
+              @for (destino of producto.destinos; track $index; let indice = $index) {
+                <div class="destino">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Almacén</mat-label>
+                    <mat-select
+                      [value]="destino.almacenId"
+                      (selectionChange)="actualizarAlmacen(producto.id, indice, $event.value)"
+                    >
+                      @for (almacen of almacenes; track almacen.id) {
+                        <mat-option
+                          [value]="almacen.id"
+                          [disabled]="!almacenDisponible(producto, almacen.id, indice)"
+                        >
+                          {{ almacen.nombre }}
+                        </mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="campo-cantidad">
+                    <mat-label>Cantidad</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      min="1"
+                      step="1"
+                      [value]="destino.cantidad"
+                      (change)="actualizarCantidad(producto.id, indice, +$any($event.target).value)"
+                    />
+                  </mat-form-field>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Quitar destino"
+                    [disabled]="producto.destinos.length === 1"
+                    (click)="quitarDestino(producto.id, indice)"
+                  >
+                    <mat-icon>remove_circle_outline</mat-icon>
+                  </button>
+                  <small>
+                    Stock actual: <strong>{{ stockEnAlmacen(producto, destino.almacenId) }}</strong>
+                    {{ producto.unidad }}
+                  </small>
+                </div>
+              }
+              <button
+                mat-button
+                type="button"
+                class="agregar-destino"
+                [disabled]="!puedeAgregarDestino(producto)"
+                (click)="agregarDestino(producto.id)"
+              >
+                <mat-icon>add_location_alt</mat-icon>
+                Agregar almacén
+              </button>
+              <small class="total-unidades">
+                Total: {{ cantidadTotal(producto) }} {{ producto.unidad }}
+              </small>
+            </div>
+
+            <mat-form-field appearance="outline">
+              <mat-select
+                [value]="producto.impuesto"
+                [attr.aria-label]="'Impuesto de ' + producto.nombre"
+                (selectionChange)="actualizarImpuesto(producto.id, $event.value)"
+              >
+                <mat-option [value]="0">Sin IVA</mat-option>
+                <mat-option [value]="8">IVA 8%</mat-option>
+                <mat-option [value]="16">IVA 16%</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <strong class="importe">
+              {{ importeProducto(producto) | currency: 'MXN' : 'symbol' : '1.2-2' }}
+            </strong>
+            <button
+              mat-icon-button
+              type="button"
+              class="eliminar"
+              [attr.aria-label]="'Eliminar ' + producto.nombre"
+              (click)="eliminarProducto(producto.id)"
+            >
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          </div>
+        } @empty {
+          <div class="sin-partidas">
+            Busca y agrega al menos un producto vinculado con este proveedor.
           </div>
         }
       </div>
-      <div class="totales"><p><span>Subtotal</span><strong>{{ subtotal() | currency: 'MXN' }}</strong></p><p><span>Impuestos</span><strong>{{ impuestos() | currency: 'MXN' }}</strong></p><p class="total"><span>Total</span><strong>{{ total() | currency: 'MXN' }}</strong></p></div>
+
+      <div class="totales">
+        <p><span>Subtotal</span><strong>{{ subtotal() | currency: 'MXN' }}</strong></p>
+        <p><span>Impuestos</span><strong>{{ impuestos() | currency: 'MXN' }}</strong></p>
+        <p class="total"><span>Total</span><strong>{{ total() | currency: 'MXN' }}</strong></p>
+      </div>
     </mat-card>
   </mat-dialog-content>
 
-  <mat-dialog-actions align="end"><button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button><button mat-flat-button type="button" class="guardar" [disabled]="!productos().length" (click)="guardar()">Guardar compra</button></mat-dialog-actions>
+  <div class="ultima-compra-accion">
+    <span>Última compra</span>
+    <strong>{{ proveedor.ultimaCompra }} · {{ proveedor.totalCompra }}</strong>
+  </div>
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button>
+    <button
+      mat-flat-button
+      type="button"
+      class="guardar"
+      [disabled]="formulario.invalid || !productosValidos()"
+      (click)="guardar()"
+    >
+      Realizar compra
+    </button>
+  </mat-dialog-actions>
 </div>

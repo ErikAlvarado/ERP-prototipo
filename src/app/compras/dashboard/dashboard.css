@@ -178,6 +178,18 @@
   align-items: start;
 }
 
+.acceso-stock {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.acceso-stock mat-icon { flex: 0 0 auto; color: #2563eb; }
+
 .item-actividad > div {
   min-width: 0;
 }

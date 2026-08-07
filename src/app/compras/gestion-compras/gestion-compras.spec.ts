@@ -7,6 +7,7 @@ describe('GestionCompras', () => {
   let fixture: ComponentFixture<GestionCompras>;
 
   beforeEach(async () => {
+    localStorage.clear();
     await TestBed.configureTestingModule({
       imports: [GestionCompras],
     }).compileComponents();

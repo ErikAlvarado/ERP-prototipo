@@ -142,6 +142,11 @@ export class Sidebar {
         route: '/compras/catalogo'
       },
       {
+        title: 'Productos bajo stock',
+        icon: 'inventory',
+        route: '/compras/bajo-stock'
+      },
+      {
         title: 'Favoritos',
         icon: 'favorite',
         route: '/compras/preferencias'

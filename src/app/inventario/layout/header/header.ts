@@ -42,6 +42,7 @@ export class Header {
     '/compras/gestion-compras': 'Compras / Gestión de Compras',
     '/compras/consultas': 'Compras / Consultas',
     '/compras/catalogo': 'Compras / Catálogo',
+    '/compras/bajo-stock': 'Compras / Productos bajo stock',
     '/compras/preferencias': 'Compras / Preferencias',
 
     // Ventas

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
@@ -10,7 +10,7 @@ import { NotificationService } from '../../services/notification.service';
 import { Cotizacion, CotizacionStatus } from '../../models/cotizacion.model';
 import { Client } from '../../models/client.model';
 import { Product } from '../../models/product.model';
-import { MOCK_PRODUCTS } from '../../services/mock-data';
+import { InventoryService, warehouseSummary } from '../../services/inventory.service';
 
 @Component({
   selector: 'app-cotizaciones',
@@ -117,10 +117,16 @@ import { MOCK_PRODUCTS } from '../../services/mock-data';
               <div class="add-item-row">
                 <mat-select class="form-control" [(ngModel)]="selectedProductToAdd">
                   <mat-option [value]="null">Seleccione un producto...</mat-option>
-                  <mat-option *ngFor="let p of availableProducts" [value]="p">{{ p.name }} (\${{ p.price | number:'1.2-2' }})</mat-option>
+                  <mat-option *ngFor="let p of availableProducts" [value]="p">
+                    {{ p.name }} · {{ p.stock }} {{ p.unit }} · \${{ p.price | number:'1.2-2' }}
+                  </mat-option>
                 </mat-select>
                 <input matInput type="number" class="form-control qty-mini-input" [(ngModel)]="productQtyToAdd" min="1" placeholder="Cant" />
                 <button class="btn-premium btn-accent" (click)="addItemToForm()">Agregar</button>
+              </div>
+              <div class="selected-product-stock" *ngIf="selectedProductToAdd as selectedProduct">
+                <strong>Existencia por almacén:</strong>
+                {{ getWarehouseSummary(selectedProduct) }}
               </div>
             </div>
 
@@ -324,9 +330,20 @@ import { MOCK_PRODUCTS } from '../../services/mock-data';
       .form-group {
         grid-column: span 1;
       }
-      .items-selector-section {
-        grid-column: span 2;
-      }
+    .items-selector-section {
+      grid-column: span 2;
+    }
+
+    .selected-product-stock {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-sm);
+      color: var(--text-secondary);
+      background: var(--bg-color);
+      font-size: 0.76rem;
+      line-height: 1.4;
+    }
       .form-items-table-wrap {
         grid-column: span 2;
       }
@@ -418,7 +435,7 @@ export class CotizacionesComponent implements OnInit {
   searchFilter = '';
 
   clients: Client[] = [];
-  availableProducts = MOCK_PRODUCTS;
+  availableProducts: Product[] = [];
 
   // Form modal state
   showFormModal = false;
@@ -449,7 +466,9 @@ export class CotizacionesComponent implements OnInit {
     private cotizacionService: CotizacionService,
     private clienteService: ClienteService,
     private authService: AuthService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private inventoryService: InventoryService,
+    private changeDetector: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -457,6 +476,18 @@ export class CotizacionesComponent implements OnInit {
     
     this.clienteService.clients$.subscribe(clients => {
       this.clients = clients;
+      this.changeDetector.markForCheck();
+    });
+
+    this.inventoryService.products$.subscribe(products => {
+      this.availableProducts = products;
+      this.changeDetector.markForCheck();
+    });
+    this.inventoryService.loadProducts().subscribe({
+      error: () => {
+        this.notificationService.error('No fue posible cargar productos y existencias del inventario.');
+        this.changeDetector.markForCheck();
+      },
     });
   }
 
@@ -464,6 +495,7 @@ export class CotizacionesComponent implements OnInit {
     this.cotizacionService.getQuotes().subscribe(quotes => {
       this.quotes = quotes;
       this.applyFilter();
+      this.changeDetector.markForCheck();
     });
   }
 
@@ -482,6 +514,10 @@ export class CotizacionesComponent implements OnInit {
 
   getStatusClass(status: CotizacionStatus): string {
     return `badge-${status.toLowerCase()}`;
+  }
+
+  getWarehouseSummary(product: Product): string {
+    return warehouseSummary(product);
   }
 
   // Quote Actions

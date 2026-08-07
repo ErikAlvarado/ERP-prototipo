@@ -1,32 +1,46 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
-import { IMPORTACIONES_MATERIAL_CONSULTAS } from '../../shared/material/importaciones-material';
 import { EncabezadoPagina } from '../../shared/components/encabezado-pagina/encabezado-pagina';
 import { Estado } from '../../shared/components/estado/estado';
+import {
+  IMPORTACIONES_MATERIAL_CONSULTAS,
+  MatSnackBar,
+} from '../../shared/material/importaciones-material';
 import { Archivos } from '../../shared/services/archivos';
-import { MatSnackBar } from '../../shared/material/importaciones-material';
-import { fechaHace, inicioPeriodo, perteneceAlPeriodo, PeriodoConsulta, PERIODOS_CONSULTA } from '../../shared/utils/periodos-consulta';
 import { ReportePdf } from '../../shared/services/reporte-pdf';
-import { PageEvent } from '@angular/material/paginator';
-
-interface OrdenCompra {
-  folio: string;
-  proveedor: string;
-  solicitante: string;
-  articulos: number;
-  total: number;
-  fecha: string;
-  estado: 'Completado' | 'En tránsito' | 'Activo' | 'Pendiente' | 'Cancelado';
-  estadoClase: string;
-  etapas: readonly EtapaOrden[];
-}
+import {
+  inicioPeriodo,
+  perteneceAlPeriodo,
+  PeriodoConsulta,
+  PERIODOS_CONSULTA,
+} from '../../shared/utils/periodos-consulta';
+import {
+  ESTADOS_ORDEN_SEGUIMIENTO,
+  OrdenCompra,
+  OrdenesCompraService,
+} from '../services/ordenes-compra.service';
 
 interface EtapaOrden {
   nombre: string;
   fecha: string;
   completada: boolean;
 }
+
+interface OrdenConsulta extends OrdenCompra {
+  totalNumerico: number;
+  estadoClase: string;
+  etapas: readonly EtapaOrden[];
+}
+
+type VistaSeguimiento = 'activos' | 'seguimiento';
 
 @Component({
   selector: 'app-consultas',
@@ -46,59 +60,135 @@ export class Consultas {
   private readonly router = inject(Router);
   private readonly notificacion = inject(MatSnackBar);
   private readonly reportePdf = inject(ReportePdf);
-  readonly columnas = ['folio', 'proveedor', 'solicitante', 'articulos', 'total', 'fecha', 'estado', 'acciones'] as const;
-  readonly periodo = signal<PeriodoConsulta>('mes');
+  private readonly ordenesCompra = inject(OrdenesCompraService);
+
+  readonly columnas = [
+    'folio',
+    'proveedor',
+    'solicitante',
+    'articulos',
+    'total',
+    'fecha',
+    'estado',
+    'acciones',
+  ] as const;
+  readonly periodo = signal<PeriodoConsulta>('anio');
   readonly periodos = PERIODOS_CONSULTA;
-  readonly etiquetaPeriodo = computed(
-    () => this.periodos.find((opcion) => opcion.valor === this.periodo())?.etiqueta ?? 'Periodo',
-  );
+  readonly etiquetaPeriodo = computed(() =>
+    this.periodos.find(opcion => opcion.valor === this.periodo())?.etiqueta
+    ?? 'Periodo');
+  readonly paginaHistorial = signal(0);
+  readonly ordenSeleccionadaFolio = signal('');
+  readonly vistaSeguimiento = signal<VistaSeguimiento>('activos');
   descripcionReporte = '';
   tipoReporte = 'periodo';
   formatoReporte = 'pdf';
-  readonly ordenes: OrdenCompra[] = [
-    this.crearOrden('OC-2026-0087', 'TechnoInsumos SA de CV', 'Laura Hernández', 5, 84500, fechaHace(0), 'Completado'),
-    this.crearOrden('OC-2026-0088', 'Electrónica Empresarial MX', 'Marco Jiménez', 3, 42300, fechaHace(8), 'En tránsito'),
-    this.crearOrden('OC-2026-0089', 'Materiales del Norte SA', 'Diana Ruiz', 12, 156800, fechaHace(25), 'Activo'),
-    this.crearOrden('OC-2026-0090', 'Grupo Distribuidora Nacional', 'Carlos Vega', 8, 23400, fechaHace(55), 'Pendiente'),
-    this.crearOrden('OC-2026-0091', 'Soluciones Logísticas Omega', 'Andrea Morales', 2, 67200, fechaHace(110), 'Activo'),
-    this.crearOrden('OC-2026-0086', 'TechnoInsumos SA de CV', 'Ricardo Torres', 7, 128900, fechaHace(300), 'Cancelado'),
-    this.crearOrden('OC-2026-0092', 'Oficinas y Diseño MX', 'Roberto Sánchez', 9, 31850, fechaHace(4), 'Completado'),
-    this.crearOrden('OC-2026-0093', 'Distribuidora DirectTech', 'Elena Romero', 6, 98200, fechaHace(6), 'En tránsito'),
-    this.crearOrden('OC-2026-0094', 'Muebles Corporativos SA', 'Miguel Sánchez', 12, 54600, fechaHace(10), 'Pendiente'),
-    this.crearOrden('OC-2026-0095', 'Papelería Metropolitana', 'Laura Torres', 24, 18975, fechaHace(14), 'Activo'),
-    this.crearOrden('OC-2026-0096', 'Seguridad Industrial Bajío', 'Diego Navarro', 18, 76340, fechaHace(18), 'Completado'),
-    this.crearOrden('OC-2026-0097', 'Redes y Sistemas Omega', 'Fernanda Castillo', 10, 112500, fechaHace(22), 'Pendiente'),
-    this.crearOrden('OC-2026-0098', 'Logística Nacional Express', 'Jorge Ramírez', 15, 29780, fechaHace(28), 'En tránsito'),
-  ];
-  readonly ordenesFiltradas = computed(() => this.ordenes.filter((orden) => perteneceAlPeriodo(orden.fecha, this.periodo())));
-  readonly paginaHistorial = signal(0);
-  readonly ordenesPaginadas = computed(() => this.ordenesFiltradas().slice(this.paginaHistorial() * 10, this.paginaHistorial() * 10 + 10));
-  readonly pedidosActivos = computed(() => this.ordenesFiltradas().filter((orden) => orden.estado !== 'Cancelado'));
-  readonly totalPeriodo = computed(() => this.ordenesFiltradas().reduce((total, orden) => total + orden.total, 0));
-  readonly canceladasPeriodo = computed(() => this.ordenesFiltradas().filter((orden) => orden.estado === 'Cancelado').length);
-  readonly ordenSeleccionada = signal(this.ordenes[0]);
-  readonly detalleOrden = computed(() => this.ordenSeleccionada());
+
+  /** Misma signal base que Gestión; solo agrega datos de presentación. */
+  readonly ordenes = computed<OrdenConsulta[]>(() =>
+    this.ordenesCompra.ordenesRecientes().map(orden => ({
+      ...orden,
+      totalNumerico: importeNumerico(orden.total),
+      estadoClase: claseEstado(orden.estado),
+      etapas: etapasOrden(orden),
+    })));
+
+  /**
+   * Pendientes de cualquier antigüedad: el filtro del historial nunca debe
+   * esconder una orden que todavía no ha sido entregada.
+   */
+  readonly pedidosActivos = computed(() =>
+    this.ordenes().filter(orden =>
+      orden.estado !== 'Completado' && orden.estado !== 'Cancelado'));
+  readonly ordenesSeguimiento = computed(() =>
+    this.ordenes().filter(orden =>
+      ESTADOS_ORDEN_SEGUIMIENTO.includes(orden.estado)));
+  readonly pedidosMostrados = computed(() =>
+    this.vistaSeguimiento() === 'activos'
+      ? this.pedidosActivos()
+      : this.ordenesSeguimiento());
+
+  readonly ordenesPeriodo = computed(() =>
+    this.ordenes().filter(orden =>
+      perteneceAlPeriodo(orden.fecha, this.periodo())));
+  /** Historial significa compras terminadas, no cualquier orden antigua. */
+  readonly ordenesFiltradas = computed(() =>
+    this.ordenesPeriodo().filter(orden => orden.estado === 'Completado'));
+  readonly ordenesPaginadas = computed(() =>
+    this.ordenesFiltradas().slice(
+      this.paginaHistorial() * 10,
+      this.paginaHistorial() * 10 + 10,
+    ));
+  readonly totalPeriodo = computed(() =>
+    this.ordenesFiltradas().reduce(
+      (total, orden) => total + orden.totalNumerico,
+      0,
+    ));
+  readonly canceladasPeriodo = computed(() =>
+    this.ordenesPeriodo().filter(orden => orden.estado === 'Cancelado').length);
+  readonly proveedorMayor = computed(() => {
+    const importes = new Map<string, number>();
+    this.ordenesFiltradas().forEach(orden =>
+      importes.set(
+        orden.proveedor,
+        (importes.get(orden.proveedor) || 0) + orden.totalNumerico,
+      ));
+    return [...importes].sort((a, b) => b[1] - a[1])[0]
+      || ['Sin compras completadas', 0] as [string, number];
+  });
+  readonly detalleOrden = computed(() => {
+    const pedidos = this.pedidosMostrados();
+    return pedidos.find(orden => orden.folio === this.ordenSeleccionadaFolio())
+      || pedidos[0]
+      || ordenVacia();
+  });
 
   cambiarPaginaHistorial(evento: PageEvent): void {
     this.paginaHistorial.set(evento.pageIndex);
   }
 
-  seleccionarOrden(orden: OrdenCompra): void {
-    this.ordenSeleccionada.set(orden);
+  cambiarPeriodo(periodo: PeriodoConsulta): void {
+    this.periodo.set(periodo);
+    this.paginaHistorial.set(0);
+  }
+
+  cambiarVistaSeguimiento(vista: VistaSeguimiento): void {
+    this.vistaSeguimiento.set(vista);
+    this.ordenSeleccionadaFolio.set('');
+  }
+
+  seleccionarOrden(orden: OrdenConsulta): void {
+    this.ordenSeleccionadaFolio.set(orden.folio);
   }
 
   exportarHistorial(): void {
     this.archivos.descargarCsv(
-      'historial-compras.csv',
-      ['Folio', 'Proveedor', 'Solicitante', 'Articulos', 'Total', 'Fecha', 'Estado'],
-      this.ordenesFiltradas().map((orden) => [orden.folio, orden.proveedor, orden.solicitante, orden.articulos, orden.total, orden.fecha, orden.estado]),
+      'historial-compras-completadas.csv',
+      ['Folio', 'Proveedor', 'Solicitante', 'Artículos', 'Total', 'Fecha', 'Estado'],
+      this.ordenesFiltradas().map(orden => [
+        orden.folio,
+        orden.proveedor,
+        orden.solicitante,
+        orden.articulos,
+        orden.totalNumerico,
+        orden.fecha,
+        orden.estado,
+      ]),
     );
-    this.notificacion.open('Historial exportado', 'Cerrar', { duration: 2500 });
+    this.notificacion.open('Historial de compras completadas exportado', 'Cerrar', {
+      duration: 2500,
+    });
   }
 
-  recomprar(orden: OrdenCompra): void {
-    this.notificacion.open(`Selecciona ${orden.proveedor} para repetir la compra`, 'Cerrar', { duration: 3500 });
-    void this.router.navigate(['/compras/proveedores'], { queryParams: { buscar: orden.proveedor } });
+  recomprar(orden: OrdenConsulta): void {
+    this.notificacion.open(
+      `Selecciona ${orden.proveedor} para repetir la compra`,
+      'Cerrar',
+      { duration: 3500 },
+    );
+    void this.router.navigate(['/compras/proveedores'], {
+      queryParams: { buscar: orden.proveedor },
+    });
   }
 
   async generarReporte(): Promise<void> {
@@ -110,38 +200,75 @@ export class Consultas {
       periodo: `Del ${inicioPeriodo(this.periodo()).toLocaleDateString('es-MX')} al ${new Date().toLocaleDateString('es-MX')}`,
       descripcion: this.descripcionReporte.trim(),
       total: this.totalPeriodo(),
-      ordenes: this.ordenesFiltradas(),
+      ordenes: this.ordenesFiltradas().map(orden => ({
+        ...orden,
+        total: orden.totalNumerico,
+      })),
     });
-    this.notificacion.open('PDF generado', 'Cerrar', { duration: 2500 });
+    this.notificacion.open('PDF de compras completadas generado', 'Cerrar', {
+      duration: 2500,
+    });
   }
+}
 
-  private crearOrden(
-    folio: string,
-    proveedor: string,
-    solicitante: string,
-    articulos: number,
-    total: number,
-    fecha: string,
-    estado: OrdenCompra['estado'],
-  ): OrdenCompra {
-    const enCurso = estado !== 'Completado' && estado !== 'Cancelado';
-    return {
-      folio,
-      proveedor,
-      solicitante,
-      articulos,
-      total,
-      fecha,
-      estado,
-      estadoClase: estado.toLocaleLowerCase('es-MX').replaceAll(' ', '-'),
-      etapas: [
-        { nombre: 'Solicitud creada', fecha: '16 Jun · 10:32', completada: true },
-        { nombre: 'Aprobación dirección', fecha: '16 Jun · 14:15', completada: true },
-        { nombre: 'Orden de compra emitida', fecha: '16 Jun · 16:00', completada: true },
-        { nombre: 'Confirmación del proveedor', fecha: '17 Jun · 09:20', completada: estado !== 'Pendiente' },
-        { nombre: 'En tránsito', fecha: enCurso ? '17 Jun · 15:45' : estado === 'Completado' ? '18 Jun · 08:15' : 'Pendiente', completada: estado === 'En tránsito' || estado === 'Completado' },
-        { nombre: 'Entregado y recibido', fecha: estado === 'Completado' ? '18 Jun · 13:10' : 'Pendiente', completada: estado === 'Completado' },
-      ],
-    };
-  }
+function importeNumerico(valor: string): number {
+  const numero = Number(valor.replace(/[^\d.-]/g, ''));
+  return Number.isFinite(numero) ? numero : 0;
+}
+
+function claseEstado(estado: string): string {
+  return estado
+    .toLocaleLowerCase('es-MX')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replaceAll(' ', '-');
+}
+
+function etapasOrden(orden: OrdenCompra): EtapaOrden[] {
+  const indiceEstado = {
+    Pendiente: 0,
+    Activo: 2,
+    'En transito': 4,
+    Completado: 5,
+    Cancelado: 0,
+  }[orden.estado];
+  const fecha = orden.historial.at(-1)?.fecha || orden.actualizadaEn;
+  const nombres = [
+    'Orden de compra emitida',
+    'Aprobación de compra',
+    'Confirmación del proveedor',
+    'Preparación del pedido',
+    'En tránsito',
+    'Entregado y recibido',
+  ];
+  return nombres.map((nombre, indice) => ({
+    nombre,
+    fecha: indice <= indiceEstado
+      ? new Date(fecha).toLocaleString('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+      : 'Pendiente',
+    completada: orden.estado !== 'Cancelado' && indice <= indiceEstado,
+  }));
+}
+
+function ordenVacia(): OrdenConsulta {
+  return {
+    folio: 'Sin pedidos para mostrar',
+    proveedor: '—',
+    articulos: 0,
+    total: '$0',
+    totalNumerico: 0,
+    solicitante: '—',
+    fecha: '',
+    estado: 'Pendiente',
+    cancelable: false,
+    actualizadaEn: '',
+    historial: [],
+    estadoClase: 'pendiente',
+    etapas: [],
+  };
 }

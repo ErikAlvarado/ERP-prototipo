@@ -10,6 +10,11 @@ import { PersistenciaLocal } from '../../shared/services/persistencia-local';
 import { DetalleOrdenDialog } from './dialogs/detalle-orden-dialog/detalle-orden-dialog';
 import { fechaHace, perteneceAlPeriodo, PeriodoConsulta, PERIODOS_CONSULTA } from '../../shared/utils/periodos-consulta';
 import { PageEvent } from '@angular/material/paginator';
+import {
+  EstadoOrdenCompra,
+  OrdenCompra,
+  OrdenesCompraService,
+} from '../services/ordenes-compra.service';
 
 interface SolicitudCompra {
   folio: string;
@@ -22,70 +27,6 @@ interface SolicitudCompra {
   importe: string;
 }
 
-export interface OrdenCompra {
-  folio: string;
-  proveedor: string;
-  articulos: number;
-  total: string;
-  solicitante: string;
-  fecha: string;
-  estado: 'Completado' | 'En transito' | 'Activo' | 'Pendiente' | 'Cancelado';
-  cancelable: boolean;
-}
-
-const ORDENES_DEMO_RECIENTES: OrdenCompra[] = [
-  {
-    folio: 'OC-2026-0101',
-    proveedor: 'Suministros Corporativos del Centro',
-    articulos: 14,
-    total: '$36,780',
-    solicitante: 'Fernanda Castillo',
-    fecha: fechaHace(0),
-    estado: 'Pendiente',
-    cancelable: true,
-  },
-  {
-    folio: 'OC-2026-0102',
-    proveedor: 'Tecnologia Integral Bajio',
-    articulos: 6,
-    total: '$92,450',
-    solicitante: 'Jorge Ramirez',
-    fecha: fechaHace(0),
-    estado: 'Activo',
-    cancelable: true,
-  },
-  {
-    folio: 'OC-2026-0103',
-    proveedor: 'Equipamiento Industrial Nova',
-    articulos: 9,
-    total: '$48,320',
-    solicitante: 'Sofia Mendoza',
-    fecha: fechaHace(0),
-    estado: 'En transito',
-    cancelable: true,
-  },
-  {
-    folio: 'OC-2026-0104',
-    proveedor: 'Papeleria y Servicios Metropolitanos',
-    articulos: 22,
-    total: '$15,690',
-    solicitante: 'Miguel Salgado',
-    fecha: fechaHace(0),
-    estado: 'Completado',
-    cancelable: false,
-  },
-  {
-    folio: 'OC-2026-0105',
-    proveedor: 'Mobiliario Ejecutivo Nacional',
-    articulos: 11,
-    total: '$73,800',
-    solicitante: 'Valeria Contreras',
-    fecha: fechaHace(0),
-    estado: 'Pendiente',
-    cancelable: true,
-  },
-];
-
 @Component({
   selector: 'app-gestion-compras',
   imports: [CommonModule, Card, EncabezadoPagina, Estado, IMPORTACIONES_MATERIAL_COMPRAS],
@@ -97,15 +38,15 @@ export class GestionCompras {
   private readonly dialogo = inject(MatDialog);
   private readonly avisos = inject(MatSnackBar);
   private readonly persistencia = inject(PersistenciaLocal);
+  private readonly ordenesCompra = inject(OrdenesCompraService);
   private readonly claveSolicitudes = 'erp.solicitudes-compras';
-  private readonly claveOrdenes = 'erp.ordenes-compras';
   readonly busquedaOrdenes = signal('');
   readonly periodoOrdenes = signal<PeriodoConsulta>('mes');
   readonly periodos = PERIODOS_CONSULTA;
   readonly etiquetaPeriodoOrdenes = computed(
     () => this.periodos.find((periodo) => periodo.valor === this.periodoOrdenes())?.etiqueta ?? 'Periodo',
   );
-  readonly estadosOrden: ReadonlyArray<OrdenCompra['estado']> = [
+  readonly estadosOrden: ReadonlyArray<EstadoOrdenCompra> = [
     'Pendiente',
     'Activo',
     'En transito',
@@ -198,69 +139,8 @@ export class GestionCompras {
     'acciones',
   ];
 
-  readonly ordenes = signal<OrdenCompra[]>([
-    ...ORDENES_DEMO_RECIENTES,
-    {
-      folio: 'OC-2025-0087',
-      proveedor: 'TechnoInsumos SA de CV',
-      articulos: 5,
-      total: '$84,500',
-      solicitante: 'Laura Hernandez',
-      fecha: '15 Jun 2025',
-      estado: 'Completado',
-      cancelable: false,
-    },
-    {
-      folio: 'OC-2025-0088',
-      proveedor: 'Electronica Empresarial MX',
-      articulos: 3,
-      total: '$42,300',
-      solicitante: 'Marco Jimenez',
-      fecha: '16 Jun 2025',
-      estado: 'En transito',
-      cancelable: true,
-    },
-    {
-      folio: 'OC-2025-0089',
-      proveedor: 'Materiales del Norte SA',
-      articulos: 12,
-      total: '$156,800',
-      solicitante: 'Diana Ruiz',
-      fecha: fechaHace(25),
-      estado: 'Activo',
-      cancelable: true,
-    },
-    {
-      folio: 'OC-2025-0090',
-      proveedor: 'Grupo Distribuidora Nacional',
-      articulos: 8,
-      total: '$23,400',
-      solicitante: 'Carlos Vega',
-      fecha: fechaHace(55),
-      estado: 'Pendiente',
-      cancelable: true,
-    },
-    {
-      folio: 'OC-2025-0091',
-      proveedor: 'Soluciones Logisticas Omega',
-      articulos: 2,
-      total: '$67,200',
-      solicitante: 'Andrea Morales',
-      fecha: fechaHace(110),
-      estado: 'Activo',
-      cancelable: true,
-    },
-    {
-      folio: 'OC-2025-0086',
-      proveedor: 'TechnoInsumos SA de CV',
-      articulos: 7,
-      total: '$128,900',
-      solicitante: 'Ricardo Torres',
-      fecha: fechaHace(300),
-      estado: 'Cancelado',
-      cancelable: false,
-    },
-  ]);
+  /** La misma lista ordenada que consumen Dashboard y Consultas. */
+  readonly ordenes = this.ordenesCompra.ordenesRecientes;
 
   readonly ordenesFiltradas = computed(() => {
     const termino = this.normalizar(this.busquedaOrdenes());
@@ -312,22 +192,12 @@ export class GestionCompras {
   }
 
   cancelarOrden(folio: string): void {
-    this.ordenes.update((ordenes) =>
-      ordenes.map((orden) =>
-        orden.folio === folio ? { ...orden, estado: 'Cancelado', cancelable: false } : orden,
-      ),
-    );
-    this.persistencia.guardar(this.claveOrdenes, this.ordenes());
+    this.ordenesCompra.cancelar(folio);
     this.avisos.open(`Orden ${folio} cancelada`, 'Cerrar', { duration: 3500 });
   }
 
-  actualizarEstadoOrden(folio: string, estado: OrdenCompra['estado']): void {
-    this.ordenes.update((ordenes) =>
-      ordenes.map((orden) => orden.folio === folio
-        ? { ...orden, estado, cancelable: estado !== 'Completado' && estado !== 'Cancelado' }
-        : orden),
-    );
-    this.persistencia.guardar(this.claveOrdenes, this.ordenes());
+  actualizarEstadoOrden(folio: string, estado: EstadoOrdenCompra): void {
+    this.ordenesCompra.actualizarEstado(folio, estado);
     this.avisos.open(`Estado de ${folio} actualizado a ${estado}`, 'Cerrar', { duration: 3000 });
   }
 
@@ -340,24 +210,6 @@ export class GestionCompras {
       ...solicitudesGuardadas,
     ]);
     this.persistencia.guardar(this.claveSolicitudes, this.solicitudes());
-    this.ordenes.set(this.persistencia.leer(this.claveOrdenes, this.ordenes()));
-    const foliosGuardados = new Set(this.ordenes().map((orden) => orden.folio));
-    const ordenesFaltantes = ORDENES_DEMO_RECIENTES.filter(
-      (orden) => !foliosGuardados.has(orden.folio),
-    );
-    if (ordenesFaltantes.length) {
-      this.ordenes.update((ordenes) => [...ordenesFaltantes, ...ordenes]);
-      this.persistencia.guardar(this.claveOrdenes, this.ordenes());
-    }
-    // Migra fechas de demostración antiguas para que los filtros de periodo sigan mostrando datos.
-    if (!this.ordenes().some((orden) => perteneceAlPeriodo(orden.fecha, 'anio'))) {
-      const antiguedad = [0, 8, 25, 55, 110, 300];
-      this.ordenes.update((ordenes) => ordenes.map((orden, indice) => ({
-        ...orden,
-        fecha: fechaHace(antiguedad[indice] ?? 300),
-      })));
-      this.persistencia.guardar(this.claveOrdenes, this.ordenes());
-    }
   }
 
   verOrden(orden: OrdenCompra): void {

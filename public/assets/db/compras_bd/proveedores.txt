@@ -5,3 +5,8 @@ id_proveedor|id_empresa|razon_social|nombre_comercial|rfc|correo|telefono|direcc
 4|1|Textiles y Calzado del Bajío SA de CV|Textil Bajío|TCB200611GH6|compras@textilbajio.mx|5551001004|Blvd. León 220, Guanajuato|1|2025-04-18
 5|1|Suministros Médicos Omega SA de CV|Médica Omega|SMO160908IJ7|atencion@medicaomega.mx|5551001005|Av. Salud 99, Querétaro|1|2025-05-20
 6|1|Productos de Limpieza Universal SA de CV|Limpieza Universal|PLU210115KL8|ventas@limpiezauniversal.mx|5551001006|Calle Higiene 310, Puebla|1|2025-06-12
+7|1|Ferreteria y Jardineria Mexicana SA de CV|FerreJardin MX|FJM220301A12|ventas@ferrejardin.mx|5551001007|Av. Herramientas 215, Estado de Mexico|1|2025-07-08
+8|1|Deportes y Juguetes del Centro SA de CV|Deportes y Juguetes MX|DJC210714B23|pedidos@deporteyjuguete.mx|5551001008|Calz. Recreacion 108, CDMX|1|2025-08-14
+9|1|Mascotas del Centro SA de CV|Mascotas del Centro|MCE200928C34|mayoreo@mascotascentro.mx|5551001009|Av. Animales 47, Queretaro|1|2025-09-02
+10|1|Autopartes Nacionales SA de CV|Autopartes Nacionales|ANA190416D45|ventas@autopartesnacionales.mx|5551001010|Blvd. Automotriz 630, Puebla|1|2025-10-11
+11|1|Abarrotes y Bebidas Mayoristas SA de CV|Abarrotes y Bebidas MX|ABM230105E56|pedidos@abarrotesybebidas.mx|5551001011|Central de Abasto Bodega 42, CDMX|1|2025-11-03

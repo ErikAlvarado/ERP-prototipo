@@ -3,12 +3,16 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "node scripts/serve-erp.mjs",
+    "start:angular": "ng serve",
+    "data:serve": "node scripts/compras-txt-api.mjs",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "migrate:data": "node scripts/migrate-inventory-no-lots.mjs",
-    "validate:data": "node scripts/validate-db.mjs"
+    "validate:data": "node scripts/validate-db.mjs",
+    "validate:compras": "node scripts/validate-compras-proveedores.mjs",
+    "test:compras-api": "node scripts/compras-txt-api.test.mjs"
   },
   "private": true,
   "packageManager": "npm@11.13.0",

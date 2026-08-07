@@ -1,13 +1,13 @@
-import { DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '../../../../shared/material/importaciones-material';
 import { IMPORTACIONES_MATERIAL_COMPRAS } from '../../../../shared/material/importaciones-material';
 import { Estado } from '../../../../shared/components/estado/estado';
-import { OrdenCompra } from '../../gestion-compras';
+import { OrdenCompra } from '../../../services/ordenes-compra.service';
 
 @Component({
   selector: 'app-detalle-orden-dialog',
-  imports: [DatePipe, Estado, IMPORTACIONES_MATERIAL_COMPRAS],
+  imports: [CurrencyPipe, DatePipe, Estado, IMPORTACIONES_MATERIAL_COMPRAS],
   templateUrl: './detalle-orden-dialog.html',
   styleUrl: './detalle-orden-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

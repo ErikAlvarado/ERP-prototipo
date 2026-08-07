@@ -26,6 +26,22 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline">
+      <mat-label>RFC</mat-label>
+      <input
+        matInput
+        formControlName="rfc"
+        maxlength="13"
+        placeholder="Ej. TIC180512AB3"
+        autocomplete="off"
+      />
+      @if (formulario.controls.rfc.hasError('required')) {
+        <mat-error>El RFC es obligatorio</mat-error>
+      } @else if (formulario.controls.rfc.hasError('pattern')) {
+        <mat-error>Ingresa un RFC mexicano válido de 12 o 13 caracteres</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
       <mat-label>Dirección fiscal</mat-label>
       <textarea matInput rows="2" formControlName="direccionFiscal" placeholder="Calle, número, colonia, C.P., ciudad y estado"></textarea>
       @if (formulario.controls.direccionFiscal.invalid && formulario.controls.direccionFiscal.touched) {
@@ -53,14 +69,6 @@
       <input matInput type="tel" formControlName="telefono" placeholder="55 0000-0000" />
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Categoría</mat-label>
-      <mat-select formControlName="categoria">
-        @for (categoria of categorias; track categoria) {
-          <mat-option [value]="categoria">{{ categoria }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
   </form>
 </mat-dialog-content>
 
