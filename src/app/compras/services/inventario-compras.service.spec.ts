@@ -126,6 +126,7 @@ function productoPrueba(): ProductoCatalogo {
       {
         id: 1,
         idAlmacen: 1,
+        idAnaquel: 1,
         almacen: 'Almacén Central',
         stock: 4,
         stockReorden: 5,
@@ -137,6 +138,7 @@ function productoPrueba(): ProductoCatalogo {
       {
         id: 2,
         idAlmacen: 2,
+        idAnaquel: 2,
         almacen: 'Almacén Norte',
         stock: 0,
         stockReorden: 5,
@@ -148,6 +150,7 @@ function productoPrueba(): ProductoCatalogo {
       {
         id: 3,
         idAlmacen: 3,
+        idAnaquel: 3,
         almacen: 'Almacén Sur',
         stock: 8,
         stockReorden: 5,

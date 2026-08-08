@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, inject, OnInit, ViewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
@@ -10,6 +11,11 @@ import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { CatalogoProductos, ProductoCatalogo } from '../../../shared/services/catalogo-productos';
 import { PersistenciaLocal } from '../../../shared/services/persistencia-local';
 import { Autenticacion } from '../../../shared/services/autenticacion';
+import { DatosDb } from '../../../shared/services/datos-db';
+import { PersistenciaComprasTxt } from '../../../shared/services/persistencia-compras-txt';
+import { forkJoin, map, Observable } from 'rxjs';
+import { CatalogoCompras } from '../../../shared/services/catalogo-compras';
+import { OrdenesCompraService } from '../../../compras/services/ordenes-compra.service';
 import {
   CampoFiltroInventario,
   FiltrosInventarioDialog,
@@ -38,7 +44,19 @@ interface RecepcionInventario {
   responsable: string;
   estado: EstadoRecepcion;
   detalles?: ProductoRecepcion[];
+  almacenId?: number;
+  documento?: string;
+  observaciones?: string;
+  origenTxt?: boolean;
 }
+
+interface RecepcionCompraDb { id_recepcion: string; folio: string; id_orden_compra: string; id_almacen: string; id_responsable: string; fecha_recepcion: string; documento_proveedor: string; observaciones: string; }
+interface RecepcionDetalleDb { id_recepcion: string; id_detalle_orden: string; cantidad_recibida: string; cantidad_rechazada: string; motivo_rechazo: string; }
+interface OrdenCompraDb { id_orden_compra: string; folio: string; id_proveedor: string; }
+interface OrdenDetalleDb { id_detalle_orden: string; id_producto: string; }
+interface ProveedorDb { id_proveedor: string; nombre_comercial: string; razon_social: string; }
+interface AlmacenDb { id_almacen: string; nombre_almacen: string; }
+interface UsuarioDb { id_usuario: string; nombres: string; apellido_paterno: string; apellido_materno: string; }
 
 interface ProveedorRecepcion {
   nombre: string;
@@ -68,13 +86,18 @@ const RECEPCIONES: RecepcionInventario[] = [
 })
 export class Recepcion implements OnInit, AfterViewInit {
   readonly displayedColumns = ['folio', 'orden', 'proveedor', 'almacen', 'fecha', 'contenido', 'responsable', 'estado', 'acciones'];
-  readonly dataSource = new MatTableDataSource<RecepcionInventario>(RECEPCIONES);
+  readonly dataSource = new MatTableDataSource<RecepcionInventario>([]);
   private readonly catalogoProductos = inject(CatalogoProductos);
   private readonly persistencia = inject(PersistenciaLocal);
   private readonly autenticacion = inject(Autenticacion);
+  private readonly catalogoCompras = inject(CatalogoCompras);
+  private readonly ordenesCompra = inject(OrdenesCompraService);
+  private readonly http = inject(HttpClient);
+  private readonly db = inject(DatosDb);
+  private readonly persistenciaTxt = inject(PersistenciaComprasTxt);
   private productosDb: ProductoCatalogo[] = [];
   busqueda = '';
-  currentSort = 'Más antiguos';
+  currentSort = 'Más recientes';
   filtros: Record<string, ValorFiltroInventario> = {
     estado: '',
     proveedor: '',
@@ -115,10 +138,17 @@ export class Recepcion implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    this.ordenar(this.currentSort);
-    this.catalogoProductos.cargar().subscribe({
-      next: productos => this.productosDb = productos.filter(producto => producto.estado),
-      error: () => this.snackBar.open('No fue posible cargar los productos de la base de datos', 'Cerrar', { duration: 4000 }),
+    this.cargarRecepcionesTxt().subscribe({
+      next: ({ productos, recepciones }) => {
+        this.productosDb = productos.filter(producto => producto.estado);
+        const ordenesTxt = new Set(recepciones.map(recepcion => recepcion.orden));
+        this.dataSource.data = [
+          ...this.recepcionesDeOrdenes().filter(recepcion => !ordenesTxt.has(recepcion.orden)),
+          ...recepciones,
+        ];
+        this.ordenar(this.currentSort);
+      },
+      error: () => this.snackBar.open('No fue posible cargar recepciones_compra.txt y sus relaciones', 'Cerrar', { duration: 4000 }),
     });
   }
 
@@ -214,7 +244,23 @@ export class Recepcion implements OnInit, AfterViewInit {
     });
   }
 
-  actualizarEstado(item: RecepcionInventario, estado: EstadoRecepcion): void {
+  async actualizarEstado(item: RecepcionInventario, estado: EstadoRecepcion): Promise<void> {
+    if (item.origenTxt) {
+      this.snackBar.open('Las recepciones históricas del TXT son de solo lectura.', 'Cerrar', { duration: 3000 });
+      return;
+    }
+    if (estado === 'Recibida' && item.estado !== 'Recibida') {
+      try {
+        await this.aplicarEntradaInventario(item);
+      } catch (error) {
+        this.snackBar.open(
+          error instanceof Error ? error.message : 'No fue posible actualizar el inventario.',
+          'Cerrar',
+          { duration: 5000 },
+        );
+        return;
+      }
+    }
     this.dataSource.data = this.dataSource.data.map(actual => actual.folio === item.folio ? { ...actual, estado } : actual);
     this.filtrar();
     this.snackBar.open(`${item.folio} cambió a ${estado}`, 'Cerrar', { duration: 3000 });
@@ -233,6 +279,143 @@ export class Recepcion implements OnInit, AfterViewInit {
       'Electronica Empresarial MX', 'Soluciones Logisticas Omega', 'Papeleria Martinez & Asoc.',
     ];
     return [...new Set([...guardados, ...base])].sort((a, b) => a.localeCompare(b, 'es'));
+  }
+
+  private recepcionesDeOrdenes(): RecepcionInventario[] {
+    return this.ordenesCompra.ordenes()
+      .filter(orden => orden.partidas?.length && orden.almacenId && orden.estado !== 'Cancelado')
+      .map(orden => ({
+        folio: `REC-${orden.folio}`,
+        orden: orden.folio,
+        proveedor: orden.proveedor,
+        almacen: orden.almacen || `Almacén #${orden.almacenId}`,
+        almacenId: orden.almacenId,
+        fecha: orden.fechaEntrega || orden.fecha,
+        productos: orden.partidas?.length || 0,
+        unidades: orden.partidas?.reduce((total, partida) => total + partida.cantidad, 0) || 0,
+        responsable: orden.solicitante,
+        estado: orden.estado === 'Completado' ? 'Recibida' : 'Pendiente',
+        detalles: orden.partidas?.map(partida => ({
+          id: partida.productoId,
+          sku: partida.sku,
+          codigo: '',
+          nombre: partida.nombre,
+          unidad: '',
+          cantidad: partida.cantidad,
+        })) || [],
+      }));
+  }
+
+  private async aplicarEntradaInventario(item: RecepcionInventario): Promise<void> {
+    const almacenId = item.almacenId
+      ?? this.catalogoCompras.almacenes().find(almacen => almacen.nombre === item.almacen)?.id;
+    if (!almacenId) throw new Error(`No se encontró el almacén destino de ${item.folio}.`);
+    if (!item.detalles?.length) {
+      throw new Error(`${item.folio} no tiene productos detallados para actualizar el stock.`);
+    }
+    await this.persistenciaTxt.registrarRecepcion({
+      folio: item.folio,
+      orden: item.orden,
+      proveedor: item.proveedor,
+      almacenId,
+      fecha: new Date().toISOString().slice(0, 10),
+      documento: item.documento || '',
+      observaciones: item.observaciones || `Recepción de ${item.orden}`,
+      partidas: item.detalles.map(detalle => ({
+        productoId: detalle.id,
+        cantidad: detalle.cantidad,
+      })),
+    });
+    this.catalogoCompras.recargar();
+    const orden = this.ordenesCompra.ordenes().find(actual => actual.folio === item.orden);
+    if (orden && orden.estado !== 'Completado') {
+      this.ordenesCompra.actualizarEstado(
+        orden.folio,
+        'Completado',
+        `Mercancía recibida mediante ${item.folio}.`,
+      );
+    }
+  }
+
+  private cargarRecepcionesTxt(): Observable<{
+    productos: ProductoCatalogo[];
+    recepciones: RecepcionInventario[];
+  }> {
+    return forkJoin({
+      productos: this.catalogoProductos.cargar(),
+      recepciones: this.leerCompras<RecepcionCompraDb>('recepciones_compra.txt'),
+      detalles: this.leerCompras<RecepcionDetalleDb>('recepciones_compra_detalle.txt'),
+      ordenes: this.leerCompras<OrdenCompraDb>('ordenes_compra.txt'),
+      detallesOrden: this.leerCompras<OrdenDetalleDb>('ordenes_compra_detalle.txt'),
+      proveedores: this.leerCompras<ProveedorDb>('proveedores.txt'),
+      almacenes: this.db.leer<AlmacenDb>('almacenes.txt', true),
+      usuarios: this.db.leer<UsuarioDb>('usuarios.txt', true),
+    }).pipe(map(datos => {
+      const ordenes = new Map(datos.ordenes.map(orden => [orden.id_orden_compra, orden]));
+      const detallesOrden = new Map(datos.detallesOrden.map(detalle => [detalle.id_detalle_orden, detalle]));
+      const proveedores = new Map(datos.proveedores.map(proveedor => [
+        proveedor.id_proveedor,
+        proveedor.nombre_comercial || proveedor.razon_social,
+      ]));
+      const almacenes = new Map(datos.almacenes.map(almacen => [almacen.id_almacen, almacen.nombre_almacen]));
+      const usuarios = new Map(datos.usuarios.map(usuario => [
+        usuario.id_usuario,
+        [usuario.nombres, usuario.apellido_paterno, usuario.apellido_materno].filter(Boolean).join(' '),
+      ]));
+      const productos = new Map(datos.productos.map(producto => [producto.id, producto]));
+      const recepciones = datos.recepciones.map(recepcion => {
+        const orden = ordenes.get(recepcion.id_orden_compra);
+        const detalles = datos.detalles.filter(detalle => detalle.id_recepcion === recepcion.id_recepcion);
+        const tieneRechazos = detalles.some(detalle => Number(detalle.cantidad_rechazada) > 0);
+        const productosRecepcion: ProductoRecepcion[] = detalles.map(detalle => {
+          const detalleOrden = detallesOrden.get(detalle.id_detalle_orden);
+          const productoId = Number(detalleOrden?.id_producto);
+          const producto = productos.get(productoId);
+          return {
+            id: productoId,
+            sku: producto?.sku || `Producto #${productoId}`,
+            codigo: producto?.codigo || '',
+            nombre: producto?.producto || `Producto #${productoId}`,
+            unidad: producto?.medida || 'unidad',
+            cantidad: Math.max(0, Number(detalle.cantidad_recibida) - Number(detalle.cantidad_rechazada)),
+          };
+        });
+        return {
+          folio: recepcion.folio,
+          orden: orden?.folio || `Orden #${recepcion.id_orden_compra}`,
+          proveedor: proveedores.get(orden?.id_proveedor || '') || 'Proveedor no disponible',
+          almacen: almacenes.get(recepcion.id_almacen) || `Almacén #${recepcion.id_almacen}`,
+          almacenId: Number(recepcion.id_almacen),
+          fecha: recepcion.fecha_recepcion.slice(0, 10),
+          productos: productosRecepcion.length,
+          unidades: productosRecepcion.reduce((total, producto) => total + producto.cantidad, 0),
+          responsable: usuarios.get(recepcion.id_responsable) || `Usuario #${recepcion.id_responsable}`,
+          estado: tieneRechazos ? 'Con incidencias' : 'Recibida',
+          detalles: productosRecepcion,
+          documento: recepcion.documento_proveedor,
+          observaciones: recepcion.observaciones,
+          origenTxt: true,
+        } satisfies RecepcionInventario;
+      });
+      return { productos: datos.productos, recepciones };
+    }));
+  }
+
+  private leerCompras<T>(archivo: string): Observable<T[]> {
+    return this.http.get(`/assets/db/compras_bd/${encodeURIComponent(archivo)}?v=${Date.now()}`, {
+      responseType: 'text',
+    }).pipe(map(texto => this.parsearTxt<T>(texto)));
+  }
+
+  private parsearTxt<T>(texto: string): T[] {
+    const lineas = texto.replace(/^\uFEFF/, '').trim().split(/\r?\n/);
+    const encabezado = lineas.shift();
+    if (!encabezado?.includes('|')) return [];
+    const columnas = encabezado.split('|');
+    return lineas.filter(linea => linea.trim()).map(linea => {
+      const valores = linea.split('|');
+      return Object.fromEntries(columnas.map((columna, indice) => [columna, valores[indice] || ''])) as T;
+    });
   }
 }
 

@@ -76,7 +76,7 @@ export class Kits implements OnInit, AfterViewInit {
   dataSource = new MatTableDataSource<Kit>([]);
   obs!: Observable<Kit[]>;
   currentSearch = '';
-  currentSort = 'Más antiguos';
+  currentSort = 'Más recientes';
   filtros: Record<string, ValorFiltroCatalogo> = { producto: '', estado: '', precioMinimo: null, precioMaximo: null };
   cargando = true;
   errorCarga = '';

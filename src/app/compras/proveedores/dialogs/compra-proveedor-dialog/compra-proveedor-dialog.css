@@ -1,8 +1,9 @@
-:host { display: block; width: 1120px; max-width: 100%; color: #172033; }
+:host { display: block; width: 1120px; max-width: 100%; height: 100%; min-height: 0; color: #172033; }
+.dialogo-compra { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: hidden; }
 .cabecera-dialogo { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid #e8ecf1; }
 .cabecera-dialogo h2 { margin: 0; font-size: 20px; }
 .cabecera-dialogo p { margin: 2px 0 0; color: #8e99ab; }
-mat-dialog-content { display: grid; gap: 14px; max-height: 74vh; padding: 18px 22px !important; background: #f8fafc; }
+mat-dialog-content { display: grid; flex: 1 1 auto; gap: 14px; min-height: 0; max-height: none; padding: 18px 22px !important; overflow: auto; overscroll-behavior: contain; background: #f8fafc; }
 mat-card { border-color: #e1e6ed; border-radius: 12px; background: #fff; }
 .aviso-folio { display: flex; align-items: center; gap: 12px; padding: 13px 17px; border-color: #bfdbfe; background: #eff6ff; color: #1e3a8a; }
 .aviso-folio div { display: grid; gap: 3px; }
@@ -43,10 +44,15 @@ mat-card { border-color: #e1e6ed; border-radius: 12px; background: #fff; }
 .totales { width: 310px; margin: 12px 0 0 auto; padding: 12px 16px; border-radius: 9px; background: #f8fafc; }
 .totales p { display: flex; justify-content: space-between; margin: 6px 0; color: #667085; }
 .totales .total { margin-top: 12px; padding-top: 12px; border-top: 1px solid #dfe4ea; color: #172033; font-size: 17px; }
-.ultima-compra-accion { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 22px 0; color: #64748b; font-size: 12px; }
+.ultima-compra-accion { display: flex; flex: 0 0 auto; justify-content: flex-end; gap: 8px; padding: 10px 22px 0; color: #64748b; font-size: 12px; }
 .ultima-compra-accion strong { color: #0f172a; }
-mat-dialog-actions { padding: 8px 22px 18px; }
+mat-dialog-actions { flex: 0 0 auto; padding: 8px 22px 18px; background: #fff; }
 .guardar { background: #1e3a8a !important; color: #fff !important; }
+@media (max-width: 1050px) {
+  .fila { grid-template-columns: minmax(175px, 1.2fr) 110px minmax(260px, 1.8fr) 100px 110px 38px; min-width: 850px; }
+  .sin-partidas { min-width: 850px; }
+  .resumen-proveedor { gap: 12px; padding-inline: 16px; }
+}
 @media (max-width: 800px) {
   .resumen-proveedor { grid-template-columns: auto 1fr; }
   .dato { display: none; }
@@ -54,4 +60,17 @@ mat-dialog-actions { padding: 8px 22px 18px; }
   .totales { width: auto; }
   .cabecera-dialogo { padding-inline: 16px; }
   .ultima-compra-accion { justify-content: flex-start; }
+  mat-dialog-content { padding: 14px 14px !important; }
+  .seccion-compra, .seccion-productos { padding: 14px; }
+  .fila { min-width: 760px; }
+  .sin-partidas { min-width: 760px; }
+  mat-dialog-actions { padding: 10px 16px 14px; }
+}
+@media (max-width: 520px) {
+  .cabecera-dialogo p { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .aviso-folio { align-items: flex-start; }
+  .resumen-proveedor { grid-template-columns: auto minmax(0, 1fr); padding: 14px; }
+  .ultima-compra-accion { display: none; }
+  mat-dialog-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  mat-dialog-actions button { width: 100%; }
 }

@@ -1,7 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-<<<<<<< HEAD
 const dbDirectory = resolve(
   process.cwd(),
   'public',
@@ -9,9 +8,6 @@ const dbDirectory = resolve(
   'db',
   'inventari_db',
 );
-=======
-const dbDirectory = resolve(process.cwd(), 'public', 'assets', 'db', 'inventari_db');
->>>>>>> 29f1c4015e72b2b7d532c551171e9adc1afd5bbc
 const failures = [];
 const tables = new Map();
 
@@ -254,7 +250,7 @@ for (const product of products) {
   const totalStock = inventory
     .filter((row) => row.id_producto === product.id_producto)
     .reduce((total, row) => total + number(row.stock), 0);
-  assert(totalStock > 0, `Product ${product.id_producto} (${product.nombre_producto}) has no positive stock.`);
+  assert(totalStock >= 0, `Product ${product.id_producto} (${product.nombre_producto}) has negative stock.`);
   assert(
     prices.some((price) => price.id_producto === product.id_producto),
     `Product ${product.id_producto} (${product.nombre_producto}) has no price.`,

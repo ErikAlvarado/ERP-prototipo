@@ -90,3 +90,8 @@ id_movimiento|id_producto|id_almacen|id_tipo_movimiento|existencia|cantidad|cost
 89|59|8|4|8.00|8.00|260.00|Entrada por transferencia desde almacén 7|TR-0007|2026-07-07|1
 90|63|11|4|5.00|-9.00|31.00|Salida por transferencia a almacén 2|TR-0011|2026-07-11|1
 91|63|2|4|9.00|9.00|31.00|Entrada por transferencia desde almacén 11|TR-0011|2026-07-11|1
+92|57|5|3|0.00|-9.00|145.00|Ajuste de stock agotado|AJ-AGOTADO-006|2026-08-07|1
+93|63|11|3|0.00|-5.00|31.00|Ajuste de stock agotado|AJ-AGOTADO-012|2026-08-07|1
+94|1|2|3|0.00|-5.00|5000.00|Ajuste de stock agotado|AJ-AGOTADO-074|2026-08-07|1
+95|55|4|3|0.00|-4.00|185.00|Ajuste de stock agotado|AJ-AGOTADO-075|2026-08-07|1
+96|59|8|3|0.00|-8.00|260.00|Ajuste de stock agotado|AJ-AGOTADO-076|2026-08-07|1

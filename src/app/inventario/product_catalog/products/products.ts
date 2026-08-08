@@ -57,7 +57,7 @@ export class Products implements OnInit, AfterViewInit {
   displayedColumns: string[] = ['sku', 'producto', 'marca', 'categoria', 'medida', 'precio', 'estatus', 'acciones'];
   dataSource = new MatTableDataSource<PeriodicElement>([]);
   currentSearch = '';
-  currentSort = 'Más antiguos';
+  currentSort = 'Más recientes';
   filtrosAvanzados: FiltrosProducto = { ...FILTROS_VACIOS };
   opciones: OpcionesProducto = { ...OPCIONES_VACIAS };
   almacenes: OpcionAlmacenProducto[] = [];

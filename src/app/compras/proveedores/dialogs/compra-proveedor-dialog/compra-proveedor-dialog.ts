@@ -115,9 +115,10 @@ export class CompraProveedorDialog {
   }
 
   agregarProducto(producto: ProductoCompra): void {
+    const almacenesProducto = this.almacenesProducto(producto);
     if (
       !this.proveedor.activo
-      || !this.almacenes.length
+      || !almacenesProducto.length
       || this.productos().some(item => item.id === producto.id)
     ) {
       return;
@@ -128,7 +129,7 @@ export class CompraProveedorDialog {
         ...producto,
         impuesto: 16,
         destinos: [{
-          almacenId: this.almacenes[0].id,
+          almacenId: almacenesProducto[0].id,
           cantidad: Math.max(1, producto.cantidadMinima),
         }],
       },
@@ -145,7 +146,7 @@ export class CompraProveedorDialog {
     this.productos.update(productos => productos.map(producto => {
       if (producto.id !== idProducto) return producto;
       const usados = new Set(producto.destinos.map(destino => destino.almacenId));
-      const almacen = this.almacenes.find(item => !usados.has(item.id));
+      const almacen = this.almacenesProducto(producto).find(item => !usados.has(item.id));
       if (!almacen) return producto;
       return {
         ...producto,
@@ -226,7 +227,12 @@ export class CompraProveedorDialog {
   }
 
   puedeAgregarDestino(producto: ProductoPedido): boolean {
-    return producto.destinos.length < this.almacenes.length;
+    return producto.destinos.length < this.almacenesProducto(producto).length;
+  }
+
+  almacenesProducto(producto: ProductoCompra): AlmacenCompra[] {
+    const ids = new Set(producto.existencias.map(existencia => existencia.almacenId));
+    return this.almacenes.filter(almacen => ids.has(almacen.id));
   }
 
   almacenDisponible(

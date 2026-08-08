@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { PageEvent } from '@angular/material/paginator';
 import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-dialog';
 import { EncabezadoPagina } from '../../shared/components/encabezado-pagina/encabezado-pagina';
 import {
@@ -53,6 +54,8 @@ export class Proveedores {
     this.route.snapshot.queryParamMap.get('buscar') || '',
   );
   readonly proveedores = this.catalogo.proveedores;
+  readonly pagina = signal(0);
+  readonly tamanoPagina = signal(10);
   readonly cargando = this.catalogo.cargando;
   readonly guardandoTxt = this.catalogo.guardandoTxt;
   readonly errorCarga = this.catalogo.errorCarga;
@@ -74,9 +77,19 @@ export class Proveedores {
       ).includes(termino);
     });
   });
+  readonly proveedoresPaginados = computed(() => {
+    const inicio = this.pagina() * this.tamanoPagina();
+    return this.proveedoresFiltrados().slice(inicio, inicio + this.tamanoPagina());
+  });
 
   buscar(valor: string): void {
     this.terminoBusqueda.set(valor);
+    this.pagina.set(0);
+  }
+
+  cambiarPagina(evento: PageEvent): void {
+    this.pagina.set(evento.pageIndex);
+    this.tamanoPagina.set(evento.pageSize);
   }
 
   reintentarCarga(): void {
@@ -220,9 +233,11 @@ export class Proveedores {
           data,
           width: '1120px',
           maxWidth: 'calc(100vw - 24px)',
-          maxHeight: '96vh',
+          height: 'calc(100vh - 24px)',
+          maxHeight: '900px',
           autoFocus: false,
           restoreFocus: true,
+          panelClass: 'dialogo-realizar-compra',
         },
       )
       .afterClosed()

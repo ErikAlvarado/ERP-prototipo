@@ -13,6 +13,7 @@ import {
 } from '../../../../shared/services/catalogo-compras';
 import { CatalogoProductos } from '../../../../shared/services/catalogo-productos';
 import { AdministracionDatos } from '../../../../inventario/administracion/administracion-datos';
+import { AnaquelesCatalogo } from '../../../../inventario/product_catalog/anaqueles/anaqueles-catalogo';
 import {
   AltaProductoProveedorDialog,
   DatosAltaProductoProveedorDialog,
@@ -122,6 +123,18 @@ describe('AltaProductoProveedorDialog', () => {
             }),
           },
         },
+        {
+          provide: AnaquelesCatalogo,
+          useValue: {
+            cargar: () => of([{
+              id: '30',
+              idEmpresa: 1,
+              idAlmacen: 10,
+              nombre: 'A-03',
+              estado: true,
+            }]),
+          },
+        },
       ],
     }).compileComponents();
 
@@ -144,14 +157,13 @@ describe('AltaProductoProveedorDialog', () => {
       precioReferencia: 2800,
       diasEntrega: 3,
       cantidadMinima: 2,
-      claveSat: '43211902',
     });
     component.inventarios.at(0).patchValue({
       stock: 1,
       stockCritico: 1,
       stockReorden: 4,
       stockMaximo: 20,
-      anaquel: 'A-03',
+      idAnaquel: 30,
     });
 
     await component.guardar();
@@ -171,6 +183,7 @@ describe('AltaProductoProveedorDialog', () => {
         precioReferencia: 2800,
         inventarios: [{
           idAlmacen: 10,
+          idAnaquel: 30,
           stock: 1,
           stockCritico: 1,
           stockReorden: 4,

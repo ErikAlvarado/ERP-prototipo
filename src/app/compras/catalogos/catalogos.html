@@ -12,10 +12,10 @@
         aria-label="Buscar productos o proveedores"
         placeholder="Buscar productos o proveedores..."
         [value]="busqueda()"
-        (input)="busqueda.set($any($event.target).value)"
+        (input)="buscar($any($event.target).value)"
       />
       @if (busqueda()) {
-        <button mat-icon-button type="button" class="limpiar-busqueda" aria-label="Limpiar búsqueda" (click)="busqueda.set('')"><mat-icon>close</mat-icon></button>
+        <button mat-icon-button type="button" class="limpiar-busqueda" aria-label="Limpiar búsqueda" (click)="buscar('')"><mat-icon>close</mat-icon></button>
       }
     </label>
 
@@ -39,7 +39,7 @@
     </button>
     <mat-menu #menuOrdenCatalogo="matMenu">
       @for (opcion of opcionesOrden; track opcion) {
-        <button mat-menu-item type="button" (click)="ordenCatalogo.set(opcion)">
+        <button mat-menu-item type="button" (click)="seleccionarOrden(opcion)">
           @if (ordenCatalogo() === opcion) { <mat-icon>check</mat-icon> }
           <span>{{ opcion }}</span>
         </button>
@@ -54,7 +54,7 @@
 
   @if (productosFiltrados().length) {
     <div class="productos-grid">
-      @for (producto of productosFiltrados(); track producto.id) {
+      @for (producto of productosPaginados(); track producto.id) {
         <mat-card class="producto-card" appearance="outlined">
           <mat-card-content>
             <div class="card-superior">
@@ -115,12 +115,21 @@
         </mat-card>
       }
     </div>
+    <mat-paginator
+      [length]="productosFiltrados().length"
+      [pageIndex]="pagina()"
+      [pageSize]="tamanoPagina()"
+      [pageSizeOptions]="[5, 10, 25]"
+      showFirstLastButtons
+      aria-label="Paginación del catálogo de productos"
+      (page)="cambiarPagina($event)"
+    />
   } @else {
     <div class="sin-resultados">
       <mat-icon>inventory_2</mat-icon>
       <h2>No encontramos productos</h2>
       <p>Prueba con otro término o selecciona una categoría diferente.</p>
-      <button mat-stroked-button type="button" (click)="busqueda.set(''); seleccionarCategoria('Todos')">
+      <button mat-stroked-button type="button" (click)="buscar(''); seleccionarCategoria('Todos')">
         Limpiar filtros
       </button>
     </div>

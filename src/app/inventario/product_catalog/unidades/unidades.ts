@@ -50,7 +50,7 @@ export class Unidades implements OnInit, AfterViewInit {
   dataSource = new MatTableDataSource<Unidad>([]);
   obs!: Observable<Unidad[]>;
   currentSearch = '';
-  currentSort = 'Más antiguos';
+  currentSort = 'Más recientes';
   filtros: Record<string, ValorFiltroCatalogo> = { empresa: '', decimales: '', uso: '' };
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 

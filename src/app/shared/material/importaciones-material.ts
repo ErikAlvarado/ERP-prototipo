@@ -37,6 +37,7 @@ export const IMPORTACIONES_MATERIAL_PROVEEDORES = [
   MatIconModule,
   MatInputModule,
   MatListModule,
+  MatPaginatorModule,
   MatSelectModule,
   MatSnackBarModule,
 ];
@@ -53,6 +54,7 @@ export const IMPORTACIONES_MATERIAL_COMPRA_PROVEEDOR = [
   MatNativeDateModule,
   MatPaginatorModule,
   MatSelectModule,
+  MatTooltipModule,
 ];
 
 export const IMPORTACIONES_MATERIAL_NAVEGACION = [
@@ -67,6 +69,7 @@ export const IMPORTACIONES_MATERIAL_CATALOGO = [
   MatCardModule,
   MatIconModule,
   MatMenuModule,
+  MatPaginatorModule,
   MatTooltipModule,
 ];
 

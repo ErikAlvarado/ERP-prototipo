@@ -61,7 +61,7 @@
     </div>
   } @else {
     <div class="grid-proveedores">
-      @for (proveedor of proveedoresFiltrados(); track proveedor.id) {
+      @for (proveedor of proveedoresPaginados(); track proveedor.id) {
         <mat-card appearance="outlined" class="tarjeta-proveedor">
           <div class="encabezado-tarjeta">
             <div class="avatar-proveedor">{{ proveedor.inicial }}</div>
@@ -155,5 +155,16 @@
         </div>
       }
     </div>
+    @if (proveedoresFiltrados().length) {
+      <mat-paginator
+        [length]="proveedoresFiltrados().length"
+        [pageIndex]="pagina()"
+        [pageSize]="tamanoPagina()"
+        [pageSizeOptions]="[5, 10, 25]"
+        showFirstLastButtons
+        aria-label="Paginación de proveedores"
+        (page)="cambiarPagina($event)"
+      />
+    }
   }
 </section>

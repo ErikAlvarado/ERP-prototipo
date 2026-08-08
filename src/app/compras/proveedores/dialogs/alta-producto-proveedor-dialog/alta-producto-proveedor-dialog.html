@@ -217,16 +217,6 @@
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Clave SAT</mat-label>
-            <input matInput formControlName="claveSat" maxlength="30" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="campo-doble">
-            <mat-label>Ubicación predeterminada</mat-label>
-            <input matInput formControlName="ubicacionDefault" maxlength="120" />
-            <mat-icon matPrefix>location_on</mat-icon>
-          </mat-form-field>
         </div>
 
         <div class="opciones-producto">
@@ -265,7 +255,7 @@
               <div class="fila-inventario" [formGroupName]="indice">
                 <mat-form-field appearance="outline" class="almacen">
                   <mat-label>Almacén</mat-label>
-                  <mat-select formControlName="idAlmacen" required>
+                  <mat-select formControlName="idAlmacen" (selectionChange)="cambiarAlmacen(indice)" required>
                     @for (almacen of almacenesParaFila(indice); track almacen.id) {
                       <mat-option [value]="almacen.id">{{ almacen.nombre }}</mat-option>
                     }
@@ -300,7 +290,14 @@
 
                 <mat-form-field appearance="outline">
                   <mat-label>Anaquel</mat-label>
-                  <input matInput formControlName="anaquel" maxlength="80" />
+                  <mat-select formControlName="idAnaquel" required>
+                    @for (anaquel of anaquelesParaFila(indice); track anaquel.id) {
+                      <mat-option [value]="+anaquel.id">{{ anaquel.nombre }}</mat-option>
+                    }
+                  </mat-select>
+                  @if (!anaquelesParaFila(indice).length) {
+                    <mat-hint>Crea un anaquel para este almacén antes de guardar.</mat-hint>
+                  }
                 </mat-form-field>
 
                 <button

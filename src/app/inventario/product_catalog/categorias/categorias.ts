@@ -52,7 +52,7 @@ export class Categorias implements OnInit, AfterViewInit {
   dataSource = new MatTableDataSource<Categoria>([]);
   obs!: Observable<Categoria[]>;
   currentSearch = '';
-  currentSort = 'Más antiguos';
+  currentSort = 'Más recientes';
   filtros: Record<string, ValorFiltroCatalogo> = { empresa: '', padre: '', tipo: '', estado: '' };
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 

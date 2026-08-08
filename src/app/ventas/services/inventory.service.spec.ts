@@ -81,6 +81,7 @@ function createCatalogProduct(): ProductoCatalogo {
       {
         id: 1,
         idAlmacen: 1,
+        idAnaquel: 1,
         almacen: 'Almacén Central',
         stock: 10,
         stockReorden: 4,
@@ -92,6 +93,7 @@ function createCatalogProduct(): ProductoCatalogo {
       {
         id: 2,
         idAlmacen: 2,
+        idAnaquel: 2,
         almacen: 'Almacén Norte',
         stock: 2,
         stockReorden: 3,

@@ -29,6 +29,7 @@ describe('Proveedores', () => {
       actualizadaEn: '2026-08-07T10:00:00.000Z',
       historial: [],
     })));
+  const registrarEntradaInventario = vi.fn();
   const abrirDialogo = vi.fn(() => ({
     afterClosed: () => ({ subscribe: () => undefined }),
   }));
@@ -55,6 +56,7 @@ describe('Proveedores', () => {
 
   beforeEach(async () => {
     crearLote.mockClear();
+    registrarEntradaInventario.mockClear();
     abrirDialogo.mockClear();
     await TestBed.configureTestingModule({
       imports: [Proveedores],
@@ -68,6 +70,7 @@ describe('Proveedores', () => {
             errorCarga: signal(''),
             almacenes: signal([{ id: 1, nombre: 'Central' }]),
             productosDeProveedor: () => [],
+            registrarEntradaInventario,
             recargar: () => undefined,
           },
         },
@@ -90,6 +93,7 @@ describe('Proveedores', () => {
         { provide: MatSnackBar, useValue: { open: () => undefined } },
       ],
     }).compileComponents();
+    TestBed.overrideProvider(MatDialog, { useValue: { open: abrirDialogo } });
 
     fixture = TestBed.createComponent(Proveedores);
     component = fixture.componentInstance;
@@ -140,6 +144,7 @@ describe('Proveedores', () => {
 
     component['registrarOrdenes'](proveedor, compra);
 
+    expect(registrarEntradaInventario).not.toHaveBeenCalled();
     expect(crearLote).toHaveBeenCalledTimes(1);
     const lote = crearLote.mock.calls[0][0];
     expect(lote).toHaveLength(2);

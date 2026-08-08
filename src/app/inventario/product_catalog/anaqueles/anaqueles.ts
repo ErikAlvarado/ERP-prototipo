@@ -40,7 +40,7 @@ export class Anaqueles implements OnInit, AfterViewInit {
   dataSource = new MatTableDataSource<AnaquelVista>([]);
   obs!: Observable<AnaquelVista[]>;
   currentSearch = '';
-  currentSort = 'Más antiguos';
+  currentSort = 'Más recientes';
   filtros: Record<string, ValorFiltroCatalogo> = { empresa: '', almacen: '', estado: '' };
   empresas: EmpresaAdministracion[] = [];
   almacenes: AlmacenAdministracion[] = [];

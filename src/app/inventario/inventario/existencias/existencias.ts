@@ -33,7 +33,7 @@ export class Existencias implements OnInit, AfterViewInit {
   obs!: Observable<ExistenciaInventario[]>;
   contexto?: ContextoInventario;
   currentSearch = '';
-  currentSort = 'Más antiguos';
+  currentSort = 'Más recientes';
   filtros: Record<string, ValorFiltroInventario> = {
     productoId: '',
     almacenId: '',

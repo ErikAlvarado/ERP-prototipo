@@ -32,6 +32,18 @@ export interface ProductoProveedorTxtNuevo {
   relacion: Omit<RelacionProveedorTxt, 'productoId' | 'activo'>;
 }
 
+export interface RecepcionCompraTxtNueva {
+  folio: string;
+  orden: string;
+  proveedor: string;
+  almacenId: number;
+  responsableId?: number;
+  fecha: string;
+  documento?: string;
+  observaciones?: string;
+  partidas: Array<{ productoId: number; cantidad: number; costoUnitario?: number }>;
+}
+
 /**
  * Puente hacia el proceso local que es el único autorizado para escribir los
  * TXT. Las llamadas se serializan para conservar el mismo orden de las
@@ -89,6 +101,11 @@ export class PersistenciaComprasTxt {
           nuevo,
         ),
       ));
+  }
+
+  registrarRecepcion(recepcion: RecepcionCompraTxtNueva): Promise<void> {
+    return this.encolar(() =>
+      firstValueFrom(this.http.post(`${this.endpoint}/recepciones`, recepcion)));
   }
 
   private encolar(solicitud: () => Promise<unknown>): Promise<void> {

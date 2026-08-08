@@ -90,17 +90,7 @@ const TABLES = Object.freeze({
   },
   inventario: {
     file: 'inventari_db/inventario.txt',
-    columns: [
-      'id_inventario',
-      'id_producto',
-      'id_almacen',
-      'stock',
-      'stock_reorden',
-      'stock_critico',
-      'stock_maximo',
-      'anaquel',
-      'fecha_actualizacion',
-    ],
+    columns: null,
   },
   kardex: {
     file: 'inventari_db/kardex_inventario.txt',
@@ -118,6 +108,10 @@ const TABLES = Object.freeze({
       'id_usuario',
     ],
   },
+  ordenes: { file: 'compras_bd/ordenes_compra.txt', columns: null },
+  detallesOrden: { file: 'compras_bd/ordenes_compra_detalle.txt', columns: null },
+  recepciones: { file: 'compras_bd/recepciones_compra.txt', columns: null },
+  detallesRecepcion: { file: 'compras_bd/recepciones_compra_detalle.txt', columns: null },
   empresas: {
     file: 'inventari_db/empresas.txt',
     columns: null,
@@ -639,6 +633,7 @@ async function createProductForProvider(dbRoot, providerId, payload) {
     if (stock <= 0 || stock > maximum) {
       throw new RequestError(400, 'El stock inicial debe ser mayor a cero y no exceder el máximo.');
     }
+    const shelfField = inventory.columns.includes('id_anaquel') ? 'id_anaquel' : 'anaquel';
     inventory.rows.push({
       id_inventario: String(inventoryId),
       id_producto: String(id),
@@ -647,7 +642,9 @@ async function createProductForProvider(dbRoot, providerId, payload) {
       stock_reorden: decimal(reorder),
       stock_critico: decimal(critical),
       stock_maximo: decimal(maximum),
-      anaquel: cleanText(input.anaquel, 'anaquel', { max: 80 }),
+      [shelfField]: shelfField === 'id_anaquel'
+        ? (input.idAnaquel == null ? '' : String(positiveInteger(input.idAnaquel, 'inventario.idAnaquel')))
+        : cleanText(input.anaquel, 'anaquel', { max: 80 }),
       fecha_actualizacion: date,
     });
     kardex.rows.push({
@@ -672,6 +669,63 @@ async function createProductForProvider(dbRoot, providerId, payload) {
   relations.rows.push(relation);
   await commitTables([products, prices, inventory, kardex, relations]);
   return { proveedorId: providerId, productoId: id };
+}
+
+async function receivePurchase(dbRoot, payload) {
+  const [providers, orders, orderDetails, receipts, receiptDetails, inventory, kardex, products, warehouses] = await Promise.all([
+    loadTable(dbRoot, 'proveedores'), loadTable(dbRoot, 'ordenes'), loadTable(dbRoot, 'detallesOrden'),
+    loadTable(dbRoot, 'recepciones'), loadTable(dbRoot, 'detallesRecepcion'), loadTable(dbRoot, 'inventario'),
+    loadTable(dbRoot, 'kardex'), loadTable(dbRoot, 'productos'), loadTable(dbRoot, 'almacenes'),
+  ]);
+  const orderFolio = cleanText(payload.orden, 'orden', { required: true, max: 40 });
+  if (receipts.rows.some(row => row.folio === payload.folio || Number(row.id_orden_compra) === Number(payload.idOrden))) {
+    throw new RequestError(409, 'La recepción ya fue registrada.');
+  }
+  const warehouseId = positiveInteger(payload.almacenId, 'almacenId');
+  const warehouse = warehouses.rows.find(row => Number(row.id_almacen) === warehouseId);
+  if (!warehouse) throw new RequestError(404, 'El almacén no existe.');
+  const provider = providers.rows.find(row => normalized(row.nombre_comercial) === normalized(payload.proveedor)
+    || normalized(row.razon_social) === normalized(payload.proveedor));
+  if (!provider) throw new RequestError(404, 'El proveedor no existe en proveedores.txt.');
+  const inputs = Array.isArray(payload.partidas) ? payload.partidas : [];
+  if (!inputs.length) throw new RequestError(400, 'La recepción debe contener productos.');
+  let order = orders.rows.find(row => row.folio === orderFolio);
+  if (!order) {
+    const orderId = nextId(orders.rows, 'id_orden_compra');
+    order = {
+      id_orden_compra: String(orderId), folio: orderFolio, id_empresa: provider.id_empresa,
+      id_proveedor: provider.id_proveedor, id_cotizacion: '', id_almacen_destino: String(warehouseId),
+      id_comprador: String(payload.responsableId || 1), id_estatus_compra: '6', id_moneda: '1', tipo_cambio: '1.0000',
+      fecha_orden: cleanText(payload.fecha, 'fecha', { required: true, max: 20 }), fecha_entrega_estimada: cleanText(payload.fecha, 'fecha', { required: true, max: 20 }),
+      condiciones_pago: 'Contado', observaciones: 'Orden registrada desde recepción de inventario',
+    };
+    orders.rows.push(order);
+  }
+  const receiptId = nextId(receipts.rows, 'id_recepcion');
+  const receiptFolio = cleanText(payload.folio || `RC-${new Date().getFullYear()}-${String(receiptId).padStart(4, '0')}`, 'folio', { required: true, max: 40 });
+  let orderDetailId = nextId(orderDetails.rows, 'id_detalle_orden');
+  let receiptDetailId = nextId(receiptDetails.rows, 'id_detalle_recepcion');
+  let movementId = nextId(kardex.rows, 'id_movimiento');
+  const date = cleanText(payload.fecha, 'fecha', { required: true, max: 20 }).slice(0, 10);
+  for (const input of inputs) {
+    const productId = positiveInteger(input.productoId, 'productoId');
+    const quantity = nonNegativeNumber(input.cantidad, 'cantidad');
+    if (quantity <= 0 || !products.rows.some(row => Number(row.id_producto) === productId)) throw new RequestError(400, `Producto ${productId} o cantidad inválida.`);
+    const stockRow = inventory.rows.find(row => Number(row.id_producto) === productId && Number(row.id_almacen) === warehouseId);
+    if (!stockRow) throw new RequestError(409, `El producto ${productId} no tiene inventario en ${warehouse.nombre_almacen}.`);
+    let detail = orderDetails.rows.find(row => Number(row.id_orden_compra) === Number(order.id_orden_compra) && Number(row.id_producto) === productId);
+    if (!detail) {
+      detail = { id_detalle_orden: String(orderDetailId++), id_orden_compra: order.id_orden_compra, id_producto: String(productId), id_unidad: '1', cantidad_ordenada: decimal(quantity), precio_unitario: decimal(input.costoUnitario || 0), descuento_porcentaje: '0.00', tasa_impuesto: '0.00' };
+      orderDetails.rows.push(detail);
+    }
+    const newStock = Number(stockRow.stock) + quantity;
+    stockRow.stock = decimal(newStock); stockRow.fecha_actualizacion = date;
+    receiptDetails.rows.push({ id_detalle_recepcion: String(receiptDetailId++), id_recepcion: String(receiptId), id_detalle_orden: detail.id_detalle_orden, cantidad_recibida: decimal(quantity), cantidad_rechazada: '0.00', motivo_rechazo: '' });
+    kardex.rows.push({ id_movimiento: String(movementId++), id_producto: String(productId), id_almacen: String(warehouseId), id_tipo_movimiento: '5', existencia: decimal(newStock), cantidad: decimal(quantity), costo_unitario: decimal(input.costoUnitario || 0), observaciones: 'Entrada por recepción de compra', referencia: receiptFolio, fecha: date, id_usuario: String(payload.responsableId || 1) });
+  }
+  receipts.rows.push({ id_recepcion: String(receiptId), folio: receiptFolio, id_orden_compra: order.id_orden_compra, id_almacen: String(warehouseId), id_responsable: String(payload.responsableId || 1), fecha_recepcion: `${date} 12:00:00`, documento_proveedor: cleanText(payload.documento, 'documento', { max: 80 }), observaciones: cleanText(payload.observaciones || 'Recepción registrada desde Inventario', 'observaciones', { max: 500 }) });
+  await commitTables([orders, orderDetails, receipts, receiptDetails, inventory, kardex]);
+  return { recepcionId: receiptId, folio: receiptFolio };
 }
 
 function router(dbRoot) {
@@ -707,6 +761,8 @@ function router(dbRoot) {
       } else if (request.method === 'POST' && productsMatch) {
         result = await serializeWrite(() =>
           createProductForProvider(dbRoot, Number(productsMatch[1]), payload));
+      } else if (request.method === 'POST' && url.pathname === '/api/compras-txt/recepciones') {
+        result = await serializeWrite(() => receivePurchase(dbRoot, payload));
       } else {
         throw new RequestError(404, 'Ruta no encontrada.');
       }

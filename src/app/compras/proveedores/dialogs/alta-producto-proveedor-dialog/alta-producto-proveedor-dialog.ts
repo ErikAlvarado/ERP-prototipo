@@ -45,6 +45,10 @@ import {
   AdministracionDatos,
   AlmacenAdministracion,
 } from '../../../../inventario/administracion/administracion-datos';
+import {
+  AnaquelCatalogo,
+  AnaquelesCatalogo,
+} from '../../../../inventario/product_catalog/anaqueles/anaqueles-catalogo';
 
 export interface DatosAltaProductoProveedorDialog {
   proveedor: ProveedorCompra;
@@ -58,11 +62,11 @@ interface OpcionAlmacen {
 
 type InventarioForm = FormGroup<{
   idAlmacen: FormControl<number>;
+  idAnaquel: FormControl<number>;
   stock: FormControl<number>;
   stockReorden: FormControl<number>;
   stockCritico: FormControl<number>;
   stockMaximo: FormControl<number>;
-  anaquel: FormControl<string>;
 }>;
 
 const OPCIONES_VACIAS: OpcionesProducto = {
@@ -95,6 +99,7 @@ export class AltaProductoProveedorDialog implements OnInit {
   private readonly catalogoCompras = inject(CatalogoCompras);
   private readonly catalogoProductos = inject(CatalogoProductos);
   private readonly administracion = inject(AdministracionDatos);
+  private readonly catalogoAnaqueles = inject(AnaquelesCatalogo);
   private readonly referencia = inject(
     MatDialogRef<AltaProductoProveedorDialog, ProductoCompra>,
   );
@@ -108,6 +113,7 @@ export class AltaProductoProveedorDialog implements OnInit {
   readonly errorFormulario = signal('');
   readonly opciones = signal<OpcionesProducto>(OPCIONES_VACIAS);
   readonly almacenes = signal<OpcionAlmacen[]>([]);
+  readonly anaqueles = signal<AnaquelCatalogo[]>([]);
 
   private productosExistentes: ProductoCatalogo[] = [];
 
@@ -122,8 +128,6 @@ export class AltaProductoProveedorDialog implements OnInit {
     idCategoria: [0, Validators.min(1)],
     idUnidad: [0, Validators.min(1)],
     estatus: ['Vigente', Validators.required],
-    ubicacionDefault: ['', Validators.maxLength(120)],
-    claveSat: ['', Validators.maxLength(30)],
     costo: [0, Validators.min(0)],
     precio: [0, Validators.min(0)],
     skuProveedor: ['', [Validators.required, Validators.maxLength(80)]],
@@ -163,10 +167,11 @@ export class AltaProductoProveedorDialog implements OnInit {
       opciones: this.catalogoProductos.cargarOpciones(),
       productos: this.catalogoProductos.cargar(),
       administracion: this.administracion.cargar(),
+      anaqueles: this.catalogoAnaqueles.cargar(),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ opciones, productos, administracion }) => {
+        next: ({ opciones, productos, administracion, anaqueles }) => {
           this.opciones.set({
             ...opciones,
             empresas: administracion.empresas
@@ -182,6 +187,7 @@ export class AltaProductoProveedorDialog implements OnInit {
               .filter(almacen => almacen.estado)
               .map(almacen => this.mapearAlmacen(almacen)),
           );
+          this.anaqueles.set(anaqueles);
           this.productosExistentes = productos;
           this.inicializarFormulario();
           this.cargando.set(false);
@@ -235,6 +241,25 @@ export class AltaProductoProveedorDialog implements OnInit {
     return this.almacenesDisponibles.filter(almacen => !usados.has(almacen.id));
   }
 
+  anaquelesParaFila(indice: number): AnaquelCatalogo[] {
+    const inventario = this.inventarios.at(indice);
+    if (!inventario) return [];
+    const empresa = Number(this.formulario.controls.idEmpresa.value);
+    const idAlmacen = Number(inventario.controls.idAlmacen.value);
+    return this.anaqueles().filter(anaquel =>
+      anaquel.estado
+      && anaquel.idEmpresa === empresa
+      && anaquel.idAlmacen === idAlmacen,
+    );
+  }
+
+  cambiarAlmacen(indice: number): void {
+    const inventario = this.inventarios.at(indice);
+    if (!inventario) return;
+    const anaquel = this.anaquelesParaFila(indice)[0];
+    inventario.controls.idAnaquel.setValue(Number(anaquel?.id) || 0);
+  }
+
   cancelar(): void {
     this.referencia.close();
   }
@@ -265,8 +290,6 @@ export class AltaProductoProveedorDialog implements OnInit {
       idCategoria: Number(valor.idCategoria),
       idUnidad: Number(valor.idUnidad),
       estatus: valor.estatus,
-      ubicacionDefault: valor.ubicacionDefault.trim(),
-      claveSat: valor.claveSat.trim(),
       pos: valor.pos,
       linea: valor.linea,
       requiereReceta: valor.requiereReceta,
@@ -275,11 +298,13 @@ export class AltaProductoProveedorDialog implements OnInit {
       precio: Number(valor.precio),
       inventarios: valor.inventarios.map(inventario => ({
         idAlmacen: Number(inventario.idAlmacen),
+        idAnaquel: Number(inventario.idAnaquel),
         stock: Number(inventario.stock),
         stockReorden: Number(inventario.stockReorden),
         stockCritico: Number(inventario.stockCritico),
         stockMaximo: Number(inventario.stockMaximo),
-        anaquel: inventario.anaquel.trim(),
+        anaquel: this.anaqueles().find(anaquel =>
+          Number(anaquel.id) === Number(inventario.idAnaquel))?.nombre || '',
       })),
       skuProveedor: valor.skuProveedor.trim(),
       precioReferencia: Number(valor.precioReferencia),
@@ -331,8 +356,15 @@ export class AltaProductoProveedorDialog implements OnInit {
   }
 
   private crearInventario(idAlmacen: number): InventarioForm {
+    const idEmpresa = Number(this.formulario.controls.idEmpresa.value);
+    const anaquel = this.anaqueles().find(item =>
+      item.estado && item.idEmpresa === idEmpresa && item.idAlmacen === idAlmacen);
     return new FormGroup({
       idAlmacen: new FormControl(idAlmacen, {
+        nonNullable: true,
+        validators: Validators.min(1),
+      }),
+      idAnaquel: new FormControl(Number(anaquel?.id) || 0, {
         nonNullable: true,
         validators: Validators.min(1),
       }),
@@ -351,10 +383,6 @@ export class AltaProductoProveedorDialog implements OnInit {
       stockMaximo: new FormControl(1, {
         nonNullable: true,
         validators: Validators.min(0),
-      }),
-      anaquel: new FormControl('', {
-        nonNullable: true,
-        validators: Validators.maxLength(80),
       }),
     });
   }
@@ -394,6 +422,14 @@ export class AltaProductoProveedorDialog implements OnInit {
       return 'No puedes registrar dos inventarios para el mismo almacén.';
     }
     for (const inventario of valor.inventarios) {
+      const anaquelValido = this.anaqueles().some(anaquel =>
+        anaquel.estado
+        && anaquel.idEmpresa === Number(valor.idEmpresa)
+        && anaquel.idAlmacen === Number(inventario.idAlmacen)
+        && Number(anaquel.id) === Number(inventario.idAnaquel));
+      if (!anaquelValido) {
+        return 'Selecciona un anaquel activo del almacén para ubicar el producto.';
+      }
       if (inventario.stock <= 0) {
         return 'El stock inicial debe ser mayor que cero.';
       }

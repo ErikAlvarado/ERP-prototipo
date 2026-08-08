@@ -41,18 +41,33 @@
 .resumen-stock .alerta-proveedor mat-icon {
   color: #b45309;
 }
-.controles-stock {
+.content-search {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 20px 0 14px;
+  gap: 14px;
+  margin: 20px 0 18px;
 }
-.buscador-stock {
+.custom-search {
+  display: flex;
   flex: 1;
+  align-items: center;
+  min-width: 280px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 5%);
 }
-.selector-almacen {
-  width: 250px;
-}
+.custom-search:focus-within { border-color: #1473b9; box-shadow: 0 0 0 3px rgb(20 115 185 / 12%); }
+.custom-search > mat-icon { width: 20px; height: 20px; margin-right: 10px; color: #667085; font-size: 20px; }
+.custom-search input { width: 100%; height: 100%; border: 0; outline: 0; background: transparent; color: #101828; font-size: 14px; }
+.custom-search input::placeholder { color: #98a2b3; }
+.custom-search button { flex: 0 0 auto; color: #667085; }
+.custom-filters { display: flex; gap: 10px; }
+.filter-btn { height: 44px !important; border-color: #d0d5dd !important; border-radius: 8px !important; background: #fff !important; color: #344054 !important; font-size: 14px !important; font-weight: 500 !important; }
+.filter-btn mat-icon { margin-right: 4px; color: #667085; }
+.filter-count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 6px; padding: 0 5px; border-radius: 10px; background: #0b66b2; color: #fff; font-size: 11px; font-weight: 700; }
 .tabla-stock {
   overflow: hidden;
   border-color: #e2e8f0;
@@ -210,14 +225,13 @@ td small {
   }
 }
 @media (max-width: 720px) {
-  .controles-stock {
+  .content-search {
     align-items: stretch;
     flex-direction: column;
   }
-  .buscador-stock,
-  .selector-almacen {
-    width: 100%;
-  }
+  .custom-search { width: 100%; min-width: 0; box-sizing: border-box; }
+  .custom-filters { width: 100%; }
+  .filter-btn { flex: 1; }
 }
 @media (max-width: 520px) {
   .resumen-stock {

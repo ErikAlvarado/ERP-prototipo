@@ -190,13 +190,10 @@ export class CatalogoProductos {
    */
   private readonly claveCambios = 'catalogo-productos-cambios-v3';
   private origenPorId = new Map<number, ProductoCatalogo>();
-<<<<<<< HEAD
   private readonly cambiosInternos = new Subject<void>();
   readonly cambios$ = this.cambiosInternos.asObservable();
-=======
   private anaquelesPorId = new Map<number, string>();
   private anaquelesPorUbicacion = new Map<string, number>();
->>>>>>> 29f1c4015e72b2b7d532c551171e9adc1afd5bbc
 
   constructor(private db: DatosDb, private persistencia: PersistenciaLocal) {}
 

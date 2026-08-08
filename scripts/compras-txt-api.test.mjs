@@ -226,3 +226,33 @@ test('alta completa escribe producto, precio, inventario, Kardex y proveedor', a
     countBeforeInvalid,
   );
 });
+
+test('recepción escribe orden, recepción, inventario y Kardex atómicamente', async t => {
+  const { directory, root } = await fixture();
+  const server = createComprasTxtServer({ dbRoot: root });
+  const endpoint = await listen(server);
+  t.after(async () => {
+    await new Promise(resolvePromise => server.close(resolvePromise));
+    await rm(directory, { recursive: true, force: true });
+  });
+  const provider = (await table(root, 'compras_bd/proveedores.txt'))[0];
+  const inventoryBefore = (await table(root, 'inventari_db/inventario.txt'))[0];
+  const stockBefore = Number(inventoryBefore.stock);
+  const kardexBefore = (await table(root, 'inventari_db/kardex_inventario.txt')).length;
+  await request(`${endpoint}/recepciones`, 'POST', {
+    folio: 'RC-TEST-0001', orden: 'OC-TEST-0001', proveedor: provider.nombre_comercial,
+    almacenId: Number(inventoryBefore.id_almacen), responsableId: 1, fecha: '2026-08-07',
+    documento: 'REM-TEST-1', observaciones: 'Recepción automatizada',
+    partidas: [{ productoId: Number(inventoryBefore.id_producto), cantidad: 3, costoUnitario: 10 }],
+  });
+  const inventoryAfter = (await table(root, 'inventari_db/inventario.txt'))
+    .find(row => row.id_inventario === inventoryBefore.id_inventario);
+  assert.equal(Number(inventoryAfter.stock), stockBefore + 3);
+  assert.equal((await table(root, 'compras_bd/recepciones_compra.txt')).at(-1).folio, 'RC-TEST-0001');
+  assert.equal((await table(root, 'compras_bd/recepciones_compra_detalle.txt')).at(-1).cantidad_recibida, '3.00');
+  const movements = await table(root, 'inventari_db/kardex_inventario.txt');
+  assert.equal(movements.length, kardexBefore + 1);
+  assert.equal(movements.at(-1).referencia, 'RC-TEST-0001');
+  assert.equal(movements.at(-1).id_tipo_movimiento, '5');
+  assert.equal(Number(movements.at(-1).existencia), stockBefore + 3);
+});

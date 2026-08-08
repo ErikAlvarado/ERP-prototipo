@@ -147,7 +147,7 @@ export class Sidebar {
         route: '/compras/catalogo'
       },
       {
-        title: 'Productos bajo stock',
+        title: 'Reporte de existencias',
         icon: 'inventory',
         route: '/compras/bajo-stock'
       },

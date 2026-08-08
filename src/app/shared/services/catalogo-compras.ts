@@ -57,6 +57,15 @@ export interface AlmacenCompra {
   nombre: string;
 }
 
+export interface EntradaInventarioCompra {
+  almacenId: number;
+  almacen: string;
+  partidas: Array<{
+    productoId: number;
+    cantidad: number;
+  }>;
+}
+
 export interface ProveedorCompra {
   id: number;
   inicial: string;
@@ -90,6 +99,7 @@ export interface NuevoProveedorCompra {
 
 export interface InventarioNuevoProductoProveedorCompra {
   idAlmacen: number;
+  idAnaquel: number;
   stock: number;
   stockReorden: number;
   stockCritico: number;
@@ -108,8 +118,6 @@ export interface NuevoProductoProveedorCompra {
   idCategoria: number;
   idUnidad: number;
   estatus: string;
-  ubicacionDefault: string;
-  claveSat: string;
   pos: boolean;
   linea: boolean;
   requiereReceta: boolean;
@@ -252,6 +260,65 @@ export class CatalogoCompras {
 
   idsProductosDeProveedor(idProveedor: number): number[] {
     return this.productosDeProveedor(idProveedor).map(producto => producto.id);
+  }
+
+  registrarEntradaInventario(destinos: readonly EntradaInventarioCompra[]): void {
+    const cantidades = new Map<string, number>();
+    for (const destino of destinos) {
+      for (const partida of destino.partidas) {
+        const producto = this.productosFuente.find(item => item.id === Number(partida.productoId));
+        const inventario = producto?.inventarios.find(
+          item => item.idAlmacen === Number(destino.almacenId),
+        );
+        const cantidad = Number(partida.cantidad);
+        if (!producto) throw new Error(`El producto #${partida.productoId} ya no existe.`);
+        if (!inventario) {
+          throw new Error(
+            `Configura un inventario y anaquel para "${producto.producto}" en ${destino.almacen} antes de comprar.`,
+          );
+        }
+        if (!Number.isFinite(cantidad) || cantidad <= 0) {
+          throw new Error(`La cantidad de "${producto.producto}" debe ser mayor que cero.`);
+        }
+        const clave = `${producto.id}:${inventario.idAlmacen}`;
+        cantidades.set(clave, (cantidades.get(clave) || 0) + cantidad);
+      }
+    }
+
+    const fecha = new Date().toISOString().slice(0, 10);
+    this.productosFuente = this.productosFuente.map(producto => {
+      const inventarios = producto.inventarios.map(inventario => {
+        const cantidad = cantidades.get(`${producto.id}:${inventario.idAlmacen}`) || 0;
+        return cantidad
+          ? {
+              ...inventario,
+              stock: inventario.stock + cantidad,
+              fechaActualizacion: fecha,
+            }
+          : inventario;
+      });
+      if (inventarios === producto.inventarios || !inventarios.some(
+        (inventario, indice) => inventario !== producto.inventarios[indice],
+      )) return producto;
+      const sumar = (campo: 'stock' | 'stockReorden' | 'stockCritico' | 'stockMaximo') =>
+        inventarios.reduce((total, inventario) => total + inventario[campo], 0);
+      return {
+        ...producto,
+        inventarios,
+        stock: sumar('stock'),
+        stockReorden: sumar('stockReorden'),
+        stockCritico: sumar('stockCritico'),
+        stockMaximo: sumar('stockMaximo'),
+        almacen: inventarios.length === 1
+          ? inventarios[0].almacen
+          : inventarios.length ? `${inventarios.length} almacenes` : 'Sin inventario',
+        anaquel: inventarios.length === 1 ? inventarios[0].anaquel : '—',
+        ultimoMovimiento: `${fecha} · Entrada por compra`,
+        fechaActualizacion: fecha,
+      };
+    });
+    this.catalogoProductos.guardar(this.productosFuente);
+    this.reconstruir();
   }
 
   async actualizarProductosProveedor(
@@ -502,6 +569,7 @@ export class CatalogoCompras {
       (inventario, indice) => ({
         id: primerIdInventario + indice,
         idAlmacen: inventario.idAlmacen,
+        idAnaquel: inventario.idAnaquel,
         almacen:
           this.almacenes().find(item => item.id === inventario.idAlmacen)?.nombre
           || `Almacén ${inventario.idAlmacen}`,
@@ -559,8 +627,8 @@ export class CatalogoCompras {
       stockReorden: sumar('stockReorden'),
       stockCritico: sumar('stockCritico'),
       stockMaximo: sumar('stockMaximo'),
-      ubicacionDefault: nuevo.ubicacionDefault.trim() || '—',
-      claveSat: nuevo.claveSat.trim() || '—',
+      ubicacionDefault: '—',
+      claveSat: '—',
       imagen: '',
       imagenes: [],
       ultimoMovimiento: inventarios.length

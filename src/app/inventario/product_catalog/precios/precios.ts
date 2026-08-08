@@ -53,7 +53,7 @@ export class Precios implements OnInit, AfterViewInit {
   productos: ProductoCatalogo[] = [];
   opciones: OpcionesProducto = { empresas: [], categorias: [], marcas: [], unidades: [], listasPrecios: [] };
   currentSearch = '';
-  currentSort = 'Más antiguos';
+  currentSort = 'Más recientes';
   filtros: Record<string, ValorFiltroCatalogo> = { empresa: '', lista: '', estado: '' };
   cargando = true;
   errorCarga = '';

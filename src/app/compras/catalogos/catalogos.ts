@@ -1,6 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { PageEvent } from '@angular/material/paginator';
 import { IMPORTACIONES_MATERIAL_CATALOGO } from '../../shared/material/importaciones-material';
 import {
   CatalogoCompras,
@@ -30,6 +31,8 @@ export class Catalogos {
     ],
   );
   readonly busqueda = signal('');
+  readonly pagina = signal(0);
+  readonly tamanoPagina = signal(10);
   readonly categoriaActiva = signal<Categoria>('Todos');
   readonly ordenCatalogo = signal<OrdenCatalogo>('Nombre A - Z');
   readonly opcionesOrden: ReadonlyArray<OrdenCatalogo> = [
@@ -68,9 +71,29 @@ export class Catalogos {
       }
     });
   });
+  readonly productosPaginados = computed(() => {
+    const inicio = this.pagina() * this.tamanoPagina();
+    return this.productosFiltrados().slice(inicio, inicio + this.tamanoPagina());
+  });
+
+  buscar(valor: string): void {
+    this.busqueda.set(valor);
+    this.pagina.set(0);
+  }
 
   seleccionarCategoria(categoria: Categoria): void {
     this.categoriaActiva.set(categoria);
+    this.pagina.set(0);
+  }
+
+  seleccionarOrden(orden: OrdenCatalogo): void {
+    this.ordenCatalogo.set(orden);
+    this.pagina.set(0);
+  }
+
+  cambiarPagina(evento: PageEvent): void {
+    this.pagina.set(evento.pageIndex);
+    this.tamanoPagina.set(evento.pageSize);
   }
 
   alternarFavorito(id: number): void {

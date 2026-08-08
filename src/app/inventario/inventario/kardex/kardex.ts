@@ -35,7 +35,7 @@ export class Kardex implements OnInit, AfterViewInit {
   obs!: Observable<MovimientoInventario[]>;
   contexto?: ContextoInventario;
   currentSearch = '';
-  currentSort = 'Más antiguos';
+  currentSort = 'Más recientes';
   filtros: Record<string, ValorFiltroInventario> = {
     productoId: '',
     almacenId: '',

@@ -1,6 +1,6 @@
 <section class="pagina-contenido pagina-bajo-stock">
   <app-encabezado-pagina
-    titulo="Productos bajo stock"
+    titulo="Reporte de existencias"
     subtitulo="Existencias reales de Inventario, separadas por almacén"
   />
 
@@ -37,31 +37,59 @@
     </mat-card>
   </div>
 
-  <div class="controles-stock">
-    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="buscador-stock">
-      <mat-label>Buscar inventario</mat-label>
-      <mat-icon matPrefix>search</mat-icon>
+  <div class="content-search">
+    <label class="custom-search">
+      <mat-icon>search</mat-icon>
       <input
         matInput
         type="search"
         placeholder="Producto, proveedor, SKU, almacén o anaquel"
+        aria-label="Buscar existencias"
         [value]="busqueda()"
-        (input)="busqueda.set($any($event.target).value)"
+        (input)="buscar($any($event.target).value)"
       />
-    </mat-form-field>
-    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="selector-almacen">
-      <mat-label>Almacén</mat-label>
-      <mat-icon matPrefix>warehouse</mat-icon>
-      <mat-select [value]="almacenId()" (selectionChange)="seleccionarAlmacen($event.value)">
-        <mat-option [value]="null">Todos los almacenes</mat-option>
-        @for (almacen of almacenes(); track almacen.id) {
-          <mat-option [value]="almacen.id">{{ almacen.nombre }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-    <button mat-stroked-button type="button" (click)="inventario.recargar()">
-      <mat-icon>refresh</mat-icon>Actualizar
-    </button>
+      @if (busqueda()) {
+        <button mat-icon-button type="button" aria-label="Limpiar búsqueda" (click)="buscar('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </label>
+    <div class="custom-filters">
+      <button mat-stroked-button class="filter-btn" type="button" [matMenuTriggerFor]="menuFiltros">
+        <mat-icon>tune</mat-icon>Filtros
+        @if (filtrosActivos()) { <span class="filter-count">{{ filtrosActivos() }}</span> }
+      </button>
+    <mat-menu #menuFiltros="matMenu">
+      <button mat-menu-item type="button" disabled><strong>Nivel de existencia</strong></button>
+      @for (opcion of ['Todos', 'Agotado', 'Crítico', 'Bajo']; track opcion) {
+        <button mat-menu-item type="button" (click)="seleccionarNivel(opcion)">
+          @if (nivel() === opcion) { <mat-icon>check</mat-icon> }
+          <span>{{ opcion }}</span>
+        </button>
+      }
+      <button mat-menu-item type="button" disabled><strong>Proveedor</strong></button>
+      @for (opcion of ['Todos', 'Con proveedor', 'Sin proveedor']; track opcion) {
+        <button mat-menu-item type="button" (click)="seleccionarProveedor(opcion)">
+          @if (proveedor() === opcion) { <mat-icon>check</mat-icon> }
+          <span>{{ opcion }}</span>
+        </button>
+      }
+      @if (filtrosActivos()) {
+        <button mat-menu-item type="button" (click)="limpiarFiltros()"><mat-icon>filter_alt_off</mat-icon>Limpiar filtros</button>
+      }
+    </mat-menu>
+      <button mat-stroked-button class="filter-btn" type="button" [matMenuTriggerFor]="menuOrden">
+        <mat-icon>sort</mat-icon>{{ orden() }}
+      </button>
+    <mat-menu #menuOrden="matMenu">
+      @for (opcion of ['Más recientes', 'Más antiguos', 'Mayor faltante', 'Nombre A - Z']; track opcion) {
+        <button mat-menu-item type="button" (click)="seleccionarOrden(opcion)">
+          @if (orden() === opcion) { <mat-icon>check</mat-icon> }
+          <span>{{ opcion }}</span>
+        </button>
+      }
+    </mat-menu>
+    </div>
   </div>
 
   @if (inventario.cargando()) {
@@ -82,7 +110,7 @@
       <div class="tabla-scroll">
         <table
           mat-table
-          [dataSource]="existenciasFiltradas()"
+          [dataSource]="existenciasPaginadas()"
           class="tabla-compartida tabla-inventario vista-escritorio"
         >
           <ng-container matColumnDef="producto">
@@ -177,7 +205,7 @@
       </div>
 
       <div class="lista-stock vista-movil">
-        @for (item of existenciasFiltradas(); track item.id) {
+        @for (item of existenciasPaginadas(); track item.id) {
           <mat-card appearance="outlined">
             <div class="encabezado-item">
               <div class="dato-principal">
@@ -242,15 +270,24 @@
           </mat-card>
         }
       </div>
+      <mat-paginator
+        [length]="existenciasFiltradas().length"
+        [pageIndex]="pagina()"
+        [pageSize]="tamanoPagina()"
+        [pageSizeOptions]="[5, 10, 25]"
+        showFirstLastButtons
+        aria-label="Paginación del reporte de existencias"
+        (page)="cambiarPagina($event)"
+      />
     </mat-card>
   } @else {
     <div class="estado-pantalla">
       <mat-icon>task_alt</mat-icon>
       <strong>{{
-        busqueda() || almacenId() !== null ? 'Sin coincidencias' : 'Inventario en niveles correctos'
+        busqueda() || filtrosActivos() ? 'Sin coincidencias' : 'Inventario en niveles correctos'
       }}</strong>
       <span>{{
-        busqueda() || almacenId() !== null
+        busqueda() || filtrosActivos()
           ? 'Prueba con otro producto o almacén.'
           : 'Ninguna existencia está por debajo de su mínimo.'
       }}</span>

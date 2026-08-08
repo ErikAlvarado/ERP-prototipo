@@ -47,7 +47,7 @@ export class Marcas implements OnInit, AfterViewInit {
   dataSource = new MatTableDataSource<Marca>([]);
   obs!: Observable<Marca[]>;
   currentSearch = '';
-  currentSort = 'Más antiguos';
+  currentSort = 'Más recientes';
   filtros: Record<string, ValorFiltroCatalogo> = { empresa: '', estado: '', asociacion: '' };
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 

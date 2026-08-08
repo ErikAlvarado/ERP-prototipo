@@ -84,6 +84,8 @@
                 mat-stroked-button
                 matListItemMeta
                 type="button"
+                [disabled]="!almacenesProducto(producto).length"
+                [matTooltip]="almacenesProducto(producto).length ? 'Agregar producto' : 'Configura primero una ubicación de inventario para este producto'"
                 (click)="agregarProducto(producto)"
               >
                 <mat-icon>add</mat-icon>Agregar
@@ -138,7 +140,7 @@
                       [value]="destino.almacenId"
                       (selectionChange)="actualizarAlmacen(producto.id, indice, $event.value)"
                     >
-                      @for (almacen of almacenes; track almacen.id) {
+                      @for (almacen of almacenesProducto(producto); track almacen.id) {
                         <mat-option
                           [value]="almacen.id"
                           [disabled]="!almacenDisponible(producto, almacen.id, indice)"
