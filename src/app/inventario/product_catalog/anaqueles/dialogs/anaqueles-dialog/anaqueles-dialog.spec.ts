@@ -12,10 +12,13 @@ describe('AnaquelesDialog', () => {
       mode: 'add',
       empresas: [{ id: '1', nombre: 'Empresa', estado: true } as EmpresaAdministracion],
       almacenes: [{ id: '1', empresaId: '1', nombre: 'Central', estado: true } as AlmacenAdministracion],
-      existentes: [{ id: '1', idEmpresa: 1, idAlmacen: 1, nombre: 'Año', estado: true }],
+      existentes: [{
+        id: '1', idEmpresa: 1, idAlmacen: 1, nombre: 'Año', codigoBarras: 'ANAQ-000001', estado: true,
+      }],
     };
     const dialogo = new AnaquelesDialog(referencia as never, data);
     dialogo.anaquel.nombre = 'Ano';
+    dialogo.anaquel.codigoBarras = 'ANAQ-000002';
 
     dialogo.guardar();
 

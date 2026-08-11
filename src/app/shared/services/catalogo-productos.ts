@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Optional } from '@angular/core';
 import { forkJoin, map, Observable, Subject } from 'rxjs';
+import { PersistenciaInventarioTxt } from './persistencia-inventario-txt';
 import { PersistenciaLocal } from './persistencia-local';
 import { DatosDb } from './datos-db';
 
@@ -195,12 +196,16 @@ export class CatalogoProductos {
   private anaquelesPorId = new Map<number, string>();
   private anaquelesPorUbicacion = new Map<string, number>();
 
-  constructor(private db: DatosDb, private persistencia: PersistenciaLocal) {}
+  constructor(
+    private db: DatosDb,
+    private local: PersistenciaLocal,
+    @Optional() private persistencia?: PersistenciaInventarioTxt,
+  ) {}
 
   cargar(): Observable<ProductoCatalogo[]> {
     return this.cargarArchivos().pipe(
       map(datos => this.relacionar(datos)),
-      map(productosOrigen => this.combinarConCambiosLocales(productosOrigen)),
+      map(productosOrigen => this.registrarOrigen(productosOrigen)),
     );
   }
 
@@ -212,33 +217,24 @@ export class CatalogoProductos {
       unidades: this.leer<UnidadDb>('unidades.txt'),
       listasPrecios: this.leer<ListaPrecioDb>('listas_precios.txt'),
     }).pipe(map(datos => {
-      const categorias = this.combinarCatalogoLocal<CategoriaLocal>(
-        'catalogo-categorias-v2',
-        datos.categorias.map(fila => ({
+      const categorias = this.combinarCatalogoLocal('catalogo-categorias-v2', datos.categorias.map(fila => ({
           id: fila.id_categoria,
           idEmpresa: fila.id_empresa,
           nombre: fila.nombre_categoria,
           estado: fila.activo !== '0',
-        })),
-      );
-      const marcas = this.combinarCatalogoLocal<MarcaLocal>(
-        'catalogo-marcas-v2',
-        datos.marcas.map(fila => ({
+        })));
+      const marcas = this.combinarCatalogoLocal('catalogo-marcas-v2', datos.marcas.map(fila => ({
           id: fila.id_marca,
           idEmpresa: fila.id_empresa,
           nombre: fila.nombre,
           estado: fila.activo !== '0',
-        })),
-      );
-      const unidades = this.combinarCatalogoLocal<UnidadLocal>(
-        'catalogo-unidades-v2',
-        datos.unidades.map(fila => ({
+        })));
+      const unidades = this.combinarCatalogoLocal('catalogo-unidades-v2', datos.unidades.map(fila => ({
           id: fila.id_unidad,
           idEmpresa: fila.id_empresa,
           nombre: fila.nombre,
           permitirDecimales: fila.permitir_decimales === '1',
-        })),
-      );
+        })));
       return {
         empresas: datos.empresas
           .filter(fila => fila.activo !== '0')
@@ -284,29 +280,37 @@ export class CatalogoProductos {
   }
 
   guardar(productos: ProductoCatalogo[]): void {
-    const campos = Object.keys(this.origenPorId.values().next().value || {}) as Array<keyof ProductoCatalogo>;
-    const actualizaciones: CambiosLocalesProducto['actualizaciones'] = [];
-    const agregados: ProductoCatalogo[] = [];
-
-    for (const producto of productos) {
-      const original = this.origenPorId.get(producto.id);
-      if (!original) {
-        agregados.push(producto);
-        continue;
-      }
-
-      const cambio: Partial<ProductoCatalogo> & Pick<ProductoCatalogo, 'id'> = { id: producto.id };
-      for (const campo of campos) {
-        if (campo !== 'id' && producto[campo] !== original[campo]) {
-          (cambio as Record<string, unknown>)[campo] = producto[campo];
-        }
-      }
-      if (Object.keys(cambio).length > 1) actualizaciones.push(cambio);
-    }
-
-    const idsActuales = new Set(productos.map(producto => producto.id));
-    const eliminados = [...this.origenPorId.keys()].filter(id => !idsActuales.has(id));
-    this.persistencia.guardar<CambiosLocalesProducto>(this.claveCambios, { actualizaciones, agregados, eliminados });
+    const fecha = this.hoy();
+    const tablas = {
+      productos: productos.map(producto => ({
+        id_producto: producto.id, id_empresa: producto.idEmpresa, sku: producto.sku,
+        codigo_barras: producto.codigo, nombre_producto: producto.producto, tipo: producto.tipo,
+        descripcion: producto.descripcion, id_marca: producto.idMarca, id_categoria: producto.idCategoria,
+        id_unidad: producto.idUnidad, estatus: producto.estatus,
+        ubicacion_default: producto.ubicacionDefault === '—' ? '' : producto.ubicacionDefault,
+        en_punto_venta: producto.pos ? '1' : '0', en_catalogo_linea: producto.linea ? '1' : '0',
+        requiere_receta: producto.requiereReceta ? '1' : '0', usar_existencias: producto.usarExistencias ? '1' : '0',
+        clave_sat: producto.claveSat === '—' ? '' : producto.claveSat,
+        fecha_creacion: producto.fechaCreacion || fecha, fecha_actualizacion: fecha,
+      })),
+      precios: productos.flatMap(producto => producto.precios.map(precio => ({
+        id_precio: precio.id, id_producto: producto.id, id_lista_precio: precio.idLista,
+        precio_costo: precio.costo, precio_venta: precio.precio, margen_ganancia: precio.margen,
+        fecha_inicio: precio.fechaInicio, fecha_fin: precio.fechaFin,
+      }))),
+      inventario: productos.flatMap(producto => producto.inventarios.map(inventario => ({
+        id_inventario: inventario.id, id_producto: producto.id, id_almacen: inventario.idAlmacen,
+        id_anaquel: inventario.idAnaquel ?? '', stock: inventario.stock,
+        stock_reorden: inventario.stockReorden, stock_critico: inventario.stockCritico,
+        stock_maximo: inventario.stockMaximo, fecha_actualizacion: fecha,
+      }))),
+      imagenesProducto: productos.flatMap(producto => producto.imagenes.map((url, indice) => ({
+        id_imagen: `${producto.id}${String(indice + 1).padStart(3, '0')}`, id_producto: producto.id,
+        url_imagen: url, es_principal: indice === 0 ? '1' : '0', orden: indice + 1,
+      }))),
+    };
+    const guardado = this.persistencia?.reemplazarVarias(tablas);
+    if (guardado) void guardado.then(() => this.local.eliminar(this.claveCambios)).catch(() => undefined);
     this.cambiosInternos.next();
   }
 
@@ -346,23 +350,9 @@ export class CatalogoProductos {
     });
   }
 
-  private combinarConCambiosLocales(productosOrigen: ProductoCatalogo[]): ProductoCatalogo[] {
+  private registrarOrigen(productosOrigen: ProductoCatalogo[]): ProductoCatalogo[] {
     this.origenPorId = new Map(productosOrigen.map(producto => [producto.id, producto]));
-    const cambios = this.persistencia.leer<CambiosLocalesProducto>(this.claveCambios, {
-      actualizaciones: [],
-      agregados: [],
-      eliminados: [],
-    });
-    const eliminados = new Set(cambios.eliminados);
-    const actualizaciones = new Map(cambios.actualizaciones.map(cambio => [cambio.id, cambio]));
-    const relacionados = productosOrigen
-      .filter(producto => !eliminados.has(producto.id))
-      .map(producto => this.normalizarProducto({ ...producto, ...(actualizaciones.get(producto.id) || {}) }));
-    const idsOrigen = new Set(productosOrigen.map(producto => producto.id));
-    const agregados = cambios.agregados
-      .filter(producto => !idsOrigen.has(producto.id))
-      .map(producto => this.normalizarProducto(producto));
-    return [...relacionados, ...agregados];
+    return productosOrigen.map(producto => this.normalizarProducto(producto));
   }
 
   private relacionar(datos: DatosRelacionados): ProductoCatalogo[] {
@@ -371,15 +361,12 @@ export class CatalogoProductos {
     const unidades = new Map(datos.unidades.map(fila => [fila.id_unidad, fila.nombre]));
     const marcas = new Map(datos.marcas.map(fila => [fila.id_marca, fila.nombre]));
     const almacenes = new Map(datos.almacenes.map(fila => [fila.id_almacen, fila.nombre_almacen]));
-    const anaquelesCatalogo = this.combinarCatalogoLocal<AnaquelLocal>(
-      'catalogo-anaqueles-v2',
-      datos.anaqueles.map(fila => ({
+    const anaquelesCatalogo = this.combinarCatalogoLocal('catalogo-anaqueles-v2', datos.anaqueles.map(fila => ({
         id: fila.id_anaquel,
         idAlmacen: Number(fila.id_almacen),
         nombre: fila.nombre_anaquel,
         estado: fila.activo !== '0',
-      })),
-    );
+      })));
     this.anaquelesPorId = new Map(
       anaquelesCatalogo.map(fila => [Number(fila.id), fila.nombre]),
     );
@@ -536,20 +523,13 @@ export class CatalogoProductos {
   }
 
   private combinarCatalogoLocal<T extends { id: string }>(clave: string, fuente: T[]): T[] {
-    const estado = this.persistencia.leer<EstadoCatalogoLocal<T>>(
-      clave,
-      { registros: [], eliminados: [] },
-    );
+    const estado = this.local.leer<EstadoCatalogoLocal<T>>(clave, { registros: [], eliminados: [] });
     const eliminados = new Set(estado.eliminados || []);
     const locales = new Map((estado.registros || []).map(registro => [registro.id, registro]));
     const idsFuente = new Set(fuente.map(registro => registro.id));
     return [
-      ...fuente
-        .filter(registro => !eliminados.has(registro.id))
-        .map(registro => locales.get(registro.id) || registro),
-      ...(estado.registros || []).filter(
-        registro => !idsFuente.has(registro.id) && !eliminados.has(registro.id),
-      ),
+      ...fuente.filter(registro => !eliminados.has(registro.id)).map(registro => locales.get(registro.id) || registro),
+      ...(estado.registros || []).filter(registro => !idsFuente.has(registro.id) && !eliminados.has(registro.id)),
     ];
   }
 

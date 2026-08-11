@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Optional } from '@angular/core';
 import { combineLatest, map, Observable } from 'rxjs';
 import { DatosDb } from '../../shared/services/datos-db';
 import { PersistenciaLocal } from '../../shared/services/persistencia-local';
+import { PersistenciaInventarioTxt } from '../../shared/services/persistencia-inventario-txt';
 import {
   CatalogoProductos,
   OpcionesProducto,
@@ -257,6 +258,7 @@ export class GestionInventario {
     private persistencia: PersistenciaLocal,
     private catalogo: CatalogoProductos,
     private administracion: AdministracionDatos,
+    @Optional() private persistenciaTxt?: PersistenciaInventarioTxt,
   ) {}
 
   cargar(): Observable<ContextoInventario> {
@@ -319,6 +321,17 @@ export class GestionInventario {
     };
     const actuales = this.persistencia.leer<AjusteInventario[]>(this.claveAjustes, []);
     this.persistencia.guardar(this.claveAjustes, [ajuste, ...actuales]);
+    const guardadoTxt = this.persistenciaTxt?.registrarAjuste({
+      productoId: ajuste.productoId,
+      almacenId: ajuste.almacenId,
+      usuarioId: ajuste.usuarioId,
+      cantidad: ajuste.ajuste,
+      motivo: ajuste.motivo,
+      referencia: ajuste.id,
+      fecha: ajuste.fecha,
+      costoUnitario: 0,
+    });
+    if (guardadoTxt) void guardadoTxt.then(() => this.persistencia.eliminar(this.claveAjustes)).catch(() => undefined);
     return ajuste;
   }
 
@@ -439,6 +452,7 @@ export class GestionInventario {
         ? actuales.map((item) => item.id === resultado.id ? resultado : item)
         : [resultado, ...actuales],
     );
+    this.persistirTransferencia(resultado);
     return resultado;
   }
 
@@ -505,6 +519,7 @@ export class GestionInventario {
         ? actuales.map((item) => item.id === transferencia.id ? actualizada : item)
         : [actualizada, ...actuales],
     );
+    this.persistirTransferencia(actualizada);
   }
 
   eliminarTransferencia(id: number): void {
@@ -512,6 +527,13 @@ export class GestionInventario {
     this.guardarTransferenciasLocales(actuales.filter((item) => item.id !== id));
     const eliminadas = this.persistencia.leer<number[]>(this.claveTransferenciasEliminadas, []);
     this.persistencia.guardar(this.claveTransferenciasEliminadas, [...new Set([...eliminadas, id])]);
+    const eliminadoTxt = this.persistenciaTxt?.eliminarTransferencia(id);
+    if (eliminadoTxt) void eliminadoTxt.then(() => {
+      const pendientes = this.leerTransferenciasLocales().filter(item => item.id !== id);
+      this.guardarTransferenciasLocales(pendientes);
+      const restantes = this.persistencia.leer<number[]>(this.claveTransferenciasEliminadas, []).filter(item => item !== id);
+      this.persistencia.guardar(this.claveTransferenciasEliminadas, restantes);
+    }).catch(() => undefined);
   }
 
   stockDisponible(
@@ -1128,6 +1150,14 @@ export class GestionInventario {
   private guardarTransferenciasLocales(transferencias: TransferenciaInventario[]): void {
     this.persistencia.guardar(this.claveTransferencias, transferencias);
     this.persistencia.guardar(this.claveMigracionTransferencias, true);
+  }
+
+  private persistirTransferencia(transferencia: TransferenciaInventario): void {
+    const guardado = this.persistenciaTxt?.guardarTransferencia(transferencia as unknown as Record<string, unknown>);
+    if (guardado) void guardado.then(() => {
+      const pendientes = this.leerTransferenciasLocales().filter(item => item.id !== transferencia.id);
+      this.guardarTransferenciasLocales(pendientes);
+    }).catch(() => undefined);
   }
 
   private migrarTransferenciasLegadas(legadas: TransferenciaLegada[]): TransferenciaInventario[] {

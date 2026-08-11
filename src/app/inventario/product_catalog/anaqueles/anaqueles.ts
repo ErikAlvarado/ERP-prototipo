@@ -36,7 +36,7 @@ interface AnaquelVista extends AnaquelCatalogo {
   styleUrls: ['../catalog-list.css', './anaqueles.css'],
 })
 export class Anaqueles implements OnInit, AfterViewInit {
-  displayedColumns = ['id', 'nombre', 'almacen', 'empresa', 'productos', 'estado', 'acciones'];
+  displayedColumns = ['id', 'nombre', 'codigoBarras', 'almacen', 'empresa', 'productos', 'estado', 'acciones'];
   dataSource = new MatTableDataSource<AnaquelVista>([]);
   obs!: Observable<AnaquelVista[]>;
   currentSearch = '';
@@ -60,7 +60,7 @@ export class Anaqueles implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.dataSource.filterPredicate = (anaquel, filtro) => {
       const f = JSON.parse(filtro) as Record<string, ValorFiltroCatalogo> & { search: string };
-      const texto = `${anaquel.id} ${anaquel.nombre} ${anaquel.almacen} ${anaquel.empresa}`
+      const texto = `${anaquel.id} ${anaquel.nombre} ${anaquel.codigoBarras} ${anaquel.almacen} ${anaquel.empresa}`
         .toLocaleLowerCase();
       return (!f.search || texto.includes(String(f.search)))
         && (!f['empresa'] || anaquel.idEmpresa === Number(f['empresa']))
@@ -263,12 +263,13 @@ export class Anaqueles implements OnInit, AfterViewInit {
 
   private registrosCatalogo(): AnaquelCatalogo[] {
     return this.dataSource.data.map(({
-      id, idEmpresa, idAlmacen, nombre, estado, fechaCreacion, fechaActualizacion,
+      id, idEmpresa, idAlmacen, nombre, codigoBarras, estado, fechaCreacion, fechaActualizacion,
     }) => ({
       id,
       idEmpresa,
       idAlmacen,
       nombre,
+      codigoBarras,
       estado,
       fechaCreacion,
       fechaActualizacion,

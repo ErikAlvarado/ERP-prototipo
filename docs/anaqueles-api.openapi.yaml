@@ -168,6 +168,7 @@ components:
         - empresaId
         - almacenId
         - nombre
+        - codigoBarras
         - activo
         - fechaCreacion
         - fechaActualizacion
@@ -186,6 +187,10 @@ components:
           type: string
           minLength: 1
           maxLength: 120
+        codigoBarras:
+          type: string
+          minLength: 1
+          maxLength: 80
         activo:
           type: boolean
         fechaCreacion:
@@ -197,7 +202,7 @@ components:
     CrearAnaquel:
       type: object
       additionalProperties: false
-      required: [almacenId, nombre]
+      required: [almacenId, nombre, codigoBarras]
       properties:
         almacenId:
           type: integer
@@ -207,6 +212,10 @@ components:
           type: string
           minLength: 1
           maxLength: 120
+        codigoBarras:
+          type: string
+          minLength: 1
+          maxLength: 80
         activo:
           type: boolean
           default: true
@@ -219,6 +228,10 @@ components:
           type: string
           minLength: 1
           maxLength: 120
+        codigoBarras:
+          type: string
+          minLength: 1
+          maxLength: 80
         activo:
           type: boolean
     PaginaAnaqueles:

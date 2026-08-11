@@ -110,6 +110,7 @@ const TABLES = Object.freeze({
   },
   ordenes: { file: 'compras_bd/ordenes_compra.txt', columns: null },
   detallesOrden: { file: 'compras_bd/ordenes_compra_detalle.txt', columns: null },
+  historialOrden: { file: 'compras_bd/ordenes_compra_historial_estatus.txt', columns: null },
   recepciones: { file: 'compras_bd/recepciones_compra.txt', columns: null },
   detallesRecepcion: { file: 'compras_bd/recepciones_compra_detalle.txt', columns: null },
   empresas: {
@@ -132,10 +133,20 @@ const TABLES = Object.freeze({
     file: 'inventari_db/almacenes.txt',
     columns: null,
   },
+  usuarios: {
+    file: 'inventari_db/usuarios.txt',
+    columns: null,
+  },
   listasPrecios: {
     file: 'inventari_db/listas_precios.txt',
     columns: null,
   },
+  medidas: { file: 'inventari_db/medidas.txt', columns: null },
+  anaqueles: { file: 'inventari_db/anaqueles.txt', columns: null },
+  componentesKit: { file: 'inventari_db/componentes_kit.txt', columns: null },
+  imagenesProducto: { file: 'inventari_db/producto_imagenes.txt', columns: null },
+  transferencias: { file: 'inventari_db/transferencias.txt', columns: null },
+  detallesTransferencia: { file: 'inventari_db/detalle_transferencia.txt', columns: null },
 });
 
 class RequestError extends Error {
@@ -172,6 +183,12 @@ function nonNegativeNumber(value, field) {
   if (!Number.isFinite(number) || number < 0) {
     throw new RequestError(400, `${field} debe ser un número mayor o igual a cero.`);
   }
+  return number;
+}
+
+function finiteNumber(value, field) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) throw new RequestError(400, `${field} debe ser un número válido.`);
   return number;
 }
 
@@ -274,6 +291,166 @@ async function commitTables(tables) {
     }
     throw error;
   }
+}
+
+const INVENTORY_EDITABLE_TABLES = new Set([
+  'productos', 'precios', 'inventario', 'kardex', 'categorias', 'marcas',
+  'unidades', 'medidas', 'anaqueles', 'componentesKit', 'imagenesProducto',
+  'transferencias', 'detallesTransferencia',
+]);
+
+async function replaceInventoryTable(dbRoot, key, payload) {
+  if (!INVENTORY_EDITABLE_TABLES.has(key)) throw new RequestError(404, 'Tabla de Inventario no permitida.');
+  if (!Array.isArray(payload?.rows)) throw new RequestError(400, 'rows debe ser un arreglo.');
+  const table = await loadTable(dbRoot, key);
+  table.rows = payload.rows.map((input, index) => {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) {
+      throw new RequestError(400, `La fila ${index + 1} no es válida.`);
+    }
+    const extras = Object.keys(input).filter(column => !table.columns.includes(column));
+    if (extras.length) throw new RequestError(400, `Columnas desconocidas: ${extras.join(', ')}.`);
+    return Object.fromEntries(table.columns.map(column => [
+      column, cleanText(input[column], `${column} (fila ${index + 1})`, { max: 2000 }),
+    ]));
+  });
+  await commitTables([table]);
+  return { tabla: key, filas: table.rows.length };
+}
+
+async function replaceInventoryTables(dbRoot, payload) {
+  if (!payload?.tables || typeof payload.tables !== 'object' || Array.isArray(payload.tables)) {
+    throw new RequestError(400, 'tables debe ser un objeto.');
+  }
+  const tables = [];
+  for (const [key, rows] of Object.entries(payload.tables)) {
+    if (!INVENTORY_EDITABLE_TABLES.has(key)) throw new RequestError(404, `Tabla ${key} no permitida.`);
+    if (!Array.isArray(rows)) throw new RequestError(400, `${key} debe ser un arreglo.`);
+    const table = await loadTable(dbRoot, key);
+    table.rows = rows.map((input, index) => {
+      if (!input || typeof input !== 'object' || Array.isArray(input)) throw new RequestError(400, `Fila inválida en ${key}.`);
+      const extras = Object.keys(input).filter(column => !table.columns.includes(column));
+      if (extras.length) throw new RequestError(400, `Columnas desconocidas en ${key}: ${extras.join(', ')}.`);
+      return Object.fromEntries(table.columns.map(column => [column, cleanText(input[column], `${column} (fila ${index + 1})`, { max: 2000 })]));
+    });
+    tables.push(table);
+  }
+  if (!tables.length) throw new RequestError(400, 'Incluye al menos una tabla.');
+  await commitTables(tables);
+  return { tablas: tables.length };
+}
+
+async function applyInventoryAdjustment(dbRoot, payload) {
+  const productId = positiveInteger(payload.productoId, 'productoId');
+  const warehouseId = positiveInteger(payload.almacenId, 'almacenId');
+  const userId = positiveInteger(payload.usuarioId, 'usuarioId');
+  const quantity = finiteNumber(payload.cantidad, 'cantidad');
+  if (!quantity) throw new RequestError(400, 'cantidad debe ser diferente de cero.');
+  const [products, warehouses, inventory, kardex] = await Promise.all([
+    loadTable(dbRoot, 'productos'), loadTable(dbRoot, 'almacenes'),
+    loadTable(dbRoot, 'inventario'), loadTable(dbRoot, 'kardex'),
+  ]);
+  const product = products.rows.find(row => Number(row.id_producto) === productId);
+  const warehouse = warehouses.rows.find(row => Number(row.id_almacen) === warehouseId);
+  if (!product || !warehouse) throw new RequestError(404, 'El producto o almacén no existe.');
+  if (product.id_empresa !== warehouse.id_empresa) throw new RequestError(409, 'El producto y almacén pertenecen a empresas distintas.');
+  let stockRow = inventory.rows.find(row => Number(row.id_producto) === productId && Number(row.id_almacen) === warehouseId);
+  const previous = Number(stockRow?.stock || 0);
+  const current = previous + quantity;
+  if (current < 0) throw new RequestError(409, `El ajuste dejaría stock negativo. Existencia: ${previous}.`);
+  const date = cleanText(payload.fecha || today(), 'fecha', { required: true, max: 10 });
+  if (!stockRow) {
+    stockRow = Object.fromEntries(inventory.columns.map(column => [column, '']));
+    Object.assign(stockRow, { id_inventario: String(nextId(inventory.rows, 'id_inventario')), id_producto: String(productId), id_almacen: String(warehouseId), stock_reorden: '0.00', stock_critico: '0.00', stock_maximo: '0.00' });
+    inventory.rows.push(stockRow);
+  }
+  stockRow.stock = decimal(current);
+  stockRow.fecha_actualizacion = date;
+  kardex.rows.push({
+    id_movimiento: String(nextId(kardex.rows, 'id_movimiento')), id_producto: String(productId),
+    id_almacen: String(warehouseId), id_tipo_movimiento: '3', existencia: decimal(current),
+    cantidad: decimal(quantity), costo_unitario: decimal(payload.costoUnitario || 0),
+    observaciones: cleanText(payload.motivo, 'motivo', { required: true, max: 500 }),
+    referencia: cleanText(payload.referencia || `AJ-${Date.now()}`, 'referencia', { max: 80 }),
+    fecha: date, id_usuario: String(userId),
+  });
+  await commitTables([inventory, kardex]);
+  return { existencia: current };
+}
+
+async function saveInventoryTransfer(dbRoot, payload) {
+  const transfer = payload?.transferencia;
+  if (!transfer || !Array.isArray(transfer.partidas) || !transfer.partidas.length) throw new RequestError(400, 'La transferencia requiere partidas.');
+  const id = positiveInteger(transfer.id, 'id');
+  const originId = positiveInteger(transfer.origenId, 'origenId');
+  const destinationId = positiveInteger(transfer.destinoId, 'destinoId');
+  if (originId === destinationId) throw new RequestError(409, 'Origen y destino deben ser diferentes.');
+  const [transfers, details, warehouses, inventory, kardex] = await Promise.all([
+    loadTable(dbRoot, 'transferencias'), loadTable(dbRoot, 'detallesTransferencia'),
+    loadTable(dbRoot, 'almacenes'), loadTable(dbRoot, 'inventario'), loadTable(dbRoot, 'kardex'),
+  ]);
+  const origin = warehouses.rows.find(row => Number(row.id_almacen) === originId);
+  const destination = warehouses.rows.find(row => Number(row.id_almacen) === destinationId);
+  if (!origin || !destination || origin.id_empresa !== destination.id_empresa) throw new RequestError(409, 'Los almacenes no existen o pertenecen a empresas distintas.');
+  const stateIds = { borrador: '1', pendiente: '2', 'en transito': '3', recibida: '4', cancelada: '5', programada: '6', preparando: '7', empacada: '8', 'lista para envio': '9', 'en ruta': '10', demorada: '11', 'recepcion parcial': '12', 'en revision': '13', devuelta: '14', cerrada: '15' };
+  const stateId = stateIds[normalized(transfer.estado)];
+  if (!stateId) throw new RequestError(400, 'Estado de transferencia desconocido.');
+  const previous = transfers.rows.find(row => Number(row.id_transferencia) === id);
+  const wasReceived = previous?.id_estado_transferencia === '4';
+  const row = previous || Object.fromEntries(transfers.columns.map(column => [column, '']));
+  Object.assign(row, {
+    id_transferencia: String(id), id_empresa: origin.id_empresa,
+    folio: cleanText(transfer.folio, 'folio', { required: true, max: 40 }),
+    id_almacen_origen: String(originId), id_almacen_destino: String(destinationId),
+    fecha_solicitud: cleanText(transfer.fechaSolicitud, 'fechaSolicitud', { required: true, max: 10 }),
+    fecha_autorizacion: cleanText(transfer.fechaAutorizacion || '', 'fechaAutorizacion', { max: 10 }),
+    fecha_recepcion: cleanText(transfer.fechaRecepcion || '', 'fechaRecepcion', { max: 10 }),
+    id_estado_transferencia: stateId,
+    observaciones: cleanText(transfer.observaciones || '', 'observaciones', { max: 500 }),
+    id_usuario_solicita: String(positiveInteger(transfer.solicitanteId, 'solicitanteId')),
+    id_usuario_autoriza: transfer.autorizadorId ? String(positiveInteger(transfer.autorizadorId, 'autorizadorId')) : '',
+  });
+  if (!previous) transfers.rows.push(row);
+  details.rows = details.rows.filter(detail => Number(detail.id_transferencia) !== id);
+  for (const part of transfer.partidas) {
+    const productId = positiveInteger(part.productoId, 'productoId');
+    const requested = nonNegativeNumber(part.cantidadSolicitada, 'cantidadSolicitada');
+    const sent = nonNegativeNumber(part.cantidadEnviada, 'cantidadEnviada');
+    const received = nonNegativeNumber(part.cantidadRecibida, 'cantidadRecibida');
+    details.rows.push({ id_transferencia: String(id), id_producto: String(productId), cantidad_solicitada: decimal(requested), cantidad_enviada: decimal(sent), cantidad_recibida: decimal(received) });
+    if (stateId === '4' && !wasReceived) {
+      const quantity = received || sent || requested;
+      const originStock = inventory.rows.find(item => Number(item.id_producto) === productId && Number(item.id_almacen) === originId);
+      let destinationStock = inventory.rows.find(item => Number(item.id_producto) === productId && Number(item.id_almacen) === destinationId);
+      if (!originStock || Number(originStock.stock) < quantity) throw new RequestError(409, `Stock insuficiente para el producto ${productId}.`);
+      if (!destinationStock) {
+        destinationStock = Object.fromEntries(inventory.columns.map(column => [column, '']));
+        Object.assign(destinationStock, { id_inventario: String(nextId(inventory.rows, 'id_inventario')), id_producto: String(productId), id_almacen: String(destinationId), stock: '0.00', stock_reorden: '0.00', stock_critico: '0.00', stock_maximo: '0.00' });
+        inventory.rows.push(destinationStock);
+      }
+      const originResult = Number(originStock.stock) - quantity;
+      const destinationResult = Number(destinationStock.stock) + quantity;
+      originStock.stock = decimal(originResult); destinationStock.stock = decimal(destinationResult);
+      originStock.fecha_actualizacion = row.fecha_recepcion || today(); destinationStock.fecha_actualizacion = originStock.fecha_actualizacion;
+      for (const [warehouseId, amount, existence] of [[originId, -quantity, originResult], [destinationId, quantity, destinationResult]]) {
+        kardex.rows.push({ id_movimiento: String(nextId(kardex.rows, 'id_movimiento')), id_producto: String(productId), id_almacen: String(warehouseId), id_tipo_movimiento: '4', existencia: decimal(existence), cantidad: decimal(amount), costo_unitario: '0.00', observaciones: 'Transferencia entre almacenes', referencia: row.folio, fecha: row.fecha_recepcion || today(), id_usuario: row.id_usuario_autoriza || row.id_usuario_solicita });
+      }
+    }
+  }
+  await commitTables(stateId === '4' && !wasReceived ? [transfers, details, inventory, kardex] : [transfers, details]);
+  return { transferenciaId: id };
+}
+
+async function deleteInventoryTransfer(dbRoot, id) {
+  const [transfers, details] = await Promise.all([
+    loadTable(dbRoot, 'transferencias'), loadTable(dbRoot, 'detallesTransferencia'),
+  ]);
+  const existing = transfers.rows.find(row => Number(row.id_transferencia) === id);
+  if (!existing) return { transferenciaId: id };
+  if (existing.id_estado_transferencia === '4') throw new RequestError(409, 'Una transferencia recibida no se puede eliminar.');
+  transfers.rows = transfers.rows.filter(row => Number(row.id_transferencia) !== id);
+  details.rows = details.rows.filter(row => Number(row.id_transferencia) !== id);
+  await commitTables([transfers, details]);
+  return { transferenciaId: id };
 }
 
 async function readJson(request) {
@@ -671,6 +848,204 @@ async function createProductForProvider(dbRoot, providerId, payload) {
   return { proveedorId: providerId, productoId: id };
 }
 
+const ORDER_STATUS_TO_ID = Object.freeze({
+  Pendiente: '2',
+  Activo: '3',
+  'En transito': '4',
+  Completado: '6',
+  Cancelado: '7',
+});
+
+const ORDER_ID_TO_STATUS = Object.freeze({
+  1: 'Pendiente',
+  2: 'Pendiente',
+  3: 'Activo',
+  4: 'En transito',
+  5: 'En transito',
+  6: 'Completado',
+  7: 'Cancelado',
+});
+
+function orderStatus(value) {
+  const status = cleanText(value || 'Pendiente', 'estado', { required: true, max: 30 });
+  if (!ORDER_STATUS_TO_ID[status]) throw new RequestError(400, `Estado de orden no válido: ${status}.`);
+  return status;
+}
+
+function formatAmount(value) {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency', currency: 'MXN', minimumFractionDigits: 2,
+  }).format(value);
+}
+
+async function purchaseOrders(dbRoot) {
+  const [orders, details, history, providers, warehouses, users, products] = await Promise.all([
+    loadTable(dbRoot, 'ordenes'), loadTable(dbRoot, 'detallesOrden'), loadTable(dbRoot, 'historialOrden'),
+    loadTable(dbRoot, 'proveedores'), loadTable(dbRoot, 'almacenes'), loadTable(dbRoot, 'usuarios'),
+    loadTable(dbRoot, 'productos'),
+  ]);
+  const providersById = new Map(providers.rows.map(row => [row.id_proveedor, row.nombre_comercial || row.razon_social]));
+  const warehousesById = new Map(warehouses.rows.map(row => [row.id_almacen, row.nombre_almacen]));
+  const usersById = new Map(users.rows.map(row => [row.id_usuario,
+    [row.nombres, row.apellido_paterno, row.apellido_materno].filter(Boolean).join(' ')]));
+  const productsById = new Map(products.rows.map(row => [row.id_producto, row]));
+  return orders.rows.map(order => {
+    const lines = details.rows.filter(row => row.id_orden_compra === order.id_orden_compra);
+    const events = history.rows
+      .filter(row => row.id_orden_compra === order.id_orden_compra)
+      .sort((a, b) => a.fecha_cambio.localeCompare(b.fecha_cambio))
+      .map(row => ({
+        id: row.id_historial,
+        estado: ORDER_ID_TO_STATUS[Number(row.id_estatus_compra)] || 'Pendiente',
+        fecha: row.fecha_cambio.includes('T') ? row.fecha_cambio : row.fecha_cambio.replace(' ', 'T'),
+        comentario: row.comentario || 'Cambio de estado registrado.',
+      }));
+    const estado = ORDER_ID_TO_STATUS[Number(order.id_estatus_compra)] || 'Pendiente';
+    const partidas = lines.map(line => {
+      const product = productsById.get(line.id_producto);
+      return {
+        productoId: Number(line.id_producto),
+        nombre: product?.nombre_producto || `Producto #${line.id_producto}`,
+        sku: product?.sku || `SKU-${line.id_producto}`,
+        cantidad: Number(line.cantidad_ordenada) || 0,
+        precioUnitario: Number(line.precio_unitario) || 0,
+        impuestoPorcentaje: Number(line.tasa_impuesto) || 0,
+      };
+    });
+    const total = lines.reduce((sum, line) => {
+      const base = Number(line.cantidad_ordenada) * Number(line.precio_unitario);
+      const discounted = base * (1 - (Number(line.descuento_porcentaje) || 0) / 100);
+      return sum + discounted * (1 + (Number(line.tasa_impuesto) || 0) / 100);
+    }, 0);
+    const updated = events.at(-1)?.fecha || `${order.fecha_orden}T00:00:00`;
+    return {
+      folio: order.folio,
+      proveedor: providersById.get(order.id_proveedor) || `Proveedor #${order.id_proveedor}`,
+      articulos: partidas.reduce((sum, line) => sum + line.cantidad, 0),
+      total: formatAmount(total),
+      solicitante: usersById.get(order.id_comprador) || `Usuario #${order.id_comprador}`,
+      fecha: order.fecha_orden,
+      estado,
+      cancelable: estado !== 'Completado' && estado !== 'Cancelado',
+      actualizadaEn: updated,
+      historial: events.length ? events : [{
+        id: `${order.folio}-base`, estado, fecha: updated, comentario: order.observaciones || 'Orden cargada desde TXT.',
+      }],
+      almacenId: Number(order.id_almacen_destino),
+      almacen: warehousesById.get(order.id_almacen_destino) || `Almacén #${order.id_almacen_destino}`,
+      fechaEntrega: order.fecha_entrega_estimada,
+      condiciones: order.condiciones_pago,
+      partidas,
+    };
+  });
+}
+
+async function createPurchaseOrderBatch(dbRoot, payload) {
+  const inputs = Array.isArray(payload.ordenes) ? payload.ordenes : [];
+  if (!inputs.length) throw new RequestError(400, 'Agrega al menos una orden de compra.');
+  const [orders, details, history, providers, warehouses, users, products] = await Promise.all([
+    loadTable(dbRoot, 'ordenes'), loadTable(dbRoot, 'detallesOrden'), loadTable(dbRoot, 'historialOrden'),
+    loadTable(dbRoot, 'proveedores'), loadTable(dbRoot, 'almacenes'), loadTable(dbRoot, 'usuarios'),
+    loadTable(dbRoot, 'productos'),
+  ]);
+  let orderId = nextId(orders.rows, 'id_orden_compra');
+  let detailId = nextId(details.rows, 'id_detalle_orden');
+  let historyId = nextId(history.rows, 'id_historial');
+  const now = new Date();
+  const year = now.getFullYear();
+  const pattern = new RegExp(`^OC-${year}-(\\d+)$`);
+  let sequence = Math.max(0, ...orders.rows.map(row => Number(row.folio.match(pattern)?.[1]) || 0)) + 1;
+  const createdFolios = [];
+  for (const input of inputs) {
+    const providerName = cleanText(input.proveedor, 'proveedor', { required: true, max: 180 });
+    const provider = providers.rows.find(row =>
+      normalized(row.nombre_comercial) === normalized(providerName)
+      || normalized(row.razon_social) === normalized(providerName));
+    if (!provider) throw new RequestError(404, `No existe el proveedor ${providerName}.`);
+    const warehouseId = positiveInteger(input.almacenId, 'almacenId');
+    const warehouse = warehouses.rows.find(row => Number(row.id_almacen) === warehouseId);
+    if (!warehouse || warehouse.id_empresa !== provider.id_empresa) {
+      throw new RequestError(400, `El almacén ${warehouseId} no pertenece a la empresa del proveedor.`);
+    }
+    const buyerId = positiveInteger(input.compradorId || 1, 'compradorId');
+    const buyer = users.rows.find(row => Number(row.id_usuario) === buyerId);
+    if (!buyer || buyer.id_empresa !== provider.id_empresa) {
+      throw new RequestError(400, 'El comprador no pertenece a la empresa de la orden.');
+    }
+    const lines = Array.isArray(input.partidas) ? input.partidas : [];
+    if (!lines.length) throw new RequestError(400, 'Cada orden debe contener productos.');
+    const status = orderStatus(input.estado || 'Activo');
+    const id = String(orderId++);
+    const folio = `OC-${year}-${String(sequence++).padStart(4, '0')}`;
+    const date = cleanText(input.fecha || now.toISOString().slice(0, 10), 'fecha', { required: true, max: 10 });
+    const deliveryDate = cleanText(input.fechaEntrega, 'fechaEntrega', { required: true, max: 10 });
+    orders.rows.push({
+      id_orden_compra: id,
+      folio,
+      id_empresa: provider.id_empresa,
+      id_proveedor: provider.id_proveedor,
+      id_cotizacion: '',
+      id_almacen_destino: String(warehouseId),
+      id_comprador: String(buyerId),
+      id_estatus_compra: ORDER_STATUS_TO_ID[status],
+      id_moneda: '1',
+      tipo_cambio: '1.0000',
+      fecha_orden: date,
+      fecha_entrega_estimada: deliveryDate,
+      condiciones_pago: cleanText(input.condiciones || 'Contado', 'condiciones', { max: 80 }),
+      observaciones: cleanText(input.observaciones || 'Orden creada desde Compras', 'observaciones', { max: 500 }),
+    });
+    for (const line of lines) {
+      const productId = positiveInteger(line.productoId, 'productoId');
+      const product = products.rows.find(row => Number(row.id_producto) === productId);
+      if (!product || product.id_empresa !== provider.id_empresa) {
+        throw new RequestError(400, `El producto ${productId} no pertenece a la empresa de la orden.`);
+      }
+      const quantity = nonNegativeNumber(line.cantidad, 'cantidad');
+      if (quantity <= 0) throw new RequestError(400, 'La cantidad debe ser mayor a cero.');
+      details.rows.push({
+        id_detalle_orden: String(detailId++), id_orden_compra: id, id_producto: String(productId),
+        id_unidad: product.id_unidad, cantidad_ordenada: decimal(quantity),
+        precio_unitario: decimal(nonNegativeNumber(line.precioUnitario, 'precioUnitario')),
+        descuento_porcentaje: '0.00', tasa_impuesto: decimal(nonNegativeNumber(line.impuestoPorcentaje || 0, 'impuestoPorcentaje')),
+      });
+    }
+    const timestamp = now.toISOString().replace('T', ' ').slice(0, 19);
+    history.rows.push({
+      id_historial: String(historyId++), id_orden_compra: id,
+      id_estatus_compra: ORDER_STATUS_TO_ID[status], id_usuario: String(buyerId),
+      fecha_cambio: timestamp, comentario: 'Orden registrada en compras_bd.',
+    });
+    createdFolios.push(folio);
+  }
+  await commitTables([orders, details, history]);
+  const all = await purchaseOrders(dbRoot);
+  return { ordenes: all.filter(order => createdFolios.includes(order.folio)) };
+}
+
+async function updatePurchaseOrderStatus(dbRoot, folio, payload) {
+  const [orders, history, users] = await Promise.all([
+    loadTable(dbRoot, 'ordenes'), loadTable(dbRoot, 'historialOrden'), loadTable(dbRoot, 'usuarios'),
+  ]);
+  const order = orders.rows.find(row => row.folio === folio);
+  if (!order) throw new RequestError(404, `No existe la orden ${folio}.`);
+  const status = orderStatus(payload.estado);
+  const userId = positiveInteger(payload.usuarioId || order.id_comprador, 'usuarioId');
+  const user = users.rows.find(row => Number(row.id_usuario) === userId);
+  if (!user || user.id_empresa !== order.id_empresa) throw new RequestError(400, 'El usuario no pertenece a la empresa de la orden.');
+  order.id_estatus_compra = ORDER_STATUS_TO_ID[status];
+  history.rows.push({
+    id_historial: String(nextId(history.rows, 'id_historial')),
+    id_orden_compra: order.id_orden_compra,
+    id_estatus_compra: ORDER_STATUS_TO_ID[status],
+    id_usuario: String(userId),
+    fecha_cambio: new Date().toISOString().replace('T', ' ').slice(0, 19),
+    comentario: cleanText(payload.comentario || `Estado actualizado a ${status}.`, 'comentario', { max: 500 }),
+  });
+  await commitTables([orders, history]);
+  return { folio, estado: status };
+}
+
 async function receivePurchase(dbRoot, payload) {
   const [providers, orders, orderDetails, receipts, receiptDetails, inventory, kardex, products, warehouses] = await Promise.all([
     loadTable(dbRoot, 'proveedores'), loadTable(dbRoot, 'ordenes'), loadTable(dbRoot, 'detallesOrden'),
@@ -678,7 +1053,7 @@ async function receivePurchase(dbRoot, payload) {
     loadTable(dbRoot, 'kardex'), loadTable(dbRoot, 'productos'), loadTable(dbRoot, 'almacenes'),
   ]);
   const orderFolio = cleanText(payload.orden, 'orden', { required: true, max: 40 });
-  if (receipts.rows.some(row => row.folio === payload.folio || Number(row.id_orden_compra) === Number(payload.idOrden))) {
+  if (receipts.rows.some(row => row.folio === payload.folio)) {
     throw new RequestError(409, 'La recepción ya fue registrada.');
   }
   const warehouseId = positiveInteger(payload.almacenId, 'almacenId');
@@ -689,21 +1064,16 @@ async function receivePurchase(dbRoot, payload) {
   if (!provider) throw new RequestError(404, 'El proveedor no existe en proveedores.txt.');
   const inputs = Array.isArray(payload.partidas) ? payload.partidas : [];
   if (!inputs.length) throw new RequestError(400, 'La recepción debe contener productos.');
-  let order = orders.rows.find(row => row.folio === orderFolio);
-  if (!order) {
-    const orderId = nextId(orders.rows, 'id_orden_compra');
-    order = {
-      id_orden_compra: String(orderId), folio: orderFolio, id_empresa: provider.id_empresa,
-      id_proveedor: provider.id_proveedor, id_cotizacion: '', id_almacen_destino: String(warehouseId),
-      id_comprador: String(payload.responsableId || 1), id_estatus_compra: '6', id_moneda: '1', tipo_cambio: '1.0000',
-      fecha_orden: cleanText(payload.fecha, 'fecha', { required: true, max: 20 }), fecha_entrega_estimada: cleanText(payload.fecha, 'fecha', { required: true, max: 20 }),
-      condiciones_pago: 'Contado', observaciones: 'Orden registrada desde recepción de inventario',
-    };
-    orders.rows.push(order);
+  const order = orders.rows.find(row => row.folio === orderFolio);
+  if (!order) throw new RequestError(404, 'La orden debe existir en ordenes_compra.txt antes de recepcionarla.');
+  if (order.id_proveedor !== provider.id_proveedor || Number(order.id_almacen_destino) !== warehouseId) {
+    throw new RequestError(409, 'La recepción no coincide con el proveedor o almacén de la orden.');
+  }
+  if (receipts.rows.some(row => row.id_orden_compra === order.id_orden_compra)) {
+    throw new RequestError(409, 'La orden ya tiene una recepción registrada.');
   }
   const receiptId = nextId(receipts.rows, 'id_recepcion');
   const receiptFolio = cleanText(payload.folio || `RC-${new Date().getFullYear()}-${String(receiptId).padStart(4, '0')}`, 'folio', { required: true, max: 40 });
-  let orderDetailId = nextId(orderDetails.rows, 'id_detalle_orden');
   let receiptDetailId = nextId(receiptDetails.rows, 'id_detalle_recepcion');
   let movementId = nextId(kardex.rows, 'id_movimiento');
   const date = cleanText(payload.fecha, 'fecha', { required: true, max: 20 }).slice(0, 10);
@@ -713,10 +1083,10 @@ async function receivePurchase(dbRoot, payload) {
     if (quantity <= 0 || !products.rows.some(row => Number(row.id_producto) === productId)) throw new RequestError(400, `Producto ${productId} o cantidad inválida.`);
     const stockRow = inventory.rows.find(row => Number(row.id_producto) === productId && Number(row.id_almacen) === warehouseId);
     if (!stockRow) throw new RequestError(409, `El producto ${productId} no tiene inventario en ${warehouse.nombre_almacen}.`);
-    let detail = orderDetails.rows.find(row => Number(row.id_orden_compra) === Number(order.id_orden_compra) && Number(row.id_producto) === productId);
-    if (!detail) {
-      detail = { id_detalle_orden: String(orderDetailId++), id_orden_compra: order.id_orden_compra, id_producto: String(productId), id_unidad: '1', cantidad_ordenada: decimal(quantity), precio_unitario: decimal(input.costoUnitario || 0), descuento_porcentaje: '0.00', tasa_impuesto: '0.00' };
-      orderDetails.rows.push(detail);
+    const detail = orderDetails.rows.find(row => Number(row.id_orden_compra) === Number(order.id_orden_compra) && Number(row.id_producto) === productId);
+    if (!detail) throw new RequestError(409, `El producto ${productId} no pertenece a la orden ${orderFolio}.`);
+    if (quantity > Number(detail.cantidad_ordenada)) {
+      throw new RequestError(409, `La cantidad recibida del producto ${productId} supera la cantidad ordenada.`);
     }
     const newStock = Number(stockRow.stock) + quantity;
     stockRow.stock = decimal(newStock); stockRow.fecha_actualizacion = date;
@@ -742,12 +1112,23 @@ function router(dbRoot) {
         sendJson(response, 200, { ok: true, almacenamiento: 'txt' });
         return;
       }
+      if (request.method === 'GET' && url.pathname === '/api/inventario-txt/salud') {
+        sendJson(response, 200, { ok: true, almacenamiento: 'txt' });
+        return;
+      }
+      if (request.method === 'GET' && url.pathname === '/api/compras-txt/ordenes') {
+        sendJson(response, 200, { ok: true, ordenes: await purchaseOrders(dbRoot) });
+        return;
+      }
       if (request.method === 'OPTIONS') {
         throw new RequestError(405, 'CORS no está habilitado; usa el proxy de la aplicación.');
       }
       const providerMatch = url.pathname.match(/^\/api\/compras-txt\/proveedores\/(\d+)$/);
       const relationsMatch = url.pathname.match(/^\/api\/compras-txt\/proveedores\/(\d+)\/relaciones$/);
       const productsMatch = url.pathname.match(/^\/api\/compras-txt\/proveedores\/(\d+)\/productos$/);
+      const orderStatusMatch = url.pathname.match(/^\/api\/compras-txt\/ordenes\/([^/]+)\/estado$/);
+      const inventoryTableMatch = url.pathname.match(/^\/api\/inventario-txt\/tablas\/([A-Za-z]+)$/);
+      const inventoryTransferMatch = url.pathname.match(/^\/api\/inventario-txt\/transferencias\/(\d+)$/);
       const payload = await readJson(request);
       let result;
       if (request.method === 'POST' && url.pathname === '/api/compras-txt/proveedores') {
@@ -761,8 +1142,24 @@ function router(dbRoot) {
       } else if (request.method === 'POST' && productsMatch) {
         result = await serializeWrite(() =>
           createProductForProvider(dbRoot, Number(productsMatch[1]), payload));
+      } else if (request.method === 'POST' && url.pathname === '/api/compras-txt/ordenes/lote') {
+        result = await serializeWrite(() => createPurchaseOrderBatch(dbRoot, payload));
+      } else if (request.method === 'PATCH' && orderStatusMatch) {
+        result = await serializeWrite(() => updatePurchaseOrderStatus(
+          dbRoot, decodeURIComponent(orderStatusMatch[1]), payload,
+        ));
       } else if (request.method === 'POST' && url.pathname === '/api/compras-txt/recepciones') {
         result = await serializeWrite(() => receivePurchase(dbRoot, payload));
+      } else if (request.method === 'PUT' && inventoryTableMatch) {
+        result = await serializeWrite(() => replaceInventoryTable(dbRoot, inventoryTableMatch[1], payload));
+      } else if (request.method === 'PUT' && url.pathname === '/api/inventario-txt/tablas') {
+        result = await serializeWrite(() => replaceInventoryTables(dbRoot, payload));
+      } else if (request.method === 'POST' && url.pathname === '/api/inventario-txt/ajustes') {
+        result = await serializeWrite(() => applyInventoryAdjustment(dbRoot, payload));
+      } else if (request.method === 'PUT' && url.pathname === '/api/inventario-txt/transferencias') {
+        result = await serializeWrite(() => saveInventoryTransfer(dbRoot, payload));
+      } else if (request.method === 'DELETE' && inventoryTransferMatch) {
+        result = await serializeWrite(() => deleteInventoryTransfer(dbRoot, Number(inventoryTransferMatch[1])));
       } else {
         throw new RequestError(404, 'Ruta no encontrada.');
       }

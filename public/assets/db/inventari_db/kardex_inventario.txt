@@ -97,3 +97,4 @@ id_movimiento|id_producto|id_almacen|id_tipo_movimiento|existencia|cantidad|cost
 96|59|8|3|0.00|-8.00|260.00|Ajuste de stock agotado|AJ-AGOTADO-076|2026-08-07|1
 97|74|1|1|100.00|100.00|3.00|Inventario inicial desde alta de proveedor|ALTA-COM-74|2026-08-08|1
 98|74|2|1|50.00|50.00|3.00|Inventario inicial desde alta de proveedor|ALTA-COM-74|2026-08-08|1
+99|63|11|5|20.00|20.00|0.00|Entrada por recepción de compra|REC-OC-2026-0094|2026-08-11|12

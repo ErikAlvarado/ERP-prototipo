@@ -12,6 +12,8 @@ se guardan en `localStorage` y no cambian estos archivos.
 
 - `anaqueles.txt` cataloga cada anaquel y referencia
   `almacenes.txt.id_almacen` mediante `id_almacen`.
+- `anaqueles.txt.codigo_barras` identifica físicamente cada anaquel y es único
+  en todo el catálogo.
 - `inventario.txt.id_anaquel` referencia `anaqueles.txt.id_anaquel`.
 - `inventario.txt.id_producto` ya referencia `productos.txt.id_producto`, por
   lo que `inventario` es la relación entre producto, almacén y anaquel.

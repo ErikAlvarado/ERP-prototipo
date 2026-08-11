@@ -6,6 +6,7 @@ CREATE TABLE anaqueles (
   id_anaquel BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   id_almacen BIGINT NOT NULL,
   nombre_anaquel VARCHAR(120) NOT NULL,
+  codigo_barras VARCHAR(80) NOT NULL,
   -- El API genera esta clave con trim + minúsculas + eliminación de diacríticos.
   nombre_normalizado VARCHAR(120) NOT NULL,
   activo BOOLEAN NOT NULL DEFAULT TRUE,
@@ -16,6 +17,8 @@ CREATE TABLE anaqueles (
     ON UPDATE RESTRICT ON DELETE RESTRICT,
   CONSTRAINT uq_anaqueles_almacen_nombre
     UNIQUE (id_almacen, nombre_normalizado),
+  CONSTRAINT uq_anaqueles_codigo_barras
+    UNIQUE (codigo_barras),
   CONSTRAINT uq_anaqueles_id_almacen
     UNIQUE (id_anaquel, id_almacen),
   CONSTRAINT ck_anaqueles_nombre_no_vacio

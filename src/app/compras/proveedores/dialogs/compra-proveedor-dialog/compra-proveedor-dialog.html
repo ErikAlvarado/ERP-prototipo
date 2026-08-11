@@ -168,17 +168,6 @@
                   </small>
                 </div>
               }
-              @if (puedeAgregarDestino(producto)) {
-              <button
-                mat-button
-                type="button"
-                class="agregar-destino"
-                (click)="agregarDestino(producto.id)"
-              >
-                <mat-icon>add_location_alt</mat-icon>
-                Agregar almacén
-              </button>
-              }
               <small class="total-unidades">
                 Total: {{ cantidadTotal(producto) }} {{ producto.unidad }}
               </small>

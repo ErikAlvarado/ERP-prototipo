@@ -8,3 +8,7 @@ id_historial|id_orden_compra|id_estatus_compra|id_usuario|fecha_cambio|comentari
 7|4|2|4|2026-07-05 12:30:00|Pendiente de aprobación
 8|5|4|6|2026-07-14 09:40:00|Enviada al proveedor
 9|6|7|5|2026-07-21 08:15:00|Orden cancelada
+10|7|3|12|2026-08-11 05:22:09|Orden registrada en compras_bd.
+11|8|3|12|2026-08-11 05:30:20|Orden registrada en compras_bd.
+12|8|4|12|2026-08-11 05:30:32|Estado actualizado a En transito.
+13|8|6|12|2026-08-11 05:31:12|Mercancía recibida mediante REC-OC-2026-0094.

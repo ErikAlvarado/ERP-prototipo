@@ -7,7 +7,7 @@ describe('AnaquelesCatalogo', () => {
     const memoria = new Map<string, unknown>();
     memoria.set('catalogo-anaqueles-v2', {
       registros: [{
-        id: '1', idEmpresa: 7, idAlmacen: 2, nombre: 'A-01 renombrado', estado: true,
+        id: '1', idEmpresa: 7, idAlmacen: 2, nombre: 'A-01 renombrado', codigoBarras: 'ANAQ-000001', estado: true,
       }],
       eliminados: [],
     });
@@ -18,7 +18,7 @@ describe('AnaquelesCatalogo', () => {
     const db = {
       leer: (archivo: string) => of(archivo === 'anaqueles.txt'
         ? [{
-            id_anaquel: '1', id_almacen: '2', nombre_anaquel: 'A-01', activo: '1',
+            id_anaquel: '1', id_almacen: '2', nombre_anaquel: 'A-01', codigo_barras: 'ANAQ-000001', activo: '1',
             fecha_creacion: '2026-08-01', fecha_actualizacion: '2026-08-01',
           }]
         : [{ id_almacen: '2', id_empresa: '7' }]),
@@ -29,7 +29,7 @@ describe('AnaquelesCatalogo', () => {
     const anaqueles = await firstValueFrom(servicio.cargar());
 
     expect(anaqueles).toEqual([expect.objectContaining({
-      id: '1', idEmpresa: 7, idAlmacen: 2, nombre: 'A-01 renombrado', estado: true,
+      id: '1', idEmpresa: 7, idAlmacen: 2, nombre: 'A-01 renombrado', codigoBarras: 'ANAQ-000001', estado: true,
     })]);
   });
 
@@ -42,7 +42,7 @@ describe('AnaquelesCatalogo', () => {
     const db = {
       leer: (archivo: string) => of(archivo === 'anaqueles.txt'
         ? [{
-            id_anaquel: '1', id_almacen: '2', nombre_anaquel: 'A-01', activo: '1',
+            id_anaquel: '1', id_almacen: '2', nombre_anaquel: 'A-01', codigo_barras: 'ANAQ-000001', activo: '1',
             fecha_creacion: '', fecha_actualizacion: '',
           }]
         : [{ id_almacen: '2', id_empresa: '7' }]),

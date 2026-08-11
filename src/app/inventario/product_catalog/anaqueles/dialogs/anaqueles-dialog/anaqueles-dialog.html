@@ -18,6 +18,11 @@
       <mat-label>Nombre o código del anaquel</mat-label>
       <input matInput [(ngModel)]="anaquel.nombre" maxlength="80" required placeholder="Ej. A1-01">
     </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Código de barras</mat-label>
+      <input matInput [(ngModel)]="anaquel.codigoBarras" maxlength="80" required placeholder="Ej. ANAQ-000001">
+      <mat-hint>Debe ser único para identificar el anaquel al escanearlo</mat-hint>
+    </mat-form-field>
     <div class="checks"><mat-checkbox [(ngModel)]="anaquel.estado">Anaquel activo</mat-checkbox></div>
     @if (error) { <p class="error-text full-width" role="alert">{{ error }}</p> }
   </div>

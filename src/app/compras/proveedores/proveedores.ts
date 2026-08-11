@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PageEvent } from '@angular/material/paginator';
 import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-dialog';
 import { EncabezadoPagina } from '../../shared/components/encabezado-pagina/encabezado-pagina';
@@ -46,6 +46,7 @@ export class Proveedores {
   private readonly dialogo = inject(MatDialog);
   private readonly avisos = inject(MatSnackBar);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly catalogo = inject(CatalogoCompras);
   private readonly ordenesCompra = inject(OrdenesCompraService);
   private readonly autenticacion = inject(Autenticacion);
@@ -81,6 +82,26 @@ export class Proveedores {
     const inicio = this.pagina() * this.tamanoPagina();
     return this.proveedoresFiltrados().slice(inicio, inicio + this.tamanoPagina());
   });
+  private solicitudAutomaticaAtendida = false;
+
+  constructor() {
+    effect(() => {
+      if (this.solicitudAutomaticaAtendida || this.catalogo.cargando()) return;
+      const parametros = this.route.snapshot.queryParamMap;
+      if (parametros.get('comprar') !== '1') return;
+      this.solicitudAutomaticaAtendida = true;
+      const proveedor = this.proveedores().find(item => item.id === Number(parametros.get('proveedor')));
+      if (!proveedor) {
+        this.avisos.open('El proveedor sugerido ya no está disponible.', 'Cerrar', { duration: 4000 });
+        return;
+      }
+      this.realizarCompra(proveedor, {
+        productoId: Number(parametros.get('producto')),
+        almacenId: Number(parametros.get('almacen')),
+        cantidad: Number(parametros.get('cantidad')) || 1,
+      });
+    });
+  }
 
   buscar(valor: string): void {
     this.terminoBusqueda.set(valor);
@@ -194,7 +215,10 @@ export class Proveedores {
       });
   }
 
-  realizarCompra(proveedor: ProveedorCompra): void {
+  realizarCompra(
+    proveedor: ProveedorCompra,
+    solicitud?: { productoId: number; almacenId: number; cantidad: number },
+  ): void {
     if (!proveedor.activo) {
       this.avisos.open('Reactiva el proveedor antes de comprar.', 'Cerrar', {
         duration: 3500,
@@ -227,6 +251,7 @@ export class Proveedores {
       },
       productos,
       almacenes,
+      solicitud,
     };
     this.dialogo
       .open<CompraProveedorDialog, DatosCompraProveedorDialog, CompraRegistrada>(
@@ -245,7 +270,7 @@ export class Proveedores {
       .afterClosed()
       .subscribe(compra => {
         if (!compra) return;
-        this.registrarOrdenes(proveedor, compra);
+        void this.registrarOrdenes(proveedor, compra);
       });
   }
 
@@ -257,14 +282,14 @@ export class Proveedores {
     };
   }
 
-  private registrarOrdenes(
+  private async registrarOrdenes(
     proveedor: ProveedorCompra,
     compra: CompraRegistrada,
-  ): void {
+  ): Promise<void> {
     try {
       const solicitante =
         this.autenticacion.sesion()?.nombre || 'Usuario de Compras';
-      const ordenes = this.ordenesCompra.crearLote(
+      const ordenes = await this.ordenesCompra.crearLote(
         compra.destinos.map(destino => ({
           proveedor: proveedor.nombre,
           solicitante,
@@ -283,6 +308,9 @@ export class Proveedores {
         'Cerrar',
         { duration: 5500 },
       );
+      await this.router.navigate(['/compras/gestion-compras'], {
+        queryParams: { orden: ordenes[0]?.folio || '' },
+      });
     } catch (error) {
       this.avisos.open(
         error instanceof Error ? error.message : 'No fue posible registrar la compra.',

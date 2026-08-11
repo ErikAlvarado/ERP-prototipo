@@ -1,101 +1,103 @@
-<h2 mat-dialog-title>Nueva recepción</h2>
-<mat-dialog-content [formGroup]="form">
-  <p class="dialog-description">Selecciona el proveedor y agrega todos los productos que contiene la recepción.</p>
-
-  <div class="form-grid">
-    <mat-form-field appearance="outline">
-      <mat-label>Orden de compra</mat-label>
-      <mat-icon matPrefix>receipt_long</mat-icon>
-      <input matInput formControlName="orden" placeholder="OC-2026-0000">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Proveedor</mat-label>
-      <mat-select formControlName="proveedor">
-        @for (proveedor of proveedores; track proveedor) {
-          <mat-option [value]="proveedor">{{ proveedor }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Almacén destino</mat-label>
-      <mat-select formControlName="almacen">
-        @for (almacen of almacenes; track almacen) {
-          <mat-option [value]="almacen">{{ almacen }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Fecha esperada</mat-label>
-      <input matInput type="date" formControlName="fecha">
-    </mat-form-field>
-
+<h2 mat-dialog-title>Recepcionar {{ recepcion.orden }}</h2>
+<mat-dialog-content>
+  <div class="order-summary">
+    <div><span>Proveedor</span><strong>{{ recepcion.proveedor }}</strong></div>
+    <div><span>Almacén destino</span><strong>{{ recepcion.almacen }}</strong></div>
+    <div><span>Responsable</span><strong>{{ responsable }}</strong></div>
+    <div><span>Entrada esperada</span><strong>{{ totalEsperado }} unidades</strong></div>
   </div>
 
-  <mat-divider></mat-divider>
-
-  <section class="productos-section">
-    <div class="section-heading">
-      <div><h3>Productos de la recepción</h3><p>Usa cualquiera de las tres opciones para agregar productos.</p></div>
-      <mat-form-field appearance="outline" class="cantidad-general">
-        <mat-label>Cantidad</mat-label>
-        <input matInput type="number" min="1" [(ngModel)]="cantidadAgregar" [ngModelOptions]="{standalone: true}">
-      </mat-form-field>
+  <section class="scanner-panel">
+    <div class="camera-box">
+      <video #camera muted playsinline></video>
+      @if (!camaraActiva) {
+        <div class="camera-placeholder">
+          <mat-icon>photo_camera</mat-icon>
+          <span>La cámara permanece apagada hasta que autorices su uso.</span>
+        </div>
+      }
     </div>
-
-    <div class="captura-unificada">
-      <div class="captura-controls">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="producto-unico-field">
-          <mat-label>SKU, escanea o selecciona</mat-label>
-          <mat-icon matPrefix>barcode_scanner</mat-icon>
-          <input
-            matInput
-            [(ngModel)]="codigoManual"
-            [ngModelOptions]="{standalone: true}"
-            [matAutocomplete]="productosAuto"
-            (keyup.enter)="agregarPorCodigo()"
-            autocomplete="off"
-          >
-          <mat-autocomplete #productosAuto="matAutocomplete" (optionSelected)="seleccionarProducto($event.option.value)">
-            @for (producto of productosSugeridos; track producto.id) {
-              <mat-option [value]="producto.sku">
-                <span class="opcion-producto"><strong>{{ producto.sku }}</strong><span>{{ producto.producto }}</span><small>{{ producto.codigo }}</small></span>
-              </mat-option>
-            }
-          </mat-autocomplete>
-        </mat-form-field>
+    <div class="scanner-controls">
+      <div class="camera-actions">
+        @if (!camaraActiva) {
+          <button mat-raised-button color="primary" type="button" (click)="iniciarCamara()">
+            <mat-icon>videocam</mat-icon>Abrir cámara
+          </button>
+        } @else {
+          <button mat-stroked-button type="button" (click)="detenerCamara()">
+            <mat-icon>videocam_off</mat-icon>Detener cámara
+          </button>
+        }
       </div>
-    </div>
-
-    <div class="productos-table">
-      <table>
-        <thead><tr><th>Producto</th><th>Código de barras</th><th>Unidad</th><th>Cantidad</th><th></th></tr></thead>
-        <tbody>
-          @for (detalle of detalles; track detalle.id) {
-            <tr>
-              <td><strong>{{ detalle.nombre }}</strong><small>{{ detalle.sku }}</small></td>
-              <td>{{ detalle.codigo || 'Sin código' }}</td>
-              <td>{{ detalle.unidad }}</td>
-              <td><input matInput class="cantidad-tabla" type="number" min="1" [value]="detalle.cantidad" (change)="cambiarCantidad(detalle.id, $any($event.target).value)"></td>
-              <td><button mat-icon-button color="warn" type="button" matTooltip="Quitar producto" (click)="quitarProducto(detalle.id)"><mat-icon>delete</mat-icon></button></td>
-            </tr>
-          } @empty {
-            <tr><td colspan="5" class="empty-products"><mat-icon>inventory_2</mat-icon><span>Aún no has agregado productos.</span></td></tr>
-          }
-        </tbody>
-      </table>
-    </div>
-
-    <div class="productos-summary">
-      <span><strong>{{ detalles.length }}</strong> productos diferentes</span>
-      <span><strong>{{ totalUnidades }}</strong> unidades totales</span>
+      <mat-form-field appearance="outline">
+        <mat-label>Código de caja, factura o remisión</mat-label>
+        <mat-icon matPrefix>barcode_scanner</mat-icon>
+        <input matInput [(ngModel)]="codigoManual" (keyup.enter)="agregarPorCodigo()" autocomplete="off">
+        <button mat-icon-button matSuffix type="button" (click)="agregarPorCodigo()" aria-label="Procesar código">
+          <mat-icon>add_circle</mat-icon>
+        </button>
+      </mat-form-field>
+      <p class="scan-message">{{ mensajeEscaneo }}</p>
+      @if (errorCamara) { <p class="camera-error" role="alert">{{ errorCamara }}</p> }
     </div>
   </section>
+
+  @if (!inventarioListo) {
+    <div class="warning-banner" role="alert">
+      <mat-icon>warning</mat-icon>
+      Hay productos que todavía no tienen una fila de inventario en {{ recepcion.almacen }}. Debes configurar su ubicación antes de recibirlos.
+    </div>
+  }
+
+  <div class="products-grid">
+    @for (partida of partidas; track partida.id) {
+      <article class="product-card" [class.complete]="recepcionCompleta" [class.blocked]="!partida.inventarioConfigurado">
+        <header>
+          <div>
+            <span class="sku">{{ partida.sku }}</span>
+            <h3>{{ partida.nombre }}</h3>
+            <small>{{ partida.codigo || 'Sin código de barras' }}</small>
+          </div>
+          <strong class="counter">{{ partida.esperada }} {{ partida.unidad }}</strong>
+        </header>
+
+        <div class="location-row">
+          <mat-icon>location_on</mat-icon>
+          <div><span>Ubicación actual</span><strong>{{ partida.ubicacionActual }}</strong></div>
+        </div>
+
+        <div class="suggestions">
+          <span>Anaqueles libres del almacén</span>
+          @if (partida.anaquelesSugeridos.length) {
+            <div class="chips">
+              @for (anaquel of partida.anaquelesSugeridos; track anaquel) { <span>{{ anaquel }}</span> }
+            </div>
+          } @else {
+            <small>No se detectaron anaqueles totalmente libres.</small>
+          }
+        </div>
+
+      </article>
+    } @empty {
+      <div class="empty-order">La orden no tiene productos detallados para escanear.</div>
+    }
+  </div>
+
+  <div class="receipt-fields" [formGroup]="form">
+    <mat-form-field appearance="outline">
+      <mat-label>Código escaneado de factura, remisión o caja</mat-label>
+      <input matInput formControlName="documento" maxlength="80">
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Observaciones</mat-label>
+      <textarea matInput formControlName="observaciones" rows="2" maxlength="500"></textarea>
+    </mat-form-field>
+  </div>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
   <button mat-button mat-dialog-close>Cancelar</button>
-  <button mat-raised-button color="primary" type="button" (click)="guardar()"><mat-icon>save</mat-icon>Registrar recepción</button>
+  <button mat-raised-button color="primary" type="button" (click)="guardar()" [disabled]="!recepcionCompleta || !inventarioListo">
+    <mat-icon>inventory</mat-icon>Recepcionar caja completa
+  </button>
 </mat-dialog-actions>

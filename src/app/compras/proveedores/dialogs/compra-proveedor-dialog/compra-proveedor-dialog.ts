@@ -16,6 +16,7 @@ export interface DatosCompraProveedorDialog {
   proveedor: ProveedorCompra;
   productos: ProductoCompra[];
   almacenes: AlmacenCompra[];
+  solicitud?: { productoId: number; almacenId: number; cantidad: number };
 }
 
 export interface PartidaCompraProveedor {
@@ -109,6 +110,23 @@ export class CompraProveedorDialog {
     this.productos().length > 0
     && this.productos().every(producto => this.productoValido(producto)),
   );
+
+  constructor() {
+    const solicitud = this.datos.solicitud;
+    if (!solicitud) return;
+    const producto = this.catalogoProductos.find(item => item.id === solicitud.productoId);
+    const almacenValido = producto && this.almacenesProducto(producto)
+      .some(item => item.id === solicitud.almacenId);
+    if (!producto || !almacenValido) return;
+    this.productos.set([{
+      ...producto,
+      impuesto: 16,
+      destinos: [{
+        almacenId: solicitud.almacenId,
+        cantidad: Math.max(producto.cantidadMinima, Number(solicitud.cantidad) || 1),
+      }],
+    }]);
+  }
 
   buscarProducto(valor: string): void {
     this.busquedaProducto.set(valor);

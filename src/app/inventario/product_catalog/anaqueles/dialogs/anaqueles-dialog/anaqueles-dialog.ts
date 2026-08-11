@@ -5,7 +5,11 @@ import {
   AlmacenAdministracion,
   EmpresaAdministracion,
 } from '../../../../administracion/administracion-datos';
-import { AnaquelCatalogo, normalizarNombreAnaquel } from '../../anaqueles-catalogo';
+import {
+  AnaquelCatalogo,
+  normalizarCodigoBarrasAnaquel,
+  normalizarNombreAnaquel,
+} from '../../anaqueles-catalogo';
 
 export interface AnaquelesDialogData {
   mode: 'add' | 'edit';
@@ -37,12 +41,14 @@ export class AnaquelesDialog {
           idEmpresa: Number(data.anaquel.idEmpresa),
           idAlmacen: Number(data.anaquel.idAlmacen),
           nombre: data.anaquel.nombre,
+          codigoBarras: data.anaquel.codigoBarras,
           estado: data.anaquel.estado,
         }
       : {
           idEmpresa: Number(empresa?.id) || 0,
           idAlmacen: Number(almacen?.id) || 0,
           nombre: '',
+          codigoBarras: '',
           estado: true,
         };
   }
@@ -63,8 +69,13 @@ export class AnaquelesDialog {
   guardar(): void {
     this.error = '';
     const nombre = this.anaquel.nombre.trim();
+    const codigoBarras = normalizarCodigoBarrasAnaquel(this.anaquel.codigoBarras);
     if (!nombre) {
       this.error = 'El nombre o código del anaquel es obligatorio.';
+      return;
+    }
+    if (!codigoBarras) {
+      this.error = 'El código de barras del anaquel es obligatorio.';
       return;
     }
     if (!this.anaquel.idEmpresa || !this.anaquel.idAlmacen) {
@@ -85,6 +96,12 @@ export class AnaquelesDialog {
       this.error = 'Ya existe un anaquel con ese nombre en el almacén seleccionado.';
       return;
     }
-    this.dialogRef.close({ ...this.anaquel, nombre });
+    const codigoDuplicado = this.data.existentes.some(actual =>
+      normalizarCodigoBarrasAnaquel(actual.codigoBarras) === codigoBarras);
+    if (codigoDuplicado) {
+      this.error = 'Ya existe un anaquel con ese código de barras.';
+      return;
+    }
+    this.dialogRef.close({ ...this.anaquel, nombre, codigoBarras });
   }
 }

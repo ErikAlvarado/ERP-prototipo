@@ -17,6 +17,7 @@ import {
 } from '../../../shared/services/catalogo-productos';
 import { DatosDb } from '../../../shared/services/datos-db';
 import { PersistenciaLocal } from '../../../shared/services/persistencia-local';
+import { PersistenciaInventarioTxt } from '../../../shared/services/persistencia-inventario-txt';
 import { CatalogFilterDialog, ValorFiltroCatalogo } from '../dialogs/catalog-filter-dialog/catalog-filter-dialog';
 import { KitDialogResult, KitsDialog, ProductoKitOption } from './dialogs/kits-dialog/kits-dialog';
 
@@ -88,6 +89,7 @@ export class Kits implements OnInit, AfterViewInit {
     private db: DatosDb,
     private catalogo: CatalogoProductos,
     private persistencia: PersistenciaLocal,
+    private persistenciaTxt: PersistenciaInventarioTxt,
   ) {}
 
   ngOnInit(): void {
@@ -447,6 +449,20 @@ export class Kits implements OnInit, AfterViewInit {
       })),
     };
     this.persistencia.guardar(this.claveComponentes, this.componentesLocales);
+    const kits = new Map(this.componentesFuente);
+    for (const [kit, componentes] of Object.entries(this.componentesLocales)) kits.set(Number(kit), componentes);
+    let id = 1;
+    const rows = [...kits.entries()].flatMap(([kit, componentes]) => componentes.map(componente => ({
+      id_componente_kit: id++,
+      id_producto_kit: kit,
+      id_producto_hijo: componente.idProducto,
+      cantidad: componente.cantidad,
+    })));
+    void this.persistenciaTxt.reemplazar('componentesKit', rows).then(() => {
+      this.persistencia.eliminar(this.claveComponentes);
+      this.componentesFuente = kits;
+      this.componentesLocales = {};
+    }).catch(() => undefined);
   }
 
   private calcularCostoElementos(elementos: KitElemento[]): number {

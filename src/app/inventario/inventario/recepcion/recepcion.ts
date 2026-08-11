@@ -1,7 +1,7 @@
-import { AfterViewInit, Component, inject, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
@@ -9,10 +9,13 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableDataSource } from '@angular/material/table';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { CatalogoProductos, ProductoCatalogo } from '../../../shared/services/catalogo-productos';
-import { PersistenciaLocal } from '../../../shared/services/persistencia-local';
 import { Autenticacion } from '../../../shared/services/autenticacion';
 import { DatosDb } from '../../../shared/services/datos-db';
 import { PersistenciaComprasTxt } from '../../../shared/services/persistencia-compras-txt';
+import {
+  AnaquelCatalogo,
+  AnaquelesCatalogo,
+} from '../../product_catalog/anaqueles/anaqueles-catalogo';
 import { forkJoin, map, Observable } from 'rxjs';
 import { CatalogoCompras } from '../../../shared/services/catalogo-compras';
 import { OrdenesCompraService } from '../../../compras/services/ordenes-compra.service';
@@ -58,15 +61,17 @@ interface ProveedorDb { id_proveedor: string; nombre_comercial: string; razon_so
 interface AlmacenDb { id_almacen: string; nombre_almacen: string; }
 interface UsuarioDb { id_usuario: string; nombres: string; apellido_paterno: string; apellido_materno: string; }
 
-interface ProveedorRecepcion {
-  nombre: string;
-  estado: string;
-}
-
 interface DatosRecepcionDialog {
   productos: ProductoCatalogo[];
-  proveedores: string[];
+  recepcion: RecepcionInventario;
+  anaqueles: AnaquelCatalogo[];
   responsable: string;
+}
+
+interface ResultadoRecepcionEscaneada {
+  detalles: ProductoRecepcion[];
+  documento: string;
+  observaciones: string;
 }
 
 const RECEPCIONES: RecepcionInventario[] = [
@@ -88,14 +93,15 @@ export class Recepcion implements OnInit, AfterViewInit {
   readonly displayedColumns = ['folio', 'orden', 'proveedor', 'almacen', 'fecha', 'contenido', 'responsable', 'estado', 'acciones'];
   readonly dataSource = new MatTableDataSource<RecepcionInventario>([]);
   private readonly catalogoProductos = inject(CatalogoProductos);
-  private readonly persistencia = inject(PersistenciaLocal);
   private readonly autenticacion = inject(Autenticacion);
   private readonly catalogoCompras = inject(CatalogoCompras);
   private readonly ordenesCompra = inject(OrdenesCompraService);
   private readonly http = inject(HttpClient);
   private readonly db = inject(DatosDb);
   private readonly persistenciaTxt = inject(PersistenciaComprasTxt);
+  private readonly catalogoAnaqueles = inject(AnaquelesCatalogo);
   private productosDb: ProductoCatalogo[] = [];
+  private anaquelesDb: AnaquelCatalogo[] = [];
   busqueda = '';
   currentSort = 'Más recientes';
   filtros: Record<string, ValorFiltroInventario> = {
@@ -138,9 +144,20 @@ export class Recepcion implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
+    void this.inicializar();
+  }
+
+  private async inicializar(): Promise<void> {
+    try {
+      await this.ordenesCompra.recargar();
+    } catch {
+      this.snackBar.open('No fue posible cargar las órdenes desde compras_bd. Verifica que el proyecto se inició con npm start.', 'Cerrar', { duration: 5000 });
+      return;
+    }
     this.cargarRecepcionesTxt().subscribe({
-      next: ({ productos, recepciones }) => {
+      next: ({ productos, recepciones, anaqueles }) => {
         this.productosDb = productos.filter(producto => producto.estado);
+        this.anaquelesDb = anaqueles.filter(anaquel => anaquel.estado);
         const ordenesTxt = new Set(recepciones.map(recepcion => recepcion.orden));
         this.dataSource.data = [
           ...this.recepcionesDeOrdenes().filter(recepcion => !ordenesTxt.has(recepcion.orden)),
@@ -220,27 +237,28 @@ export class Recepcion implements OnInit, AfterViewInit {
     this.filtrar();
   }
 
-  nuevaRecepcion(): void {
-    if (!this.productosDb.length) {
-      this.snackBar.open('El catálogo de productos todavía se está cargando', 'Cerrar', { duration: 3000 });
-      return;
-    }
+  recepcionar(item: RecepcionInventario): void {
     this.dialog.open(RecepcionDialog, {
-      width: '960px',
-      maxWidth: '96vw',
-      maxHeight: '94vh',
+      width: '1080px',
+      maxWidth: '98vw',
+      maxHeight: '96vh',
       panelClass: 'custom-dialog',
       data: {
         productos: this.productosDb,
-        proveedores: this.proveedoresActivos(),
+        recepcion: item,
+        anaqueles: this.anaquelesDb,
         responsable: this.autenticacion.sesion()?.nombre || 'Usuario en sesión',
       } satisfies DatosRecepcionDialog,
-    }).afterClosed().subscribe((recepcion?: Omit<RecepcionInventario, 'folio' | 'estado'>) => {
-      if (!recepcion) return;
-      const siguiente = String(this.dataSource.data.length + 1).padStart(4, '0');
-      this.dataSource.data = [{ ...recepcion, folio: `REC-${siguiente}`, estado: 'Pendiente' }, ...this.dataSource.data];
-      this.ordenar(this.currentSort);
-      this.snackBar.open('Recepción registrada correctamente', 'Cerrar', { duration: 3500 });
+    }).afterClosed().subscribe((resultado?: ResultadoRecepcionEscaneada) => {
+      if (!resultado) return;
+      void this.actualizarEstado({
+        ...item,
+        detalles: resultado.detalles,
+        productos: resultado.detalles.length,
+        unidades: resultado.detalles.reduce((total, detalle) => total + detalle.cantidad, 0),
+        documento: resultado.documento,
+        observaciones: resultado.observaciones,
+      }, 'Recibida');
     });
   }
 
@@ -270,20 +288,11 @@ export class Recepcion implements OnInit, AfterViewInit {
     return estado.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
   }
 
-  private proveedoresActivos(): string[] {
-    const guardados = this.persistencia.leer<ProveedorRecepcion[]>('erp.proveedores', [])
-      .filter(proveedor => proveedor.estado !== 'Inactivo')
-      .map(proveedor => proveedor.nombre);
-    const base = [
-      'TechnoInsumos SA de CV', 'Grupo Distribuidora Nacional', 'Materiales del Norte SA',
-      'Electronica Empresarial MX', 'Soluciones Logisticas Omega', 'Papeleria Martinez & Asoc.',
-    ];
-    return [...new Set([...guardados, ...base])].sort((a, b) => a.localeCompare(b, 'es'));
-  }
-
   private recepcionesDeOrdenes(): RecepcionInventario[] {
     return this.ordenesCompra.ordenes()
-      .filter(orden => orden.partidas?.length && orden.almacenId && orden.estado !== 'Cancelado')
+      .filter(orden => orden.partidas?.length
+        && orden.almacenId
+        && (orden.estado === 'Activo' || orden.estado === 'En transito'))
       .map(orden => ({
         folio: `REC-${orden.folio}`,
         orden: orden.folio,
@@ -318,6 +327,7 @@ export class Recepcion implements OnInit, AfterViewInit {
       orden: item.orden,
       proveedor: item.proveedor,
       almacenId,
+      responsableId: Number(this.autenticacion.sesion()?.id) || undefined,
       fecha: new Date().toISOString().slice(0, 10),
       documento: item.documento || '',
       observaciones: item.observaciones || `Recepción de ${item.orden}`,
@@ -329,7 +339,7 @@ export class Recepcion implements OnInit, AfterViewInit {
     this.catalogoCompras.recargar();
     const orden = this.ordenesCompra.ordenes().find(actual => actual.folio === item.orden);
     if (orden && orden.estado !== 'Completado') {
-      this.ordenesCompra.actualizarEstado(
+      await this.ordenesCompra.actualizarEstado(
         orden.folio,
         'Completado',
         `Mercancía recibida mediante ${item.folio}.`,
@@ -340,9 +350,11 @@ export class Recepcion implements OnInit, AfterViewInit {
   private cargarRecepcionesTxt(): Observable<{
     productos: ProductoCatalogo[];
     recepciones: RecepcionInventario[];
+    anaqueles: AnaquelCatalogo[];
   }> {
     return forkJoin({
       productos: this.catalogoProductos.cargar(),
+      anaqueles: this.catalogoAnaqueles.cargar(),
       recepciones: this.leerCompras<RecepcionCompraDb>('recepciones_compra.txt'),
       detalles: this.leerCompras<RecepcionDetalleDb>('recepciones_compra_detalle.txt'),
       ordenes: this.leerCompras<OrdenCompraDb>('ordenes_compra.txt'),
@@ -397,7 +409,7 @@ export class Recepcion implements OnInit, AfterViewInit {
           origenTxt: true,
         } satisfies RecepcionInventario;
       });
-      return { productos: datos.productos, recepciones };
+      return { productos: datos.productos, recepciones, anaqueles: datos.anaqueles };
     }));
   }
 
@@ -419,99 +431,201 @@ export class Recepcion implements OnInit, AfterViewInit {
   }
 }
 
+interface PartidaEscaneada extends ProductoRecepcion {
+  esperada: number;
+  recibida: number;
+  ubicacionActual: string;
+  anaquelesSugeridos: string[];
+  inventarioConfigurado: boolean;
+}
+
+interface DetectorCodigo {
+  detect(source: HTMLVideoElement): Promise<Array<{ rawValue: string }>>;
+}
+
+type ConstructorDetectorCodigo = new (opciones?: { formats?: string[] }) => DetectorCodigo;
+
 @Component({
   selector: 'app-recepcion-dialog',
   imports: [...SHARED_IMPORTS, MatSnackBarModule],
   templateUrl: './recepcion-dialog.html',
   styleUrl: './recepcion-dialog.css',
 })
-export class RecepcionDialog {
+export class RecepcionDialog implements OnDestroy {
   private readonly data = inject<DatosRecepcionDialog>(MAT_DIALOG_DATA);
   private readonly snackBar = inject(MatSnackBar);
-  readonly productos = this.data.productos;
-  readonly proveedores = this.data.proveedores;
-  readonly almacenes = ['Almacén Central', 'Sucursal Norte', 'Sucursal Sur'];
+  private flujoCamara = 0;
+  private procesandoFotograma = false;
+  private detector?: DetectorCodigo;
+  private ultimoCodigo = '';
+  private ultimoEscaneo = 0;
+
+  @ViewChild('camera') camera?: ElementRef<HTMLVideoElement>;
+
+  readonly recepcion = this.data.recepcion;
   readonly responsable = this.data.responsable;
-  readonly detalles: ProductoRecepcion[] = [];
   readonly form;
+  readonly partidas: PartidaEscaneada[];
   codigoManual = '';
-  cantidadAgregar = 1;
+  camaraActiva = false;
+  errorCamara = '';
+  mensajeEscaneo = 'Escanea el código de la caja, factura o remisión.';
 
   constructor(fb: FormBuilder, private dialogRef: MatDialogRef<RecepcionDialog>) {
     this.form = fb.nonNullable.group({
-      orden: ['', Validators.required],
-      proveedor: ['', Validators.required],
-      almacen: ['', Validators.required],
-      fecha: [new Date().toISOString().slice(0, 10), Validators.required],
+      documento: [''],
+      observaciones: [`Recepción escaneada de ${this.recepcion.orden}`],
     });
+    const usados = new Set(this.data.productos.flatMap(producto =>
+      producto.inventarios
+        .filter(inventario => inventario.idAlmacen === this.recepcion.almacenId)
+        .map(inventario => inventario.idAnaquel)
+        .filter((id): id is number => id != null)));
+    const libres = this.data.anaqueles.filter(anaquel =>
+      anaquel.idAlmacen === this.recepcion.almacenId && !usados.has(Number(anaquel.id)));
+    this.partidas = (this.recepcion.detalles || []).map(detalle => {
+      const producto = this.data.productos.find(actual => actual.id === detalle.id);
+      const inventario = producto?.inventarios.find(actual =>
+        actual.idAlmacen === this.recepcion.almacenId);
+      return {
+        ...detalle,
+        sku: producto?.sku || detalle.sku,
+        codigo: producto?.codigo || detalle.codigo,
+        nombre: producto?.producto || detalle.nombre,
+        unidad: producto?.medida || detalle.unidad,
+        esperada: detalle.cantidad,
+        recibida: 0,
+        cantidad: 0,
+        ubicacionActual: inventario?.anaquel && inventario.anaquel !== '—'
+          ? inventario.anaquel
+          : 'Sin anaquel asignado',
+        anaquelesSugeridos: libres.slice(0, 5).map(anaquel => anaquel.nombre),
+        inventarioConfigurado: Boolean(inventario),
+      };
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.detenerCamara();
+  }
+
+  get totalEsperado(): number {
+    return this.partidas.reduce((total, partida) => total + partida.esperada, 0);
+  }
+
+  get totalEscaneado(): number {
+    return this.form.controls.documento.value.trim() ? this.totalEsperado : 0;
+  }
+
+  get recepcionCompleta(): boolean {
+    return this.partidas.length > 0 && Boolean(this.form.controls.documento.value.trim());
+  }
+
+  get inventarioListo(): boolean {
+    return this.partidas.every(partida => partida.inventarioConfigurado);
+  }
+
+  async iniciarCamara(): Promise<void> {
+    this.errorCamara = '';
+    if (!navigator.mediaDevices?.getUserMedia) {
+      this.errorCamara = 'Este navegador no permite usar la cámara. Captura el código manualmente.';
+      return;
+    }
+    const Detector = (window as unknown as { BarcodeDetector?: ConstructorDetectorCodigo }).BarcodeDetector;
+    if (!Detector) {
+      this.errorCamara = 'El navegador no reconoce códigos desde cámara. Usa Chrome o Edge actualizado, o captura el código manualmente.';
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      });
+      if (!this.camera?.nativeElement) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+      this.detector = new Detector({ formats: ['ean_13', 'ean_8', 'code_128', 'upc_a', 'upc_e', 'qr_code'] });
+      this.camera.nativeElement.srcObject = stream;
+      await this.camera.nativeElement.play();
+      this.camaraActiva = true;
+      const flujo = ++this.flujoCamara;
+      this.detectar(flujo);
+    } catch (error) {
+      this.errorCamara = error instanceof DOMException && error.name === 'NotAllowedError'
+        ? 'Permiso de cámara rechazado. Habilítalo en el navegador o captura el código manualmente.'
+        : 'No fue posible iniciar la cámara.';
+    }
+  }
+
+  detenerCamara(): void {
+    this.flujoCamara += 1;
+    this.camaraActiva = false;
+    const video = this.camera?.nativeElement;
+    const stream = video?.srcObject as MediaStream | null;
+    stream?.getTracks().forEach(track => track.stop());
+    if (video) video.srcObject = null;
   }
 
   agregarPorCodigo(): void {
-    const codigo = this.codigoManual.trim().toLocaleLowerCase();
+    const codigo = this.codigoManual.trim();
     if (!codigo) return;
-    const producto = this.productos.find(item => item.sku.toLocaleLowerCase() === codigo || item.codigo.toLocaleLowerCase() === codigo);
-    if (!producto) {
-      this.snackBar.open('No se encontró un producto con ese SKU o código de barras', 'Cerrar', { duration: 3500 });
-      return;
-    }
-    this.agregarProducto(producto);
+    this.registrarDocumento(codigo);
     this.codigoManual = '';
-  }
-
-  get productosSugeridos(): ProductoCatalogo[] {
-    const termino = this.codigoManual.trim().toLocaleLowerCase();
-    if (!termino) return this.productos.slice(0, 20);
-    return this.productos
-      .filter(item => `${item.sku} ${item.codigo} ${item.producto}`.toLocaleLowerCase().includes(termino))
-      .slice(0, 20);
-  }
-
-  seleccionarProducto(codigo: string): void {
-    const producto = this.productos.find(item => item.sku === codigo);
-    if (producto) this.agregarProducto(producto);
-    this.codigoManual = '';
-  }
-
-  cambiarCantidad(id: number, cantidad: number): void {
-    const detalle = this.detalles.find(item => item.id === id);
-    if (detalle) detalle.cantidad = Math.max(1, Number(cantidad) || 1);
-  }
-
-  quitarProducto(id: number): void {
-    const indice = this.detalles.findIndex(item => item.id === id);
-    if (indice >= 0) this.detalles.splice(indice, 1);
-  }
-
-  get totalUnidades(): number {
-    return this.detalles.reduce((total, item) => total + item.cantidad, 0);
   }
 
   guardar(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.inventarioListo) {
+      this.snackBar.open('Hay productos sin inventario configurado en el almacén destino.', 'Cerrar', { duration: 4500 });
       return;
     }
-    if (!this.detalles.length) {
-      this.snackBar.open('Agrega al menos un producto a la recepción', 'Cerrar', { duration: 3500 });
+    if (!this.recepcionCompleta) {
+      this.snackBar.open('Escanea o captura el código de la caja, factura o remisión.', 'Cerrar', { duration: 4000 });
       return;
     }
+    this.detenerCamara();
+    const formulario = this.form.getRawValue();
     this.dialogRef.close({
-      ...this.form.getRawValue(),
-      responsable: this.responsable,
-      productos: this.detalles.length,
-      unidades: this.totalUnidades,
-      detalles: this.detalles.map(item => ({ ...item })),
-    });
+      detalles: this.partidas.map(({ esperada, recibida, ubicacionActual, anaquelesSugeridos, inventarioConfigurado, ...detalle }) => ({
+        ...detalle,
+        cantidad: esperada,
+      })),
+      documento: formulario.documento.trim(),
+      observaciones: formulario.observaciones.trim(),
+    } satisfies ResultadoRecepcionEscaneada);
   }
 
-  private agregarProducto(producto: ProductoCatalogo): void {
-    const cantidad = Math.max(1, Number(this.cantidadAgregar) || 1);
-    const existente = this.detalles.find(item => item.id === producto.id);
-    if (existente) existente.cantidad += cantidad;
-    else this.detalles.push({
-      id: producto.id, sku: producto.sku, codigo: producto.codigo,
-      nombre: producto.producto, unidad: producto.medida, cantidad,
+  private registrarDocumento(valor: string): void {
+    const codigo = valor.trim();
+    if (!codigo) return;
+    this.form.controls.documento.setValue(codigo.slice(0, 80));
+    this.mensajeEscaneo = `Documento ${codigo} leído. Se recibirá el contenido completo de ${this.recepcion.orden}.`;
+    if (this.camaraActiva) this.detenerCamara();
+  }
+
+  private detectar(flujo: number): void {
+    if (!this.camaraActiva || flujo !== this.flujoCamara) return;
+    requestAnimationFrame(async () => {
+      if (!this.camaraActiva || flujo !== this.flujoCamara) return;
+      const video = this.camera?.nativeElement;
+      if (!this.procesandoFotograma && this.detector && video && video.readyState >= 2) {
+        this.procesandoFotograma = true;
+        try {
+          const codigos = await this.detector.detect(video);
+          const valor = codigos[0]?.rawValue?.trim();
+          const ahora = Date.now();
+          if (valor && (valor !== this.ultimoCodigo || ahora - this.ultimoEscaneo > 1200)) {
+            this.ultimoCodigo = valor;
+            this.ultimoEscaneo = ahora;
+            this.registrarDocumento(valor);
+          }
+        } catch {
+          this.errorCamara = 'La cámara está activa, pero no fue posible leer este fotograma.';
+        } finally {
+          this.procesandoFotograma = false;
+        }
+      }
+      this.detectar(flujo);
     });
-    this.cantidadAgregar = 1;
   }
 }

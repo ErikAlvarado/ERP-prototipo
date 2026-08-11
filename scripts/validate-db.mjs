@@ -194,6 +194,7 @@ const expectedShelfColumns = [
   'id_anaquel',
   'id_almacen',
   'nombre_anaquel',
+  'codigo_barras',
   'activo',
   'fecha_creacion',
   'fecha_actualizacion',
@@ -221,11 +222,13 @@ validateUnique('productos.txt', ['id_empresa', 'codigo_barras']);
 validateUnique('usuarios.txt', ['id_empresa', 'email']);
 validateUnique('inventario.txt', ['id_producto', 'id_almacen']);
 validateUniqueNormalized('anaqueles.txt', ['id_almacen', 'nombre_anaquel']);
+validateUnique('anaqueles.txt', ['codigo_barras']);
 validateUnique('unidades.txt', ['id_empresa', 'nombre', 'abreviatura', 'permitir_decimales']);
 validateUnique('componentes_kit.txt', ['id_producto_kit', 'id_producto_hijo']);
 
 for (const shelf of shelves) {
   assert(shelf.nombre_anaquel.trim(), `Shelf ${shelf.id_anaquel}: name is required.`);
+  assert(shelf.codigo_barras.trim(), `Shelf ${shelf.id_anaquel}: barcode is required.`);
   assert(['0', '1'].includes(shelf.activo), `Shelf ${shelf.id_anaquel}: activo must be 0 or 1.`);
   assert(
     !shelf.fecha_actualizacion || shelf.fecha_actualizacion >= shelf.fecha_creacion,

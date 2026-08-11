@@ -11,11 +11,16 @@ export function normalizarNombreAnaquel(valor: string): string {
     .toLocaleLowerCase();
 }
 
+export function normalizarCodigoBarrasAnaquel(valor: string): string {
+  return String(valor || '').trim().toLocaleUpperCase();
+}
+
 export interface AnaquelCatalogo {
   id: string;
   idEmpresa: number;
   idAlmacen: number;
   nombre: string;
+  codigoBarras: string;
   estado: boolean;
   fechaCreacion?: string;
   fechaActualizacion?: string;
@@ -25,6 +30,7 @@ interface AnaquelDb {
   id_anaquel: string;
   id_almacen: string;
   nombre_anaquel: string;
+  codigo_barras: string;
   activo: string;
   fecha_creacion: string;
   fecha_actualizacion: string;
@@ -58,6 +64,7 @@ export class AnaquelesCatalogo {
         idEmpresa: empresaPorAlmacen.get(Number(fila.id_almacen)) || 0,
         idAlmacen: Number(fila.id_almacen),
         nombre: fila.nombre_anaquel,
+        codigoBarras: fila.codigo_barras || this.codigoPredeterminado(fila.id_anaquel),
         estado: fila.activo !== '0',
         fechaCreacion: fila.fecha_creacion || '',
         fechaActualizacion: fila.fecha_actualizacion || '',
@@ -91,6 +98,9 @@ export class AnaquelesCatalogo {
       idEmpresa: Number(registro.idEmpresa),
       idAlmacen: Number(registro.idAlmacen),
       nombre: this.limpiarNombre(registro.nombre),
+      codigoBarras: normalizarCodigoBarrasAnaquel(
+        registro.codigoBarras || this.codigoPredeterminado(registro.id),
+      ),
       estado: registro.estado !== false,
       fechaCreacion: registro.fechaCreacion || '',
       fechaActualizacion: registro.fechaActualizacion || '',
@@ -100,6 +110,10 @@ export class AnaquelesCatalogo {
   private limpiarNombre(nombre: string): string {
     const valor = String(nombre || '').trim();
     return valor === '—' || valor === '-' ? '' : valor;
+  }
+
+  private codigoPredeterminado(id: string): string {
+    return `ANAQ-${String(id).padStart(6, '0')}`;
   }
 
 }

@@ -227,7 +227,7 @@ test('alta completa escribe producto, precio, inventario, Kardex y proveedor', a
   );
 });
 
-test('recepción escribe orden, recepción, inventario y Kardex atómicamente', async t => {
+test('orden y recepción se escriben en TXT de forma atómica', async t => {
   const { directory, root } = await fixture();
   const server = createComprasTxtServer({ dbRoot: root });
   const endpoint = await listen(server);
@@ -239,8 +239,28 @@ test('recepción escribe orden, recepción, inventario y Kardex atómicamente', 
   const inventoryBefore = (await table(root, 'inventari_db/inventario.txt'))[0];
   const stockBefore = Number(inventoryBefore.stock);
   const kardexBefore = (await table(root, 'inventari_db/kardex_inventario.txt')).length;
+  const created = await request(`${endpoint}/ordenes/lote`, 'POST', {
+    ordenes: [{
+      proveedor: provider.nombre_comercial,
+      compradorId: 1,
+      almacenId: Number(inventoryBefore.id_almacen),
+      fecha: '2026-08-07',
+      fechaEntrega: '2026-08-08',
+      condiciones: 'Contado',
+      estado: 'Activo',
+      partidas: [{
+        productoId: Number(inventoryBefore.id_producto),
+        cantidad: 3,
+        precioUnitario: 10,
+        impuestoPorcentaje: 16,
+      }],
+    }],
+  });
+  const orderFolio = created.ordenes[0].folio;
+  assert.equal((await table(root, 'compras_bd/ordenes_compra.txt')).at(-1).folio, orderFolio);
+  assert.equal((await table(root, 'compras_bd/ordenes_compra_detalle.txt')).at(-1).cantidad_ordenada, '3.00');
   await request(`${endpoint}/recepciones`, 'POST', {
-    folio: 'RC-TEST-0001', orden: 'OC-TEST-0001', proveedor: provider.nombre_comercial,
+    folio: 'RC-TEST-0001', orden: orderFolio, proveedor: provider.nombre_comercial,
     almacenId: Number(inventoryBefore.id_almacen), responsableId: 1, fecha: '2026-08-07',
     documento: 'REM-TEST-1', observaciones: 'Recepción automatizada',
     partidas: [{ productoId: Number(inventoryBefore.id_producto), cantidad: 3, costoUnitario: 10 }],

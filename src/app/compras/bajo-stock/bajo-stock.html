@@ -190,7 +190,7 @@
                 routerLink="/compras/proveedores"
                 [queryParams]="
                   item.proveedores.length
-                    ? { producto: item.productoId, buscar: item.producto, almacen: item.almacenId }
+                    ? { comprar: 1, proveedor: item.proveedores[0].proveedorId, producto: item.productoId, almacen: item.almacenId, cantidad: item.faltante > item.proveedores[0].cantidadMinima ? item.faltante : item.proveedores[0].cantidadMinima }
                     : { producto: item.productoId, almacen: item.almacenId }
                 "
               >
@@ -260,7 +260,7 @@
               routerLink="/compras/proveedores"
               [queryParams]="
                 item.proveedores.length
-                  ? { producto: item.productoId, buscar: item.producto, almacen: item.almacenId }
+                  ? { comprar: 1, proveedor: item.proveedores[0].proveedorId, producto: item.productoId, almacen: item.almacenId, cantidad: item.faltante > item.proveedores[0].cantidadMinima ? item.faltante : item.proveedores[0].cantidadMinima }
                   : { producto: item.productoId, almacen: item.almacenId }
               "
             >

@@ -1,7 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-<<<<<<< HEAD
 const dbDirectory = resolve(
   process.cwd(),
   'public',
@@ -9,9 +8,6 @@ const dbDirectory = resolve(
   'db',
   'inventari_db',
 );
-=======
-const dbDirectory = resolve(process.cwd(), 'public', 'assets', 'db', 'inventari_db');
->>>>>>> 29f1c4015e72b2b7d532c551171e9adc1afd5bbc
 const migrationDate = '2026-07-23';
 
 function readTable(fileName) {
@@ -108,6 +104,7 @@ const shelves = readTableOrCreate('anaqueles.txt', [
   'id_anaquel',
   'id_almacen',
   'nombre_anaquel',
+  'codigo_barras',
   'activo',
   'fecha_creacion',
   'fecha_actualizacion',
@@ -121,6 +118,14 @@ if (shelves.columns.includes('nombre') && !shelves.columns.includes('nombre_anaq
     shelf.nombre_anaquel = shelf.nombre;
     delete shelf.nombre;
   }
+}
+
+if (!shelves.columns.includes('codigo_barras')) {
+  const nameColumn = shelves.columns.indexOf('nombre_anaquel');
+  shelves.columns.splice(nameColumn + 1, 0, 'codigo_barras');
+}
+for (const shelf of shelves.rows) {
+  shelf.codigo_barras ||= `ANAQ-${String(shelf.id_anaquel).padStart(6, '0')}`;
 }
 
 let shelfId = nextId(shelves.rows, 'id_anaquel');
@@ -139,10 +144,12 @@ function ensureShelf(warehouseId, name, date = migrationDate) {
   const existing = shelfByKey.get(key);
   if (existing) return existing.id_anaquel;
 
+  const newShelfId = String(shelfId++);
   const shelf = {
-    id_anaquel: String(shelfId++),
+    id_anaquel: newShelfId,
     id_almacen: String(warehouseId),
     nombre_anaquel: cleanName,
+    codigo_barras: `ANAQ-${newShelfId.padStart(6, '0')}`,
     activo: '1',
     fecha_creacion: date || migrationDate,
     fecha_actualizacion: date || migrationDate,

@@ -1,106 +1,106 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PersistenciaLocal } from '../../shared/services/persistencia-local';
+import { Autenticacion } from '../../shared/services/autenticacion';
 import {
-  NuevaOrdenCompra,
-  OrdenesCompraService,
-} from './ordenes-compra.service';
+  OrdenCompraTxtPersistida,
+  PersistenciaComprasTxt,
+} from '../../shared/services/persistencia-compras-txt';
+import { NuevaOrdenCompra, OrdenesCompraService } from './ordenes-compra.service';
+
+const ordenPersistida = (estado = 'Activo'): OrdenCompraTxtPersistida => ({
+  folio: 'OC-2026-0100',
+  proveedor: 'Proveedor Uno',
+  articulos: 2,
+  total: '$232.00',
+  solicitante: 'Compras',
+  fecha: '2026-08-10',
+  estado,
+  cancelable: true,
+  actualizadaEn: '2026-08-10T12:00:00',
+  historial: [{ id: '1', estado, fecha: '2026-08-10T12:00:00', comentario: 'Orden registrada.' }],
+  almacenId: 1,
+  almacen: 'Almacén Central',
+  fechaEntrega: '2026-08-20',
+  condiciones: 'Contado',
+  partidas: [{
+    productoId: 10,
+    nombre: 'Producto gravado',
+    sku: 'SKU-10',
+    cantidad: 2,
+    precioUnitario: 100,
+    impuestoPorcentaje: 16,
+  }],
+});
 
 describe('OrdenesCompraService', () => {
-  const persistencia = {
-    leer: vi.fn(),
-    guardar: vi.fn(),
+  const api = {
+    listarOrdenes: vi.fn(),
+    registrarOrdenes: vi.fn(),
+    actualizarEstadoOrden: vi.fn(),
   };
 
   beforeEach(() => {
-    persistencia.leer.mockReset().mockReturnValue([]);
-    persistencia.guardar.mockReset();
+    api.listarOrdenes.mockReset().mockResolvedValue([]);
+    api.registrarOrdenes.mockReset().mockResolvedValue([ordenPersistida()]);
+    api.actualizarEstadoOrden.mockReset().mockResolvedValue(undefined);
     TestBed.configureTestingModule({
       providers: [
         OrdenesCompraService,
-        { provide: PersistenciaLocal, useValue: persistencia },
+        { provide: PersistenciaComprasTxt, useValue: api },
+        { provide: Autenticacion, useValue: { sesion: () => ({ id: '1' }) } },
       ],
     });
   });
 
-  it('migra solo la orden demo antigua en tránsito a completada', () => {
-    persistencia.leer.mockReturnValue([{
-      folio: 'OC-2025-0088',
-      proveedor: 'Electrónica Empresarial MX',
-      articulos: 3,
-      total: '$42,300',
-      solicitante: 'Marco Jiménez',
-      fecha: '2025-06-16',
-      estado: 'En transito',
-      cancelable: true,
-    }]);
-
+  it('carga las órdenes desde compras_bd, no desde localStorage', async () => {
+    api.listarOrdenes.mockResolvedValue([ordenPersistida()]);
     const servicio = TestBed.inject(OrdenesCompraService);
-    const migrada = servicio.ordenes().find(orden =>
-      orden.folio === 'OC-2025-0088');
 
-    expect(migrada?.estado).toBe('Completado');
-    expect(migrada?.cancelable).toBe(false);
-    expect(migrada?.historial.at(-1)?.estado).toBe('Completado');
+    await servicio.recargar();
+
+    expect(servicio.ordenes()[0].folio).toBe('OC-2026-0100');
+    expect(api.listarOrdenes).toHaveBeenCalled();
   });
 
-  it('crea un lote multialmacén de forma atómica e incluye IVA', () => {
+  it('crea un lote mediante la API TXT', async () => {
     const servicio = TestBed.inject(OrdenesCompraService);
-    persistencia.guardar.mockClear();
-    const entradas: NuevaOrdenCompra[] = [
-      {
-        proveedor: 'Proveedor Uno',
-        solicitante: 'Compras',
-        almacenId: 1,
-        almacen: 'Almacén Central',
-        fechaEntrega: '2026-08-20',
-        condiciones: 'Contado',
-        partidas: [{
-          productoId: 10,
-          nombre: 'Producto gravado',
-          sku: 'SKU-10',
-          cantidad: 2,
-          precioUnitario: 100,
-          impuestoPorcentaje: 16,
-        }],
-      },
-      {
-        proveedor: 'Proveedor Uno',
-        solicitante: 'Compras',
-        almacenId: 2,
-        almacen: 'Almacén Norte',
-        fechaEntrega: '2026-08-22',
-        condiciones: 'Contado',
-        partidas: [{
-          productoId: 11,
-          nombre: 'Producto tasa cero',
-          sku: 'SKU-11',
-          cantidad: 1,
-          precioUnitario: 50,
-          impuestoPorcentaje: 0,
-        }],
-      },
-    ];
+    const entradas: NuevaOrdenCompra[] = [{
+      proveedor: 'Proveedor Uno',
+      solicitante: 'Compras',
+      almacenId: 1,
+      almacen: 'Almacén Central',
+      fechaEntrega: '2026-08-20',
+      condiciones: 'Contado',
+      partidas: [{
+        productoId: 10,
+        nombre: 'Producto gravado',
+        sku: 'SKU-10',
+        cantidad: 2,
+        precioUnitario: 100,
+        impuestoPorcentaje: 16,
+      }],
+    }];
 
-    const creadas = servicio.crearLote(entradas);
+    const creadas = await servicio.crearLote(entradas);
 
-    expect(creadas).toHaveLength(2);
-    expect(new Set(creadas.map(orden => orden.folio)).size).toBe(2);
-    expect(creadas[0].total.replace(/[^\d.]/g, '')).toBe('232.00');
-    expect(creadas[0].almacen).toBe('Almacén Central');
-    expect(creadas[0].condiciones).toBe('Contado');
-    expect(servicio.ordenes().slice(0, 2)).toEqual(creadas);
-    expect(persistencia.guardar).toHaveBeenCalledTimes(1);
+    expect(creadas[0].folio).toBe('OC-2026-0100');
+    expect(api.registrarOrdenes).toHaveBeenCalledWith([
+      expect.objectContaining({ proveedor: 'Proveedor Uno', compradorId: 1, almacenId: 1 }),
+    ]);
   });
 
-  it('publica los cambios de estado en la misma signal compartida', () => {
+  it('guarda el cambio de estado en TXT y recarga', async () => {
+    api.listarOrdenes
+      .mockResolvedValueOnce([ordenPersistida()])
+      .mockResolvedValue([ordenPersistida('En transito')]);
     const servicio = TestBed.inject(OrdenesCompraService);
-    const folio = servicio.ordenes()[0].folio;
+    await servicio.recargar();
 
-    servicio.actualizarEstado(folio, 'En transito');
+    await servicio.actualizarEstado('OC-2026-0100', 'En transito');
 
-    expect(servicio.ordenes().find(orden => orden.folio === folio)?.estado)
-      .toBe('En transito');
-    expect(servicio.actividadReciente()[0].folio).toBe(folio);
+    expect(api.actualizarEstadoOrden).toHaveBeenCalledWith(
+      'OC-2026-0100', 'En transito', 1, 'Estado actualizado a En transito.',
+    );
+    expect(servicio.ordenes()[0].estado).toBe('En transito');
   });
 });

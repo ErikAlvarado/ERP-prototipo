@@ -10,6 +10,7 @@ import { PersistenciaLocal } from '../../shared/services/persistencia-local';
 import { DetalleOrdenDialog } from './dialogs/detalle-orden-dialog/detalle-orden-dialog';
 import { fechaHace, perteneceAlPeriodo, PeriodoConsulta, PERIODOS_CONSULTA } from '../../shared/utils/periodos-consulta';
 import { PageEvent } from '@angular/material/paginator';
+import { ActivatedRoute } from '@angular/router';
 import {
   EstadoOrdenCompra,
   OrdenCompra,
@@ -39,8 +40,9 @@ export class GestionCompras {
   private readonly avisos = inject(MatSnackBar);
   private readonly persistencia = inject(PersistenciaLocal);
   private readonly ordenesCompra = inject(OrdenesCompraService);
+  private readonly route = inject(ActivatedRoute, { optional: true });
   private readonly claveSolicitudes = 'erp.solicitudes-compras';
-  readonly busquedaOrdenes = signal('');
+  readonly busquedaOrdenes = signal(this.route?.snapshot.queryParamMap.get('orden') || '');
   readonly periodoOrdenes = signal<PeriodoConsulta>('mes');
   readonly periodos = PERIODOS_CONSULTA;
   readonly etiquetaPeriodoOrdenes = computed(
@@ -191,14 +193,22 @@ export class GestionCompras {
     this.avisos.open(`Prioridad de ${folio} actualizada a ${prioridad}`, 'Cerrar', { duration: 3000 });
   }
 
-  cancelarOrden(folio: string): void {
-    this.ordenesCompra.cancelar(folio);
-    this.avisos.open(`Orden ${folio} cancelada`, 'Cerrar', { duration: 3500 });
+  async cancelarOrden(folio: string): Promise<void> {
+    try {
+      await this.ordenesCompra.cancelar(folio);
+      this.avisos.open(`Orden ${folio} cancelada`, 'Cerrar', { duration: 3500 });
+    } catch (error) {
+      this.avisos.open(error instanceof Error ? error.message : 'No fue posible cancelar la orden.', 'Cerrar', { duration: 4500 });
+    }
   }
 
-  actualizarEstadoOrden(folio: string, estado: EstadoOrdenCompra): void {
-    this.ordenesCompra.actualizarEstado(folio, estado);
-    this.avisos.open(`Estado de ${folio} actualizado a ${estado}`, 'Cerrar', { duration: 3000 });
+  async actualizarEstadoOrden(folio: string, estado: EstadoOrdenCompra): Promise<void> {
+    try {
+      await this.ordenesCompra.actualizarEstado(folio, estado);
+      this.avisos.open(`Estado de ${folio} actualizado a ${estado}`, 'Cerrar', { duration: 3000 });
+    } catch (error) {
+      this.avisos.open(error instanceof Error ? error.message : 'No fue posible actualizar la orden.', 'Cerrar', { duration: 4500 });
+    }
   }
 
   constructor() {
@@ -233,6 +243,6 @@ export class GestionCompras {
         message: `Confirma que deseas cancelar la orden ${folio}. Esta accion quedara registrada.`,
         confirmText: 'Cancelar orden',
       },
-    }).afterClosed().subscribe((confirmado) => confirmado && this.cancelarOrden(folio));
+    }).afterClosed().subscribe((confirmado) => { if (confirmado) void this.cancelarOrden(folio); });
   }
 }
