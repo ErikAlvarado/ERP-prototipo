@@ -234,6 +234,7 @@ export class Sidebar {
     const menu = this.menus()[index];
 
     if (!menu.children?.length) {
+      this.closeOnMobile();
       return;
     }
 
@@ -242,5 +243,11 @@ export class Sidebar {
     }
 
     this.toggleMenuItem(index);
+  }
+
+  closeOnMobile(): void {
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches) {
+      this.expanded.set(false);
+    }
   }
 }

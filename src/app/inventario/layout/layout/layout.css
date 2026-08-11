@@ -27,3 +27,26 @@
 .content::-webkit-scrollbar {
   display: none;
 }
+
+@media (max-width: 700px) {
+  .layout-wrapper {
+    grid-template-areas:
+      "header"
+      "content";
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sidebar {
+    position: fixed;
+    z-index: 120;
+    top: 64px;
+    bottom: 0;
+    left: 0;
+    height: auto;
+  }
+
+  .content {
+    min-width: 0;
+    padding: 14px 12px 14px 68px;
+  }
+}

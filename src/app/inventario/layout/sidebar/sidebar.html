@@ -1,3 +1,7 @@
+@if (expanded()) {
+  <button class="mobile-backdrop" type="button" aria-label="Cerrar menú" (click)="toggleMenu()"></button>
+}
+
 <mat-drawer-container class="container drawer-container" [class.expanded]="expanded()">
   <mat-drawer #drawer opened mode="side" class="custom-drawer">
     <div class="sidebar" [class.expanded]="expanded()">
@@ -49,7 +53,8 @@
                 class="submenu-item"
                 [class.expanded]="expanded()"
                 routerLink="{{ child.route }}"
-                routerLinkActive="active">
+                routerLinkActive="active"
+                (click)="closeOnMobile()">
 
                 <mat-icon>{{ child.icon }}</mat-icon>
                 <span>{{ child.title }}</span>
