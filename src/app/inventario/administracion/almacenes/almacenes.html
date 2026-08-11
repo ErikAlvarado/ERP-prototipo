@@ -1,0 +1,49 @@
+<div class="content-header">
+  <h1>Lista de Almacenes</h1>
+  <button mat-raised-button color="primary" (click)="abrirDialogo()">Agregar almacén</button>
+</div>
+
+<div class="content-search">
+  <div class="custom-search">
+    <mat-icon>search</mat-icon>
+    <input matInput [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar por clave, nombre, empresa o dirección">
+  </div>
+  <div class="custom-filters">
+    <button mat-stroked-button class="filter-btn" (click)="abrirFiltros()">
+      <mat-icon>tune</mat-icon>Filtrar@if (filtrosActivos) { <span class="filter-count">{{ filtrosActivos }}</span> }
+    </button>
+  </div>
+</div>
+
+<div class="desktop-view table-responsive">
+  <table mat-table [dataSource]="dataSource">
+    <ng-container matColumnDef="id"><th mat-header-cell *matHeaderCellDef>ID</th><td mat-cell *matCellDef="let e">{{ e.id }}</td></ng-container>
+    <ng-container matColumnDef="nombre"><th mat-header-cell *matHeaderCellDef>Almacén</th><td mat-cell *matCellDef="let e">{{ e.nombre }}</td></ng-container>
+    <ng-container matColumnDef="empresa"><th mat-header-cell *matHeaderCellDef>Empresa</th><td mat-cell *matCellDef="let e">{{ nombreEmpresa(e.empresaId) }}</td></ng-container>
+    <ng-container matColumnDef="direccion"><th mat-header-cell *matHeaderCellDef>Dirección</th><td mat-cell *matCellDef="let e">{{ e.direccion || '—' }}</td></ng-container>
+    <ng-container matColumnDef="principal"><th mat-header-cell *matHeaderCellDef>Principal</th><td mat-cell *matCellDef="let e">{{ e.principal ? 'Sí' : 'No' }}</td></ng-container>
+    <ng-container matColumnDef="estado"><th mat-header-cell *matHeaderCellDef>Estado</th><td mat-cell *matCellDef="let e"><app-status [active]="e.estado"></app-status></td></ng-container>
+    <ng-container matColumnDef="acciones">
+      <th mat-header-cell *matHeaderCellDef>Acciones</th>
+      <td mat-cell *matCellDef="let e" class="actions-cell">
+        <button mat-icon-button color="primary" matTooltip="Editar" (click)="editar(e)"><mat-icon>edit</mat-icon></button>
+        <button mat-icon-button color="warn" matTooltip="Desactivar" [disabled]="!e.estado" (click)="desactivar(e)"><mat-icon>block</mat-icon></button>
+      </td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    <tr class="mat-row empty-row" *matNoDataRow><td class="mat-cell" [attr.colspan]="displayedColumns.length">No hay almacenes que coincidan con los filtros.</td></tr>
+  </table>
+</div>
+
+<div class="cards-container">
+  @for (e of obs | async; track e.id) {
+    <article class="entity-card">
+      <div class="card-header"><div><h3>{{ e.nombre }}</h3><span class="card-subtitle">ID {{ e.id }}</span></div><app-status [active]="e.estado"></app-status></div>
+      <div class="card-body"><span><strong>Empresa:</strong> {{ nombreEmpresa(e.empresaId) }}</span><span><strong>Principal:</strong> {{ e.principal ? 'Sí' : 'No' }}</span><span><strong>Dirección:</strong> {{ e.direccion || '—' }}</span></div>
+      <div class="card-actions"><button mat-icon-button color="primary" aria-label="Editar almacén" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" aria-label="Desactivar almacén" [disabled]="!e.estado" (click)="desactivar(e)"><mat-icon>block</mat-icon></button></div>
+    </article>
+  } @empty { <div class="entity-card">No hay almacenes que coincidan con los filtros.</div> }
+</div>
+
+<div class="paginator-container"><mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 50]" showFirstLastButtons></mat-paginator></div>

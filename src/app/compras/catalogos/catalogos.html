@@ -1,0 +1,137 @@
+<section class="catalogo-pagina">
+  <div class="titulo-pagina">
+    <h1>Catálogo de Productos</h1>
+    <p>Consulta y gestiona los productos disponibles para compra</p>
+  </div>
+
+  <div class="controles-catalogo barra-filtros-inventario">
+    <label class="buscador-inventario">
+      <mat-icon>search</mat-icon>
+      <input matInput
+        type="search"
+        aria-label="Buscar productos o proveedores"
+        placeholder="Buscar productos o proveedores..."
+        [value]="busqueda()"
+        (input)="buscar($any($event.target).value)"
+      />
+      @if (busqueda()) {
+        <button mat-icon-button type="button" class="limpiar-busqueda" aria-label="Limpiar búsqueda" (click)="buscar('')"><mat-icon>close</mat-icon></button>
+      }
+    </label>
+
+    <button mat-stroked-button type="button" class="boton-filtro-inventario" [matMenuTriggerFor]="menuCategorias">
+      <mat-icon>tune</mat-icon>
+      {{ etiquetaCategoriaActiva() }}
+      @if (categoriaActiva() !== 'Todos') { <span class="contador-filtro">1</span> }
+    </button>
+    <mat-menu #menuCategorias="matMenu">
+      @for (categoria of categorias(); track categoria.valor) {
+        <button mat-menu-item type="button" (click)="seleccionarCategoria(categoria.valor)">
+          @if (categoriaActiva() === categoria.valor) { <mat-icon>check</mat-icon> }
+          <span>{{ categoria.etiqueta }}</span>
+        </button>
+      }
+    </mat-menu>
+
+    <button mat-stroked-button type="button" class="boton-filtro-inventario" [matMenuTriggerFor]="menuOrdenCatalogo">
+      <mat-icon>sort</mat-icon>
+      {{ ordenCatalogo() }}
+    </button>
+    <mat-menu #menuOrdenCatalogo="matMenu">
+      @for (opcion of opcionesOrden; track opcion) {
+        <button mat-menu-item type="button" (click)="seleccionarOrden(opcion)">
+          @if (ordenCatalogo() === opcion) { <mat-icon>check</mat-icon> }
+          <span>{{ opcion }}</span>
+        </button>
+      }
+    </mat-menu>
+  </div>
+
+  <div class="resumen-catalogo">
+    <span><strong>{{ productosFiltrados().length }}</strong> de {{ productos().length }} productos</span>
+    @if (busqueda() || categoriaActiva() !== 'Todos') { <span>Resultados filtrados</span> }
+  </div>
+
+  @if (productosFiltrados().length) {
+    <div class="productos-grid">
+      @for (producto of productosPaginados(); track producto.id) {
+        <mat-card class="producto-card" appearance="outlined">
+          <mat-card-content>
+            <div class="card-superior">
+              <div class="identidad-producto">
+                <h2>{{ producto.nombre }}</h2>
+                <span class="categoria">{{ producto.categoria }}</span>
+              </div>
+              <div class="acciones">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="producto.favorito ? 'Quitar de favoritos ' + producto.nombre : 'Agregar a favoritos ' + producto.nombre"
+                  [class.activo-rojo]="producto.favorito"
+                  [matTooltip]="producto.favorito ? 'Quitar de favoritos' : 'Agregar a favoritos'"
+                  (click)="alternarFavorito(producto.id)"
+                >
+                  <mat-icon>{{ producto.favorito ? 'favorite' : 'favorite_border' }}</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <p class="proveedor">{{ producto.proveedor }}</p>
+
+            <div class="separador"></div>
+
+            <div class="datos-producto">
+              <div class="precio">
+                <strong>{{ producto.precio | currency: 'MXN' : 'symbol' : '1.0-0' }}</strong>
+                <span>/ {{ producto.unidad }}</span>
+              </div>
+              <div class="stock">
+                <span>Stock</span>
+                <strong [class]="stockClase(producto.stock)">{{ producto.stock }}</strong>
+              </div>
+            </div>
+            <div class="stock-almacenes">
+              @for (existencia of producto.existencias; track existencia.almacenId) {
+                <span>
+                  {{ existencia.almacen }}:
+                  <strong [class]="stockClase(existencia.stock)">{{ existencia.stock }}</strong>
+                  <small>(reorden {{ existencia.stockReorden }})</small>
+                </span>
+              } @empty {
+                <span>Sin existencias por almacén</span>
+              }
+            </div>
+            <button
+              mat-stroked-button
+              type="button"
+              class="comprar"
+              [disabled]="producto.proveedorId === null"
+              (click)="comprar(producto.proveedor)"
+            >
+              <mat-icon>shopping_cart</mat-icon>
+              {{ producto.proveedorId === null ? 'Sin proveedor' : 'Comprar' }}
+            </button>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+    <mat-paginator
+      [length]="productosFiltrados().length"
+      [pageIndex]="pagina()"
+      [pageSize]="tamanoPagina()"
+      [pageSizeOptions]="[5, 10, 25]"
+      showFirstLastButtons
+      aria-label="Paginación del catálogo de productos"
+      (page)="cambiarPagina($event)"
+    />
+  } @else {
+    <div class="sin-resultados">
+      <mat-icon>inventory_2</mat-icon>
+      <h2>No encontramos productos</h2>
+      <p>Prueba con otro término o selecciona una categoría diferente.</p>
+      <button mat-stroked-button type="button" (click)="buscar(''); seleccionarCategoria('Todos')">
+        Limpiar filtros
+      </button>
+    </div>
+  }
+</section>

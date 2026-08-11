@@ -1,0 +1,73 @@
+<header class="encabezado-dialogo">
+  <div>
+    <h2 mat-dialog-title>Productos de {{ proveedor.nombre }}</h2>
+    <p>Selecciona productos reales del catálogo de Inventario.</p>
+  </div>
+  <button mat-icon-button type="button" aria-label="Cerrar" (click)="cancelar()">
+    <mat-icon>close</mat-icon>
+  </button>
+</header>
+
+<mat-dialog-content>
+  @if (!proveedor.activo) {
+    <div class="aviso-inactivo">
+      <mat-icon>person_off</mat-icon>
+      Reactiva el proveedor antes de modificar sus productos.
+    </div>
+  }
+
+  <mat-form-field appearance="outline" class="busqueda">
+    <mat-icon matPrefix>search</mat-icon>
+    <mat-label>Buscar producto</mat-label>
+    <input
+      matInput
+      [value]="busqueda()"
+      (input)="busqueda.set($any($event.target).value)"
+      placeholder="Nombre, SKU, código o categoría"
+    />
+  </mat-form-field>
+
+  <p class="resumen">
+    <strong>{{ seleccionados().size }}</strong> productos vinculados
+  </p>
+
+  <div class="lista-productos">
+    @for (producto of productos(); track producto.id) {
+      <article class="producto" [class.seleccionado]="estaSeleccionado(producto.id)">
+        <div class="identidad">
+          <strong>{{ producto.nombre }}</strong>
+          <span>{{ producto.sku }} · {{ producto.categoria }} · {{ producto.unidad }}</span>
+          <small>{{ existencias(producto) }}</small>
+        </div>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="!proveedor.activo"
+          [class.vinculado]="estaSeleccionado(producto.id)"
+          (click)="alternar(producto)"
+        >
+          <mat-icon>{{ estaSeleccionado(producto.id) ? 'check' : 'add' }}</mat-icon>
+          {{ estaSeleccionado(producto.id) ? 'Vinculado' : 'Vincular' }}
+        </button>
+      </article>
+    } @empty {
+      <div class="vacio">
+        <mat-icon>inventory_2</mat-icon>
+        <p>No hay productos que coincidan con la búsqueda.</p>
+      </div>
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button>
+  <button
+    mat-flat-button
+    type="button"
+    class="guardar"
+    [disabled]="!proveedor.activo"
+    (click)="guardar()"
+  >
+    Guardar productos
+  </button>
+</mat-dialog-actions>

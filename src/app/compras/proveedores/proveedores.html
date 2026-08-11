@@ -1,0 +1,170 @@
+<section class="pagina-contenido pagina-proveedores">
+  <div class="encabezado-proveedores">
+    <app-encabezado-pagina
+      titulo="Gestión de Proveedores"
+      [subtitulo]="'Activos: ' + proveedoresActivos() + ' de ' + proveedores().length"
+    />
+    <button
+      mat-flat-button
+      type="button"
+      class="boton-nuevo"
+      [disabled]="cargando() || guardandoTxt()"
+      (click)="abrirNuevoProveedor()"
+    >
+      <mat-icon>add</mat-icon>
+      Nuevo proveedor
+    </button>
+  </div>
+
+  <mat-form-field
+    appearance="outline"
+    subscriptSizing="dynamic"
+    class="barra-busqueda"
+  >
+    <mat-label>Buscar proveedores</mat-label>
+    <mat-icon matPrefix>search</mat-icon>
+    <input
+      matInput
+      type="search"
+      placeholder="Buscar por nombre, RFC, contacto o categoría..."
+      aria-label="Buscar proveedores"
+      [value]="terminoBusqueda()"
+      (input)="buscar($any($event.target).value)"
+    />
+    @if (terminoBusqueda()) {
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        class="limpiar-busqueda"
+        aria-label="Limpiar búsqueda"
+        (click)="buscar('')"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </mat-form-field>
+
+  @if (cargando()) {
+    <div class="estado-carga">
+      <mat-icon>sync</mat-icon>
+      <p>Cargando proveedores, productos e inventarios...</p>
+    </div>
+  } @else if (errorCarga() && !proveedores().length) {
+    <div class="sin-resultados">
+      <mat-icon>cloud_off</mat-icon>
+      <p>{{ errorCarga() }}</p>
+      <button mat-stroked-button type="button" (click)="reintentarCarga()">
+        <mat-icon>refresh</mat-icon>
+        Reintentar
+      </button>
+    </div>
+  } @else {
+    <div class="grid-proveedores">
+      @for (proveedor of proveedoresPaginados(); track proveedor.id) {
+        <mat-card appearance="outlined" class="tarjeta-proveedor">
+          <div class="encabezado-tarjeta">
+            <div class="avatar-proveedor">{{ proveedor.inicial }}</div>
+            <div class="info-proveedor">
+              <h2>{{ proveedor.nombre }}</h2>
+              <p>{{ proveedor.razonSocial }} · {{ proveedor.categoria }}</p>
+              @if (proveedor.rfc) { <small>RFC {{ proveedor.rfc }}</small> }
+            </div>
+            <mat-chip-set
+              class="estado-proveedor"
+              [attr.aria-label]="'Estado del proveedor: ' + proveedor.estado"
+            >
+              <mat-chip
+                [class.proveedor-activo]="proveedor.activo"
+                [class.proveedor-inactivo]="!proveedor.activo"
+              >
+                {{ proveedor.estado }}
+              </mat-chip>
+            </mat-chip-set>
+          </div>
+
+          <mat-list class="condiciones-proveedor">
+            <mat-list-item>
+              <mat-icon matListItemIcon>local_shipping</mat-icon>
+              <span matListItemTitle>Tiempo de surtido</span>
+              <span matListItemLine>{{ proveedor.tiempoSurtido }}</span>
+            </mat-list-item>
+            <mat-list-item>
+              <mat-icon matListItemIcon>inventory_2</mat-icon>
+              <span matListItemTitle>Productos vinculados</span>
+              <span matListItemLine>
+                {{ proveedor.productosVinculados }} · {{ proveedor.unidadCompra }}
+              </span>
+            </mat-list-item>
+            <mat-list-item>
+              <mat-icon matListItemIcon>location_on</mat-icon>
+              <span matListItemTitle>Dirección fiscal</span>
+              <span matListItemLine>{{ proveedor.direccionFiscal }}</span>
+            </mat-list-item>
+          </mat-list>
+
+          <div class="datos-proveedor">
+            <p><mat-icon>person</mat-icon>{{ proveedor.contacto }}</p>
+            <p><mat-icon>mail</mat-icon>{{ proveedor.correo }}</p>
+            <p><mat-icon>call</mat-icon>{{ proveedor.telefono }}</p>
+          </div>
+
+          <div class="ultima-compra">
+            <p>Última compra: <strong>{{ ultimaCompra(proveedor).fecha }}</strong></p>
+            <strong>{{ ultimaCompra(proveedor).total }}</strong>
+          </div>
+
+          <div class="acciones-proveedor">
+            <button
+              mat-stroked-button
+              type="button"
+              class="boton-productos"
+              [disabled]="!proveedor.activo || guardandoTxt()"
+              (click)="agregarProducto(proveedor)"
+            >
+              <mat-icon>add_box</mat-icon>
+              Agregar producto
+            </button>
+            <button
+              mat-stroked-button
+              type="button"
+              class="boton-estado"
+              [class.boton-baja]="proveedor.activo"
+              [disabled]="guardandoTxt()"
+              (click)="confirmarCambioEstado(proveedor)"
+            >
+              <mat-icon>{{ proveedor.activo ? 'person_off' : 'person_check' }}</mat-icon>
+              {{ proveedor.activo ? 'Dar de baja' : 'Reactivar' }}
+            </button>
+            <button
+              mat-stroked-button
+              type="button"
+              class="boton-comprar"
+              [disabled]="guardandoTxt() || !proveedor.activo || proveedor.productosVinculados === 0"
+              (click)="realizarCompra(proveedor)"
+            >
+              <mat-icon>shopping_cart_checkout</mat-icon>
+              Realizar compra
+            </button>
+          </div>
+        </mat-card>
+      } @empty {
+        <div class="sin-resultados">
+          <mat-icon>search_off</mat-icon>
+          <p>No encontramos proveedores con esa búsqueda.</p>
+        </div>
+      }
+    </div>
+    @if (proveedoresFiltrados().length) {
+      <mat-paginator
+        [length]="proveedoresFiltrados().length"
+        [pageIndex]="pagina()"
+        [pageSize]="tamanoPagina()"
+        [pageSizeOptions]="[5, 10, 25]"
+        showFirstLastButtons
+        aria-label="Paginación de proveedores"
+        (page)="cambiarPagina($event)"
+      />
+    }
+  }
+</section>

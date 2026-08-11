@@ -1,0 +1,49 @@
+:host { display: block; color: #07142d; }
+
+.catalogo-pagina { min-height: 100%; background: #f5f7fb; }
+.titulo-pagina { margin-bottom: 22px; }
+.titulo-pagina h1 { margin: 0 0 5px; color: #0f2742; font-size: 26px; font-weight: 700; letter-spacing: 0; }
+.titulo-pagina p { margin: 0; color: #667085; font-size: 14px; }
+
+.controles-catalogo { margin-bottom: 0; }
+.resumen-catalogo { display: flex; justify-content: space-between; align-items: center; min-height: 40px; padding-inline: 4px; color: #475467; font-size: 13px; }
+.resumen-catalogo > span:last-child { color: #0b66b2; font-weight: 600; }
+
+.productos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+.producto-card { min-width: 0; min-height: 224px; border-color: #e4e7ec; border-radius: 9px; background: #fff; box-shadow: 0 2px 5px rgb(16 24 40 / 6%); transition: border-color 160ms ease, box-shadow 160ms ease; }
+.producto-card:hover { border-color: #b8c7d9; box-shadow: 0 4px 10px rgb(16 24 40 / 9%); }
+.producto-card mat-card-content { display: flex; flex-direction: column; height: 100%; padding: 16px; }
+.card-superior { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; min-height: 50px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #eaecf0; }
+.identidad-producto { min-width: 0; }
+.categoria { display: inline-flex; margin-top: 5px; padding: 2px 8px; border-radius: 12px; background: #edf5fc; color: #175a8d; font-size: 12px; }
+.acciones { display: flex; gap: 0; }
+.acciones button { width: 34px; height: 34px; padding: 5px; color: #98a2b3; }
+.acciones mat-icon { width: 18px; height: 18px; font-size: 18px; }
+.acciones .activo-rojo { color: #ff334d; background: #fff1f3; }
+.producto-card h2 { margin: 0; color: #1f2937; font-size: 16px; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
+.proveedor { margin: 0 0 16px; color: #667085; font-size: 13px; overflow-wrap: anywhere; }
+.separador { display: none; }
+.datos-producto { display: flex; align-items: flex-end; justify-content: space-between; margin-top: auto; }
+.comprar { width: 100%; height: 40px; margin-top: 16px; border-color: #98b5d5; border-radius: 8px; color: #0b66b2; }
+.precio, .stock { display: flex; flex-direction: column; }
+.precio strong { color: #1f2937; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 18px; line-height: 1.2; }
+.precio span, .stock span { color: #667085; font-size: 11px; }
+.stock { align-items: flex-end; }
+.stock strong { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; }
+.stock-almacenes { display: grid; gap: 4px; max-height: 72px; margin-top: 13px; padding: 9px 10px; overflow: auto; border-radius: 7px; background: #f8fafc; color: #64748b; font-size: 11px; }
+.stock-almacenes span { display: flex; gap: 4px; justify-content: space-between; }
+.stock-almacenes small { color: #94a3b8; }
+.stock-alto { color: #047857; }.stock-medio { color: #1d4ed8; }.stock-bajo { color: #b42318; }
+.sin-resultados { display: grid; justify-items: center; padding: 70px 20px; color: #8d98ac; text-align: center; }
+.sin-resultados > mat-icon { width: 48px; height: 48px; font-size: 48px; color: #cbd2dc; }
+.sin-resultados h2 { margin: 12px 0 4px; color: #172442; }.sin-resultados p { margin: 0 0 18px; }
+
+@media (max-width: 680px) {
+  .titulo-pagina h1 { font-size: 21px; }
+  .titulo-pagina p { font-size: 14px; }
+  .controles-catalogo { display: grid; grid-template-columns: 1fr 1fr; }
+  .controles-catalogo .buscador-inventario { grid-column: 1 / -1; }
+  .controles-catalogo .boton-filtro-inventario { width: 100%; min-width: 0; }
+  .datos-producto { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .stock { align-items: flex-start; }
+}

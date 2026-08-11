@@ -1,0 +1,272 @@
+openapi: 3.1.0
+info:
+  title: API de anaqueles de inventario
+  version: 1.0.0
+  description: >-
+    Contrato para el backend productivo. El repositorio actual sólo contiene
+    Angular, fixtures delimitadas y persistencia local; no expone estos
+    endpoints en tiempo de ejecución.
+servers:
+  - url: /api
+security:
+  - bearerAuth: []
+paths:
+  /inventario/anaqueles:
+    get:
+      operationId: listarAnaqueles
+      summary: Lista anaqueles visibles para la empresa autenticada
+      parameters:
+        - $ref: '#/components/parameters/EmpresaId'
+        - $ref: '#/components/parameters/AlmacenId'
+        - $ref: '#/components/parameters/Activo'
+        - $ref: '#/components/parameters/Busqueda'
+        - $ref: '#/components/parameters/Limite'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Página de anaqueles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaAnaqueles'
+        '401':
+          $ref: '#/components/responses/NoAutorizado'
+    post:
+      operationId: crearAnaquel
+      summary: Crea un anaquel en un almacén de la empresa autenticada
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearAnaquel'
+      responses:
+        '201':
+          description: Anaquel creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Anaquel'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '409':
+          $ref: '#/components/responses/Conflicto'
+  /inventario/anaqueles/{anaquelId}:
+    parameters:
+      - $ref: '#/components/parameters/AnaquelId'
+    get:
+      operationId: obtenerAnaquel
+      summary: Obtiene un anaquel por ID
+      responses:
+        '200':
+          description: Anaquel encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Anaquel'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+    patch:
+      operationId: actualizarAnaquel
+      summary: Modifica el nombre o estado de un anaquel
+      description: >-
+        El almacén es inmutable para conservar las relaciones de inventario. Si
+        cambia la ubicación física, debe crearse otro anaquel y reasignarse el
+        inventario de forma explícita.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActualizarAnaquel'
+      responses:
+        '200':
+          description: Anaquel actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Anaquel'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/Conflicto'
+    delete:
+      operationId: eliminarAnaquel
+      summary: Elimina un anaquel sin referencias de inventario
+      description: >-
+        Devuelve 409 si inventario todavía referencia el anaquel. Para conservar
+        trazabilidad, los anaqueles usados normalmente se desactivan con PATCH.
+      responses:
+        '204':
+          description: Anaquel eliminado
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/Conflicto'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    AnaquelId:
+      name: anaquelId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    EmpresaId:
+      name: empresaId
+      in: query
+      description: Sólo administradores globales pueden consultar otra empresa.
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    AlmacenId:
+      name: almacenId
+      in: query
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    Activo:
+      name: activo
+      in: query
+      schema:
+        type: boolean
+    Busqueda:
+      name: q
+      in: query
+      schema:
+        type: string
+        maxLength: 120
+    Limite:
+      name: limite
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+  schemas:
+    Anaquel:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - empresaId
+        - almacenId
+        - nombre
+        - activo
+        - fechaCreacion
+        - fechaActualizacion
+      properties:
+        id:
+          type: integer
+          format: int64
+        empresaId:
+          type: integer
+          format: int64
+          description: Derivado del almacén; no se persiste de forma redundante.
+        almacenId:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 120
+        activo:
+          type: boolean
+        fechaCreacion:
+          type: string
+          format: date-time
+        fechaActualizacion:
+          type: string
+          format: date-time
+    CrearAnaquel:
+      type: object
+      additionalProperties: false
+      required: [almacenId, nombre]
+      properties:
+        almacenId:
+          type: integer
+          format: int64
+          minimum: 1
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 120
+        activo:
+          type: boolean
+          default: true
+    ActualizarAnaquel:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 120
+        activo:
+          type: boolean
+    PaginaAnaqueles:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Anaquel'
+        siguienteCursor:
+          type: [string, 'null']
+    Error:
+      type: object
+      additionalProperties: false
+      required: [codigo, mensaje]
+      properties:
+        codigo:
+          type: string
+        mensaje:
+          type: string
+        detalles:
+          type: array
+          items:
+            type: string
+  responses:
+    SolicitudInvalida:
+      description: Datos inválidos o almacén fuera de la empresa autenticada
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NoAutorizado:
+      description: Falta autenticación o autorización
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NoEncontrado:
+      description: El anaquel no existe o no es visible para la empresa
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflicto:
+      description: Nombre duplicado o anaquel todavía referenciado por inventario
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

@@ -1,0 +1,16 @@
+.detail-dialog { color: #0f2744; background: #f8fbff; }
+header { display: flex; justify-content: space-between; gap: 16px; padding: 22px 24px; color: white; background: #0d4794; }
+header span { font-size: 12px; opacity: .82; }
+header h2 { margin: 4px 0; font-size: 20px; }
+header p { margin: 0; opacity: .85; }
+header button { color: white; }
+mat-dialog-content { padding: 22px 24px !important; }
+.summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+.summary div, section { padding: 16px; border: 1px solid #dbeafe; border-radius: 9px; background: white; }
+.summary small, dt { display: block; color: #667085; font-size: 12px; }
+.summary strong { display: block; margin-top: 6px; font-size: 18px; }
+.positive { color: #027a48; }.negative { color: #d92d20; }
+section h3 { margin: 0 0 16px; color: #0d4794; font-size: 15px; }
+dl { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 0; }
+dd { margin: 4px 0 0; color: #101828; }.full { grid-column: 1 / -1; }
+@media (max-width: 600px) { .summary, dl { grid-template-columns: 1fr; }.full { grid-column: auto; } }

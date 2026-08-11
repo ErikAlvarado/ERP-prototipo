@@ -1,0 +1,23 @@
+:host { display: block; width: 820px; max-width: 100%; color: #172033; }
+.encabezado-dialogo { display: flex; align-items: center; justify-content: space-between; padding: 16px 22px; border-bottom: 1px solid #e2e8f0; }
+.encabezado-dialogo h2 { margin: 0; font-size: 20px; }
+.encabezado-dialogo p { margin: 4px 0 0; color: #64748b; font-size: 13px; }
+mat-dialog-content { padding: 18px 22px !important; background: #f8fafc; }
+.aviso-inactivo { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; padding: 12px; border: 1px solid #fecaca; border-radius: 9px; background: #fef2f2; color: #991b1b; }
+.busqueda { width: 100%; }
+.resumen { margin: 0 0 10px; color: #64748b; font-size: 13px; }
+.lista-productos { display: grid; gap: 8px; max-height: 480px; overflow: auto; }
+.producto { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 14px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; }
+.producto.seleccionado { border-color: #93c5fd; background: #eff6ff; }
+.identidad { display: grid; min-width: 0; gap: 3px; }
+.identidad span { color: #64748b; font-size: 12px; }
+.identidad small { overflow-wrap: anywhere; color: #2563eb; font-size: 11px; }
+.producto button { flex: 0 0 118px; }
+.producto button.vinculado { border-color: #2563eb; color: #1d4ed8; }
+.vacio { display: grid; justify-items: center; padding: 36px; color: #94a3b8; }
+.guardar { background: #1e3a8a !important; color: #fff !important; }
+mat-dialog-actions { padding: 12px 22px 18px; }
+@media (max-width: 620px) {
+  .producto { align-items: stretch; flex-direction: column; }
+  .producto button { flex-basis: auto; width: 100%; }
+}

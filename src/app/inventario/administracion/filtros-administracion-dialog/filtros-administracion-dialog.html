@@ -1,0 +1,9 @@
+<div class="dialog-container">
+  <div class="dialog-header"><div><span>Administración</span><h2>{{ data.titulo }}</h2></div><button mat-icon-button aria-label="Cerrar filtros" (click)="cerrar()"><mat-icon>close</mat-icon></button></div>
+  <mat-dialog-content class="dialog-content"><div class="filters-grid">
+    @for (campo of data.campos; track campo.clave) {
+      <mat-form-field appearance="outline"><mat-label>{{ campo.etiqueta }}</mat-label><mat-icon matPrefix>{{ campo.icono }}</mat-icon><mat-select [(ngModel)]="filtros[campo.clave]"><mat-option [value]="campo.valorVacio">{{ campo.etiquetaVacia || 'Todos' }}</mat-option>@for (opcion of campo.opciones; track opcion.etiqueta) { <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option> }</mat-select></mat-form-field>
+    }
+  </div></mat-dialog-content>
+  <mat-dialog-actions><button mat-raised-button (click)="limpiar()">Limpiar ({{ activos }})</button><button mat-raised-button color="primary" (click)="aplicar()">Aplicar filtros</button></mat-dialog-actions>
+</div>

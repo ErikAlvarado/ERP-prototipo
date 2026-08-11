@@ -1,0 +1,336 @@
+/* Grid de cards superiores */
+.grid-resumen1 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 16px;
+}
+
+/* Card de resumen */
+.tarjeta-resumen {
+  width: 100%;
+  min-width: 0;
+  min-height: 104px;
+  padding: 17px 18px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+/* Texto interno de las cards de resumen */
+.info-resumen {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.etiqueta-resumen {
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.info-resumen strong {
+  color: #0f172a;
+  font-size: clamp(22px, 2.2vw, 30px);
+  line-height: 1;
+}
+
+.subtitulo-resumen {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+/* Icono opcional para cards de resumen */
+.icono-resumen {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+/* Ajustes responsivos */
+@media (max-width: 900px) {
+  .grid-resumen1 {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .grid-resumen1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Grid de grafica y actividad reciente */
+.grid-contenido {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+}
+
+/* Card de grafica */
+.tarjeta-grafica {
+  min-width: 0;
+  min-height: 360px;
+  padding: 20px 22px 24px;
+}
+
+/* Encabezado de grafica */
+.encabezado-grafica {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.encabezado-grafica h2 {
+  margin: 0;
+  color: #020617;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.encabezado-grafica span {
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* Area donde se dibuja Chart.js */
+.contenedor-grafica {
+  width: 100%;
+  height: clamp(190px, 24vw, 300px);
+  min-width: 0;
+}
+
+.contenedor-grafica canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* Leyenda manual de la grafica */
+.leyenda-grafica {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 18px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.item-leyenda {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.cuadro-leyenda {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.cuadro-leyenda.compras {
+  background: #172554;
+}
+
+.cuadro-leyenda.presupuesto {
+  background: #60a5fa;
+}
+
+/* Card de actividad reciente */
+.tarjeta-actividad {
+  min-width: 0;
+  min-height: 360px;
+  padding: 20px 22px;
+}
+
+.tarjeta-actividad h2 {
+  margin: 0 0 14px;
+  color: #020617;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Lista de eventos recientes */
+.lista-actividad {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.item-actividad {
+  display: grid;
+  grid-template-columns: 8px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.acceso-stock {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.acceso-stock mat-icon { flex: 0 0 auto; color: #2563eb; }
+
+.item-actividad > div {
+  min-width: 0;
+}
+
+.punto-actividad {
+  width: 6px;
+  height: 6px;
+  margin-top: 7px;
+  border-radius: 999px;
+}
+
+.punto-actividad.verde {
+  background: #10b981;
+}
+
+.punto-actividad.azul {
+  background: #60a5fa;
+}
+
+.punto-actividad.azul-fuerte {
+  background: #2563eb;
+}
+
+/* Texto de cada actividad */
+.item-actividad strong {
+  display: block;
+  color: #020617;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.item-actividad p {
+  margin: 3px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.item-actividad small {
+  display: block;
+  margin-top: 4px;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Card de ultimas ordenes */
+.ultimas-ordenes {
+  margin-top: 20px;
+  border-color: #e4e7ec !important;
+  border-radius: 9px !important;
+  box-shadow: 0 2px 5px rgb(16 24 40 / 6%) !important;
+}
+
+/* Encabezado de la tabla */
+.encabezado-ordenes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.encabezado-ordenes h2 {
+  margin: 0;
+  color: #020617;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.encabezado-ordenes a {
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* Tabla de ordenes */
+.contenedor-tabla {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.contenedor-tabla::-webkit-scrollbar,
+.lista-actividad::-webkit-scrollbar {
+  display: none;
+}
+
+.lista-actividad {
+  scrollbar-width: none;
+}
+
+.tabla-ordenes {
+  font-size: 14px;
+}
+
+.tabla-ordenes .folio,
+.tabla-ordenes .total {
+  color: #020617;
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.vista-movil { display: none; }
+.lista-ordenes-movil { flex-direction: column; gap: 14px; padding: 14px; background: transparent; }
+.tarjeta-orden { padding: 16px; border-color: #e4e7ec; border-radius: 9px; box-shadow: none; }
+.tarjeta-orden mat-card-header { display: block; margin-bottom: 12px; padding: 0 0 12px; border-bottom: 1px solid #eaecf0; }
+.encabezado-registro { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; width: 100%; }
+.encabezado-registro h3 { margin: 5px 0 0; color: #0f172a; font-size: 15px; line-height: 1.35; }
+.tarjeta-orden mat-card-content { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 18px; padding: 0; }
+.tarjeta-orden mat-card-content div { display: flex; flex-direction: column; gap: 4px; }
+.tarjeta-orden mat-card-content span { color: #94a3b8; font-size: 11px; }
+.tarjeta-orden mat-card-content strong { color: #334155; font-size: 13px; }
+
+@media (max-width: 900px) {
+  .grid-contenido {
+    grid-template-columns: 1fr;
+  }
+  .tarjeta-grafica,
+  .tarjeta-actividad {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 992px) {
+  .vista-escritorio { display: none; }
+  .vista-movil { display: flex; }
+  .contenedor-tabla { overflow: visible; }
+}
+
+@media (max-width: 680px) {
+  .grid-resumen1 { gap: 12px; }
+  .tarjeta-resumen { min-height: 94px; padding: 15px 16px; }
+  .encabezado-grafica { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .tarjeta-grafica, .tarjeta-actividad { padding: 16px; }
+  .contenedor-grafica { height: 220px; }
+  .leyenda-grafica { flex-wrap: wrap; }
+  .encabezado-ordenes { align-items: flex-start; padding: 16px; }
+  .tarjeta-orden mat-card-content { grid-template-columns: 1fr; }
+}

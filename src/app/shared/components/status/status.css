@@ -1,0 +1,35 @@
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+
+.active {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.active .dot {
+  background-color: #16a34a;
+}
+
+
+.inactive {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.inactive .dot {
+  background-color: #94a3b8;
+}

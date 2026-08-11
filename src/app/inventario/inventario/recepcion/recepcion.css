@@ -1,0 +1,5 @@
+:host { display: block; }
+table { min-width: 1220px; } td strong, td small { display: block; } td small { margin-top: 3px; color: #667085; }
+.status-badge { display: inline-flex; padding: 5px 9px; border-radius: 99px; color: #b54708; background: #fffaeb; font-size: 11px; font-weight: 700; }
+.status-badge.en-revision { color: #175cd3; background: #eaf2ff; }.status-badge.recibida { color: #027a48; background: #ecfdf3; }.status-badge.con-incidencias { color: #b42318; background: #fef3f2; }
+.empty-row td { padding: 36px; color: #667085; text-align: center; }

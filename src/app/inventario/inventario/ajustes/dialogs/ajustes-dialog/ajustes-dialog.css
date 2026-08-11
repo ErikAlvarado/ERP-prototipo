@@ -1,0 +1,6 @@
+.textarea { height: auto; min-height: 82px; padding: 10px 12px; resize: vertical; }
+.result-input { color: #075985; font-weight: 700; background: #f0f9ff; }
+.form-error { display: flex; align-items: center; gap: 8px; padding: 12px; border-radius: 7px; color: #b42318; background: #fef3f2; font-size: 13px; }
+.form-error mat-icon { font-size: 18px; width: 18px; height: 18px; }
+mat-dialog-actions.dialog-footer { display: block; }
+.dialog-header span { display: block; margin-bottom: 3px; color: #1570ef; font-size: 12px; font-weight: 600; }

@@ -1,0 +1,9 @@
+<span
+  class="estatus-producto"
+  [class.vigente]="valor() === 'Vigente'"
+  [class.eliminado]="valor() === 'Eliminado'"
+  [class.descontinuado]="valor() === 'Descontinuado'"
+  [attr.aria-label]="'Estatus: ' + valor()">
+  <span class="status-dot" aria-hidden="true"></span>
+  {{ valor() }}
+</span>

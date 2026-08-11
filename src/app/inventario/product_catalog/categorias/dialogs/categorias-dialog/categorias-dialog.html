@@ -1,0 +1,33 @@
+<h2 mat-dialog-title>{{ data.mode === 'add' ? 'Agregar categoría o subcategoría' : 'Actualizar categoría o subcategoría' }}</h2>
+<mat-dialog-content>
+  <div class="formulario">
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre</mat-label>
+      <input matInput [(ngModel)]="categoria.nombre" maxlength="100" required>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Empresa</mat-label>
+      <mat-select [(ngModel)]="categoria.idEmpresa" (selectionChange)="cambiarEmpresa()" [disabled]="data.mode === 'edit'" required>
+        @for (empresa of data.empresas; track empresa.id) {
+          <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Pertenece a</mat-label>
+      <mat-select [(ngModel)]="categoria.idPadre">
+        <mat-option value="">Categoría principal</mat-option>
+        @for (categoriaPadre of categoriasPadre; track categoriaPadre.id) {
+          <mat-option [value]="categoriaPadre.id">{{ categoriaPadre.nombre }}</mat-option>
+        }
+      </mat-select>
+      <mat-hint>Selecciona una categoría para crear una subcategoría.</mat-hint>
+    </mat-form-field>
+    <div class="checks"><mat-checkbox [(ngModel)]="categoria.estado">Categoría activa</mat-checkbox></div>
+    @if (error) { <p class="error-text full-width">{{ error }}</p> }
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-raised-button mat-dialog-close>Cancelar</button>
+  <button mat-raised-button color="primary" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button>
+</mat-dialog-actions>

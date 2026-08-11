@@ -1,0 +1,17 @@
+.encabezado-pagina {
+  margin-bottom: 24px;
+}
+
+.encabezado-pagina h1 {
+  margin: 0 0 6px;
+  color: #1f2937;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.encabezado-pagina p {
+  margin: 0;
+  color: #667085;
+  font-size: 15px;
+}

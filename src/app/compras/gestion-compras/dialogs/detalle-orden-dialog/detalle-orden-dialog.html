@@ -1,0 +1,47 @@
+<div class="cabecera-dialogo">
+  <div class="icono"><mat-icon>receipt_long</mat-icon></div>
+  <div>
+    <span>Orden de compra</span>
+    <h2>{{ orden.folio }}</h2>
+  </div>
+  <button mat-icon-button type="button" aria-label="Cerrar detalle" matTooltip="Cerrar" (click)="cerrar()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <div class="estado"><app-estado [texto]="orden.estado" /></div>
+  <dl>
+    <div><dt>Proveedor</dt><dd>{{ orden.proveedor }}</dd></div>
+    <div><dt>Total</dt><dd class="total">{{ orden.total }}</dd></div>
+    <div><dt>Articulos</dt><dd>{{ orden.articulos }}</dd></div>
+    <div><dt>Fecha</dt><dd>{{ orden.fecha | date:'dd MMM yyyy' }}</dd></div>
+    <div class="ancho"><dt>Solicitante</dt><dd>{{ orden.solicitante }}</dd></div>
+    @if (orden.almacen) {
+      <div><dt>Almacén destino</dt><dd>{{ orden.almacen }}</dd></div>
+    }
+    @if (orden.fechaEntrega) {
+      <div><dt>Entrega estimada</dt><dd>{{ orden.fechaEntrega | date:'dd MMM yyyy' }}</dd></div>
+    }
+    @if (orden.condiciones) {
+      <div><dt>Condiciones</dt><dd>{{ orden.condiciones }}</dd></div>
+    }
+  </dl>
+
+  @if (orden.partidas?.length) {
+    <section class="partidas">
+      <h3>Productos</h3>
+      @for (partida of orden.partidas; track partida.productoId) {
+        <article>
+          <div><strong>{{ partida.nombre }}</strong><small>{{ partida.sku }}</small></div>
+          <span>{{ partida.cantidad }} × {{ partida.precioUnitario | currency:'MXN' }}</span>
+          <span>IVA {{ partida.impuestoPorcentaje }}%</span>
+        </article>
+      }
+    </section>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-flat-button type="button" (click)="cerrar()">Cerrar</button>
+</mat-dialog-actions>

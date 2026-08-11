@@ -1,0 +1,32 @@
+<h2 mat-dialog-title>{{ data.mode === 'add' ? 'Agregar almacén' : 'Actualizar almacén' }}</h2>
+<mat-dialog-content>
+  <div class="formulario">
+    <mat-form-field appearance="outline">
+      <mat-label>Empresa</mat-label>
+      <mat-select [(ngModel)]="almacen.empresaId" required [disabled]="data.mode === 'edit'">
+        @for (empresa of data.empresas; track empresa.id) { <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option> }
+      </mat-select>
+      @if (!data.empresas.length) { <mat-hint>Primero registra una empresa</mat-hint> }
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre del almacén</mat-label>
+      <input matInput [(ngModel)]="almacen.nombre" required maxlength="120">
+      @if (nombreDuplicado) { <mat-error>Ya existe un almacén con este nombre en la empresa</mat-error> }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Dirección</mat-label>
+      <textarea matInput rows="3" [(ngModel)]="almacen.direccion" maxlength="250"></textarea>
+    </mat-form-field>
+    <div class="checks">
+      <mat-checkbox [(ngModel)]="almacen.principal">Almacén principal</mat-checkbox>
+      <mat-checkbox [(ngModel)]="almacen.estado">Activo</mat-checkbox>
+    </div>
+    @if (almacen.principal && principalExistente) {
+      <p class="full-width">Al guardar, “{{ principalExistente?.nombre }}” dejará de ser el almacén principal.</p>
+    }
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-raised-button mat-dialog-close>Cancelar</button>
+  <button mat-raised-button color="primary" [disabled]="!puedeGuardar" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button>
+</mat-dialog-actions>

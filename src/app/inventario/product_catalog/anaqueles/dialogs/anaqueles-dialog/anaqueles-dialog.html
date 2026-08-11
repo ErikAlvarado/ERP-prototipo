@@ -1,0 +1,28 @@
+<h2 mat-dialog-title>{{ data.mode === 'add' ? 'Agregar anaquel' : 'Actualizar anaquel' }}</h2>
+<mat-dialog-content>
+  <div class="formulario">
+    <mat-form-field appearance="outline">
+      <mat-label>Empresa</mat-label>
+      <mat-select [(ngModel)]="anaquel.idEmpresa" (selectionChange)="cambiarEmpresa()" [disabled]="data.mode === 'edit'" required>
+        @for (empresa of data.empresas; track empresa.id) { <mat-option [value]="+empresa.id">{{ empresa.nombre }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Almacén</mat-label>
+      <mat-select [(ngModel)]="anaquel.idAlmacen" [disabled]="data.mode === 'edit'" required>
+        @for (almacen of almacenesDisponibles; track almacen.id) { <mat-option [value]="+almacen.id">{{ almacen.nombre }}</mat-option> }
+      </mat-select>
+      @if (!almacenesDisponibles.length) { <mat-hint>La empresa no tiene almacenes activos</mat-hint> }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre o código del anaquel</mat-label>
+      <input matInput [(ngModel)]="anaquel.nombre" maxlength="80" required placeholder="Ej. A1-01">
+    </mat-form-field>
+    <div class="checks"><mat-checkbox [(ngModel)]="anaquel.estado">Anaquel activo</mat-checkbox></div>
+    @if (error) { <p class="error-text full-width" role="alert">{{ error }}</p> }
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-raised-button mat-dialog-close>Cancelar</button>
+  <button mat-raised-button color="primary" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button>
+</mat-dialog-actions>

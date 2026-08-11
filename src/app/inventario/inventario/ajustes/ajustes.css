@@ -1,0 +1,12 @@
+.content-header p { margin: 5px 0 0; color: #667085; font-size: 14px; }
+table { min-width: 1040px; }
+.filter-count { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; margin-left: 5px; padding: 0 6px; border-radius: 10px; color: #fff; background: #1570ef; font-size: 11px; }
+td strong, td small { display: block; }
+td small { color: #667085; margin-top: 3px; }
+.reason { max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quantity { display: inline-flex; padding: 4px 9px; border-radius: 14px; font-weight: 700; }
+.quantity.positive { color: #027a48; background: #ecfdf3; }
+.quantity.negative { color: #b42318; background: #fef3f2; }
+.empty-row td, .empty-card { padding: 32px; text-align: center; color: #667085; background: white; }
+.wide { grid-column: 1 / -1; }
+@media (max-width: 600px) { .content-header p { display: none; } }

@@ -1,0 +1,52 @@
+.estado {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border: 1px solid;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.activo,
+.aprobada,
+.baja {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #047857;
+}
+
+.pendiente,
+.media {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.completado {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #0369a1;
+}
+
+.en-transito {
+  border-color: #c4b5fd;
+  background: #f5f3ff;
+  color: #5b21b6;
+}
+
+.cancelada,
+.cancelado,
+.alta {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.inactivo {
+  border-color: #d1d5db;
+  background: #f8fafc;
+  color: #64748b;
+}

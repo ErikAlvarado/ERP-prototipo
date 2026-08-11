@@ -1,0 +1,124 @@
+@if (producto; as p) {
+  <main class="detail-page">
+    <header class="detail-header">
+      <div class="heading">
+        <button mat-icon-button class="back-button" (click)="volver()" aria-label="Volver a productos">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <h1>Detalle del producto</h1>
+      </div>
+      <div class="header-actions">
+        <button mat-raised-button class="delete-button" (click)="desactivar()">
+          <mat-icon>block</mat-icon>Desactivar
+        </button>
+        <button mat-raised-button color="primary" (click)="editar()">
+          <mat-icon>edit</mat-icon>Editar
+        </button>
+      </div>
+    </header>
+
+    <mat-card class="overview-card" appearance="outlined">
+      <mat-card-content class="overview-content">
+        <div class="overview">
+          <div class="product-tags">
+          <mat-chip-set aria-label="Clasificación del producto">
+            <mat-chip>{{ p.categoria }}</mat-chip>
+            <mat-chip>{{ p.marca }}</mat-chip>
+          </mat-chip-set>
+          <app-estatus-producto [estatus]="p.estatus" />
+          </div>
+          <h2>{{ p.producto }}</h2>
+          <p class="barcode">SKU: {{ p.sku }} · Código: {{ p.codigo || 'Sin código de barras' }}</p>
+          <mat-divider></mat-divider>
+          <div class="metrics">
+            <div><span>Precio de venta</span><strong>{{ p.precio | currency:'MXN' }}</strong><small>{{ p.listaPrecio }}</small></div>
+            <div><span>Costo</span><strong>{{ p.costo | currency:'MXN' }}</strong><small>Margen: {{ p.margen }}%</small></div>
+            <div><span>Existencias</span><strong>{{ p.stock }}</strong><small>{{ p.medida }}</small></div>
+          </div>
+        </div>
+        <div class="image-box">
+          @if (p.imagen && !imagenNoDisponible) { <img [src]="p.imagen" [alt]="p.producto" (error)="imagenNoDisponible = true"> }
+          @else { <mat-icon>inventory_2</mat-icon><span>Sin imagen</span> }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-header><mat-icon mat-card-avatar>warehouse</mat-icon><mat-card-title>Inventario por ubicación</mat-card-title></mat-card-header>
+      <mat-card-content class="locations-content">
+        @for (ubicacion of p.inventarios; track ubicacion.id) {
+          <section class="location-card">
+            <div class="location-heading">
+              <div><strong>{{ ubicacion.almacen }}</strong><span>{{ ubicacion.anaquel }}</span></div>
+              <b>{{ ubicacion.stock }} {{ p.medida }}</b>
+            </div>
+            <div class="data-grid inventory-grid">
+              <div><span>Existencias</span><strong>{{ ubicacion.stock }}</strong></div>
+              <div><span>Reorden</span><strong>{{ ubicacion.stockReorden }}</strong></div>
+              <div><span>Crítico</span><strong>{{ ubicacion.stockCritico }}</strong></div>
+              <div><span>Máximo</span><strong>{{ ubicacion.stockMaximo }}</strong></div>
+              <div><span>Actualizado</span><strong>{{ ubicacion.fechaActualizacion || '—' }}</strong></div>
+            </div>
+          </section>
+        } @empty {
+          <div class="inline-empty">Este producto aún no tiene una ubicación de inventario registrada. Su existencia actual es 0.</div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-header><mat-icon mat-card-avatar>payments</mat-icon><mat-card-title>Precios por lista</mat-card-title></mat-card-header>
+      <mat-card-content class="prices-content">
+        @for (precio of p.precios; track precio.id) {
+          <section class="price-card" [class.current-price]="precio.vigente && precio.listaPredeterminada">
+            <div class="price-heading">
+              <div>
+                <strong>{{ precio.lista }}</strong>
+                <span>{{ precio.listaPredeterminada ? 'Predeterminada' : 'Lista alterna' }}</span>
+              </div>
+              <span class="validity" [class.active]="precio.vigente">{{ precio.vigente ? 'Vigente' : 'Fuera de vigencia' }}</span>
+            </div>
+            <div class="data-grid price-grid">
+              <div><span>Precio de venta</span><strong>{{ precio.precio | currency:'MXN' }}</strong></div>
+              <div><span>Costo</span><strong>{{ precio.costo | currency:'MXN' }}</strong></div>
+              <div><span>Margen sobre costo</span><strong>{{ precio.margen }}%</strong></div>
+              <div><span>Ganancia estimada</span><strong>{{ (precio.precio - precio.costo) | currency:'MXN' }}</strong></div>
+              <div><span>Vigencia</span><strong>{{ precio.fechaInicio || 'Sin inicio' }} — {{ precio.fechaFin || 'Sin fin' }}</strong></div>
+            </div>
+          </section>
+        } @empty {
+          <div class="inline-empty">Este producto todavía no tiene precios registrados en una lista.</div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-header><mat-icon mat-card-avatar>info</mat-icon><mat-card-title>Información adicional</mat-card-title></mat-card-header>
+      <mat-card-content class="data-grid details-grid">
+        <div><span>Descripción</span><strong>{{ p.descripcion || 'Sin descripción' }}</strong></div>
+        <div><span>Configuración</span><strong>POS: {{ p.pos ? 'Sí' : 'No' }} · En línea: {{ p.linea ? 'Sí' : 'No' }} · Control de existencias: {{ p.usarExistencias ? 'Sí' : 'No' }}</strong></div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-header><mat-icon mat-card-avatar>history</mat-icon><mat-card-title>Último movimiento</mat-card-title></mat-card-header>
+      <mat-card-content class="data-grid movement-grid">
+        <div><span>Movimiento</span><strong>{{ p.ultimoMovimiento }}</strong></div>
+        <div><span>Producto</span><strong>{{ p.producto }}</strong></div>
+        <div><span>Actualizado</span><strong>{{ p.fechaActualizacion || '—' }}</strong></div>
+      </mat-card-content>
+    </mat-card>
+  </main>
+} @else if (cargando) {
+  <div class="empty-state" role="status">
+    <mat-spinner diameter="44" aria-label="Cargando producto"></mat-spinner>
+    <h2>Cargando producto...</h2>
+  </div>
+} @else {
+  <div class="empty-state">
+    <mat-icon>inventory_2</mat-icon>
+    <h2>Producto no encontrado</h2>
+    @if (errorCarga) { <p>{{ errorCarga }}</p> }
+    <button mat-raised-button color="primary" (click)="volver()"><mat-icon>arrow_back</mat-icon>Volver a productos</button>
+  </div>
+}

@@ -1,0 +1,53 @@
+<main class="dashboard-shell">
+  <div class="content-header">
+    <h1>Reportes inventario</h1>
+  </div>
+  @if (error) { <section class="error-panel"><mat-icon>cloud_off</mat-icon><div><strong>No se pudieron cargar los reportes de inventario</strong><span>{{ error }}</span></div><button mat-raised-button color="primary" (click)="cargar()">Reintentar</button></section> }
+
+  <section class="grid-container">
+    <mat-card class="dashboard-card" appearance="outlined">
+      <mat-card-header><mat-icon mat-card-avatar>inventory</mat-icon><mat-card-title>Stock por producto</mat-card-title><a mat-raised-button routerLink="/existencias">Ver existencias</a></mat-card-header>
+      <mat-card-content><div class="table-header"><span>Producto</span><span>Stock</span></div>
+        @for (item of stockProducts; track item.id) { <a class="list-row" [routerLink]="['/products', item.id]"><div><strong>{{ item.name }}</strong><small>{{ item.sku }}</small></div><b>{{ item.stock | number:'1.0-2' }} {{ item.unidad }}</b></a> }
+        @empty { <div class="empty-state">No hay existencias registradas</div> }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="dashboard-card" appearance="outlined">
+      <mat-card-header><mat-icon mat-card-avatar>history</mat-icon><mat-card-title>Movimientos recientes</mat-card-title><a mat-raised-button routerLink="/kardex">Ver kardex</a></mat-card-header>
+      <mat-card-content><div class="table-header"><span>Producto</span><span>Movimiento</span></div>
+        @for (item of recentMovements; track item.id) { <a class="list-row" [routerLink]="['/products', item.productoId]"><div><strong>{{ item.name }}</strong><small>{{ item.type }} · {{ item.fecha }}</small></div><b [class.positive]="item.qty.startsWith('+')" [class.negative]="item.qty.startsWith('-')">{{ item.qty }}</b></a> }
+        @empty { <div class="empty-state">No hay movimientos registrados</div> }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="dashboard-card value-card" appearance="outlined">
+      <mat-card-header><mat-icon mat-card-avatar>payments</mat-icon><mat-card-title>Valor del inventario</mat-card-title><a mat-raised-button routerLink="/existencias">Ver reporte</a></mat-card-header>
+      <mat-card-content class="value-content"><div class="main-value"><span>Valor de venta</span><strong>{{ inventoryValue.totalValue }}</strong></div><div class="value-breakdown"><div><span>Costo acumulado</span><b>{{ inventoryValue.totalCost }}</b></div><div><span>Utilidad estimada</span><b class="positive">{{ inventoryValue.margin }}</b><small>{{ inventoryValue.marginPercent }} sobre costo</small></div></div></mat-card-content>
+    </mat-card>
+
+    <mat-card class="dashboard-card" appearance="outlined">
+      <mat-card-header><mat-icon mat-card-avatar>warning</mat-icon><mat-card-title>Productos por reponer</mat-card-title><a mat-raised-button routerLink="/existencias">Ver reporte</a></mat-card-header>
+      <mat-card-content><div class="table-header"><span>Producto y almacén</span><span>Actual / mínimo</span></div>
+        @for (item of reorderProducts; track item.id + item.almacen) { <a class="list-row" [routerLink]="['/products', item.id]"><div><strong>{{ item.name }}</strong><small>{{ item.almacen }}</small></div><span class="status-pill" [class.danger]="item.tone === 'danger'">{{ item.stock }}</span></a> }
+        @empty { <div class="empty-state">No hay productos por reponer</div> }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="dashboard-card" appearance="outlined">
+      <mat-card-header><mat-icon mat-card-avatar>inventory_2</mat-icon><mat-card-title>Productos sin existencia</mat-card-title><a mat-raised-button routerLink="/existencias">Ver existencias</a></mat-card-header>
+      <mat-card-content><div class="table-header"><span>Producto</span><span>Estado</span></div>
+        @for (item of outOfStockProducts; track item.id) { <a class="list-row" [routerLink]="['/products', item.id]"><div><strong>{{ item.name }}</strong><small>{{ item.sku }}</small></div><span class="status-pill danger">{{ item.status }}</span></a> }
+        @empty { <div class="empty-state">Todos los productos tienen existencia</div> }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="dashboard-card" appearance="outlined">
+      <mat-card-header><mat-icon mat-card-avatar>move_to_inbox</mat-icon><mat-card-title>Stock comprometido</mat-card-title><a mat-raised-button routerLink="/transferencias">Ver transferencias</a></mat-card-header>
+      <mat-card-content><div class="table-header"><span>Producto</span><span>Apartado</span></div>
+        @for (item of reservedProducts; track item.id) { <a class="list-row" [routerLink]="['/products', item.id]"><strong>{{ item.name }}</strong><span class="status-pill blue">{{ item.reservedQty | number:'1.0-2' }} {{ item.unidad }}</span></a> }
+        @empty { <div class="empty-state">No hay stock comprometido</div> }
+      </mat-card-content>
+    </mat-card>
+  </section>
+</main>
