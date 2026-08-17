@@ -1,0 +1,2 @@
+id_detalle_devolucion|id_devolucion_venta|id_detalle_venta|cantidad_devuelta|motivo|subtotal
+1|1|2|1.0000|Producto sin abrir|45.00

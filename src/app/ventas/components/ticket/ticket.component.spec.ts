@@ -20,7 +20,7 @@ describe('contenido del PDF de ticket', () => {
     expect(content).toContain('CANTIDAD / PRECIO U.: 2 x $100.00');
     expect(content).toContain('DESCUENTO CATÁLOGO (10%): -$20.00');
     expect(content).toContain('SUBTOTAL: $200.00');
-    expect(content).toContain('IVA (16%): $28.80');
+    expect(content).toContain('IVA INCLUIDO: $28.80');
     expect(content).toContain('TOTAL: $208.80 MXN');
     expect(content).toContain('FORMA DE PAGO: EFECTIVO');
     expect(content).toContain('EFECTIVO RECIBIDO: $250.00');

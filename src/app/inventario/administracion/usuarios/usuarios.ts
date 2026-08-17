@@ -3,6 +3,7 @@ import { AsyncPipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
@@ -15,7 +16,7 @@ import { UsuariosDialog } from './dialogs/usuarios-dialog/usuarios-dialog';
 
 @Component({
   selector: 'app-usuarios',
-  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule],
+  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule, MatSnackBarModule],
   templateUrl: './usuarios.html',
   styleUrls: ['../administracion-listas.css'],
 })
@@ -34,7 +35,11 @@ export class Usuarios implements OnInit, AfterViewInit {
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  constructor(private dialog: MatDialog, private datos: AdministracionDatos) {}
+  constructor(
+    private dialog: MatDialog,
+    private datos: AdministracionDatos,
+    private snackBar: MatSnackBar,
+  ) {}
 
   ngOnInit(): void {
     this.dataSource.filterPredicate = (usuario, filtro) => {
@@ -154,7 +159,12 @@ export class Usuarios implements OnInit, AfterViewInit {
   }
 
   private guardar(usuarios: UsuarioAdministracion[]): void {
-    this.datos.guardarUsuarios(usuarios);
+    void this.datos.guardarUsuarios(usuarios).then(() => {
+      this.snackBar.open('Usuario guardado correctamente en usuarios.txt.', 'Cerrar', { duration: 3500 });
+    }).catch(error => {
+      const mensaje = error?.error?.error || error?.message || 'No se pudo guardar el usuario.';
+      this.snackBar.open(String(mensaje), 'Cerrar', { duration: 7000 });
+    });
     this.applyFilter();
   }
 }

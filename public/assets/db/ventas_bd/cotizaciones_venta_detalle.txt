@@ -1,0 +1,2 @@
+id_detalle_cotizacion_venta|id_cotizacion_venta|id_producto|id_unidad|cantidad|precio_unitario|descuento_porcentaje|tasa_impuesto|subtotal|impuesto|total
+1|1|1|1|1.0000|7500.00|0.00|16.00|7500.00|1200.00|8700.00

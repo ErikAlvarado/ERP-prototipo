@@ -1,0 +1,2 @@
+id_corte|id_empresa|id_almacen|id_usuario|fecha_apertura|fecha_cierre|efectivo_inicial|total_ventas|efectivo_esperado|efectivo_real|diferencia|estatus|observaciones
+1|1|1|1|2026-08-05 08:00:00|2026-08-05 18:00:00|1000.00|8981.40|1281.40|1281.40|0.00|Cerrado|Corte sin diferencias

@@ -30,7 +30,7 @@ export class UsuariosDialog {
     const empresaId = data.empresas[0]?.id || '';
     this.usuario = data.usuario ? { ...data.usuario, rolIds: [...data.usuario.rolIds] } : {
       id: '', empresaId, nombres: '', apellidoPaterno: '', apellidoMaterno: '', fechaNacimiento: '',
-      email: '', telefono: '', estado: true, ultimoAcceso: '', intentosFallidos: 0,
+      email: '', telefono: '', passwordHash: '', estado: true, ultimoAcceso: '', intentosFallidos: 0,
       fechaBloqueo: '', almacenId: data.almacenes.find(almacen => almacen.empresaId === empresaId)?.id || '',
       rolIds: [], fechaCreacion: '', fechaActualizacion: '',
       creadoPorUsuarioId: '', actualizadoPorUsuarioId: '',

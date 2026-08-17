@@ -3,6 +3,7 @@ import { AsyncPipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
@@ -15,7 +16,7 @@ import { RolesDialog } from './dialogs/roles-dialog/roles-dialog';
 
 @Component({
   selector: 'app-roles',
-  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule],
+  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule, MatSnackBarModule],
   templateUrl: './roles.html',
   styleUrls: ['../administracion-listas.css'],
 })
@@ -32,7 +33,11 @@ export class Roles implements OnInit, AfterViewInit {
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  constructor(private dialog: MatDialog, private datos: AdministracionDatos) {}
+  constructor(
+    private dialog: MatDialog,
+    private datos: AdministracionDatos,
+    private snackBar: MatSnackBar,
+  ) {}
 
   ngOnInit(): void {
     this.dataSource.filterPredicate = (rol, filtro) => {
@@ -139,7 +144,12 @@ export class Roles implements OnInit, AfterViewInit {
   }
 
   private guardar(roles: RolAdministracion[]): void {
-    this.datos.guardarRoles(roles);
+    void this.datos.guardarRoles(roles).then(() => {
+      this.snackBar.open('Rol y permisos guardados correctamente en TXT.', 'Cerrar', { duration: 3500 });
+    }).catch(error => {
+      const mensaje = error?.error?.error || error?.message || 'No se pudieron guardar el rol y sus permisos.';
+      this.snackBar.open(String(mensaje), 'Cerrar', { duration: 7000 });
+    });
     this.applyFilter();
   }
 }

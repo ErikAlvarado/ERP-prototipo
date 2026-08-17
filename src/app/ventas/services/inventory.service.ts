@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { map, shareReplay, tap } from 'rxjs/operators';
+import { BehaviorSubject, forkJoin, from, Observable, of } from 'rxjs';
+import { map, shareReplay, switchMap, tap } from 'rxjs/operators';
 import {
   CatalogoProductos,
   ProductoCatalogo,
 } from '../../shared/services/catalogo-productos';
 import { Product, ProductWarehouseStock } from '../models/product.model';
+import { PersistenciaVentasTxt } from '../../shared/services/persistencia-ventas-txt';
 
 @Injectable({ providedIn: 'root' })
 export class InventoryService {
@@ -16,7 +17,12 @@ export class InventoryService {
   private loadingRequest?: Observable<Product[]>;
   private readonly legacyStocks = new Map<string, number>();
 
-  constructor(private catalog: CatalogoProductos) {
+  private taxRates = new Map<number, number>();
+
+  constructor(
+    private catalog: CatalogoProductos,
+    private ventasTxt: PersistenciaVentasTxt,
+  ) {
     this.catalog.cambios$?.subscribe(() => {
       this.loadProducts(true).subscribe({
         error: () => {
@@ -39,8 +45,19 @@ export class InventoryService {
     if (!force && this.catalogProducts.length) return of(this.productsSubject.value);
     if (!force && this.loadingRequest) return this.loadingRequest;
 
-    const request = this.catalog.cargar().pipe(
-      map(products => {
+    const request = forkJoin({
+      products: this.catalog.cargar(),
+      productTaxes: from(this.ventasTxt.leer<Record<string, string>>('productos_impuestos.txt')),
+      taxes: from(this.ventasTxt.leer<Record<string, string>>('impuestos.txt')),
+    }).pipe(
+      map(({ products, productTaxes, taxes }) => {
+        const taxById = new Map(taxes.map(tax => [Number(tax['id_impuesto']), Number(tax['tasa']) || 0]));
+        this.taxRates = new Map(productTaxes
+          .filter(relation => relation['es_predeterminado'] === '1' && !relation['fecha_fin'])
+          .map(relation => [
+            Number(relation['id_producto']),
+            taxById.get(Number(relation['id_impuesto'])) || 0,
+          ]));
         // Conserva las referencias de relaciones sin mutar el origen del catálogo.
         this.catalogProducts = products.map(product => ({ ...product }));
         return this.mapSalesProducts();
@@ -73,15 +90,15 @@ export class InventoryService {
     items: { sku: string; quantity: number; fallbackStock?: number }[],
   ): Observable<boolean> {
     return this.ensureProductsLoaded().pipe(
-      map(products => {
+      switchMap(products => {
         const requested = this.groupQuantities(items);
         for (const [sku, quantity] of requested) {
           const product = products.find(item => item.sku === sku);
           if (product) {
-            if (product.tracksInventory !== false && product.stock < quantity) return false;
+            if (product.tracksInventory !== false && product.stock < quantity) return of(false);
           } else {
             const fallback = items.find(item => item.sku === sku)?.fallbackStock;
-            if (this.getLegacyStock(sku, fallback) < quantity) return false;
+            if (this.getLegacyStock(sku, fallback) < quantity) return of(false);
           }
         }
 
@@ -92,8 +109,7 @@ export class InventoryService {
             this.legacyStocks.set(sku, this.getLegacyStock(sku) - quantity);
           }
         }
-        this.persistCatalogStock();
-        return true;
+        return from(this.persistCatalogStock()).pipe(map(() => true));
       }),
     );
   }
@@ -102,7 +118,7 @@ export class InventoryService {
     items: { sku: string; quantity: number; fallbackStock?: number }[],
   ): Observable<boolean> {
     return this.ensureProductsLoaded().pipe(
-      map(() => {
+      switchMap(() => {
         for (const item of items) {
           if (this.catalogProducts.some(product => product.sku === item.sku)) {
             this.applyStockMovement(item.sku, item.quantity);
@@ -113,8 +129,7 @@ export class InventoryService {
             );
           }
         }
-        this.persistCatalogStock();
-        return true;
+        return from(this.persistCatalogStock()).pipe(map(() => true));
       }),
     );
   }
@@ -162,7 +177,7 @@ export class InventoryService {
   private mapSalesProducts(): Product[] {
     return this.catalogProducts
       .filter(product => product.pos && product.estado)
-      .map(mapCatalogProductToSale)
+      .map(product => mapCatalogProductToSale(product, this.taxRates.get(product.id) || 0))
       .sort((a, b) => a.name.localeCompare(b.name, 'es'));
   }
 
@@ -215,14 +230,15 @@ export class InventoryService {
     };
   }
 
-  private persistCatalogStock(): void {
-    if (!this.catalogProducts.length) return;
-    this.catalog.guardar(this.catalogProducts);
+  private persistCatalogStock(): Promise<void> {
+    if (!this.catalogProducts.length) return Promise.resolve();
+    const saved = this.catalog.guardar(this.catalogProducts);
     this.productsSubject.next(this.mapSalesProducts());
+    return Promise.resolve(saved).then(() => undefined);
   }
 }
 
-export function mapCatalogProductToSale(product: ProductoCatalogo): Product {
+export function mapCatalogProductToSale(product: ProductoCatalogo, taxRate = 0): Product {
   const warehouseStocks: ProductWarehouseStock[] = (product.inventarios || []).map(inventory => ({
     warehouseId: inventory.idAlmacen,
     warehouse: inventory.almacen,
@@ -242,6 +258,7 @@ export function mapCatalogProductToSale(product: ProductoCatalogo): Product {
     unit: product.medida,
     stock: warehouseStocks.reduce((total, inventory) => total + inventory.stock, 0),
     discount: 0,
+    taxRate,
     category: product.categoria,
     brand: product.marca,
     image: product.imagen || undefined,

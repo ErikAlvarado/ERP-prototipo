@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { BehaviorSubject, from, Observable, of, throwError } from 'rxjs';
+import { catchError, switchMap, tap } from 'rxjs/operators';
 import { Product } from '../models/product.model';
 import { Client } from '../models/client.model';
 import { Venta, VentaItem, PaymentMethod, PaymentDetails } from '../models/venta.model';
@@ -9,6 +9,7 @@ import { HistorialService } from './historial.service';
 import { MOCK_CLIENTS } from './mock-data';
 import { NotificationService } from './notification.service';
 import { DescuentoService } from './descuento.service';
+import { PersistenciaVentasTxt } from '../../shared/services/persistencia-ventas-txt';
 
 @Injectable({
   providedIn: 'root'
@@ -29,13 +30,12 @@ export class VentaService {
   private showTicketSubject = new BehaviorSubject<boolean>(false);
   public showTicket$: Observable<boolean> = this.showTicketSubject.asObservable();
 
-  private folioCounter = 254;
-
   constructor(
     private inventoryService: InventoryService,
     private historialService: HistorialService,
     private notificationService: NotificationService,
-    private descuentoService: DescuentoService
+    private descuentoService: DescuentoService,
+    private ventasTxt: PersistenciaVentasTxt,
   ) {}
 
   getCartItems(): VentaItem[] {
@@ -147,17 +147,21 @@ export class VentaService {
     const items = this.cartItemsSubject.value;
     let subtotal = 0;
     let totalDiscount = 0;
-    
-    items.forEach(item => {
-      const originalSub = item.product.price * item.quantity;
-      const finalSub = item.subtotal;
-      subtotal += originalSub;
-      totalDiscount += (originalSub - finalSub);
-    });
+    let tax = 0;
+    let total = 0;
 
-    const netSubtotal = subtotal - totalDiscount;
-    const tax = netSubtotal * 0.16; // 16% IVA
-    const total = netSubtotal + tax;
+    items.forEach(item => {
+      const rate = item.product.taxRate || 0;
+      const factor = 1 + rate / 100;
+      const grossOriginal = item.product.price * item.quantity;
+      const grossFinal = item.subtotal;
+      const baseOriginal = grossOriginal / factor;
+      const baseFinal = grossFinal / factor;
+      subtotal += baseOriginal;
+      totalDiscount += baseOriginal - baseFinal;
+      tax += grossFinal - baseFinal;
+      total += grossFinal;
+    });
 
     return {
       subtotal,
@@ -165,12 +169,6 @@ export class VentaService {
       tax,
       total
     };
-  }
-
-  private generateFolio(): string {
-    this.folioCounter++;
-    const padded = this.folioCounter.toString().padStart(6, '0');
-    return `ZYR-2026-${padded}`;
   }
 
   checkout(cashierName: string, observation: string = '', paymentDetails?: PaymentDetails): Observable<Venta> {
@@ -205,7 +203,7 @@ export class VentaService {
 
         const newSale: Venta = {
           id: 'v' + Math.random().toString(36).substring(2, 9),
-          folio: this.generateFolio(),
+          folio: '',
           date: dateStr,
           time: timeStr,
           client,
@@ -223,16 +221,75 @@ export class VentaService {
           observation: observation || (payment === 'Crédito' ? 'Crédito autorizado' : 'Venta de mostrador')
         };
 
-        this.historialService.addSale(newSale);
-        
-        this.lastCompletedSaleSubject.next(newSale);
-        this.showTicketSubject.next(true);
-
-        this.notificationService.success(`Venta completada con éxito. Folio: ${newSale.folio}`);
-        this.clearCart();
-        return of(newSale);
+        return from(this.persistSale(newSale)).pipe(
+          tap(savedSale => {
+            this.historialService.addSale(savedSale);
+            this.lastCompletedSaleSubject.next(savedSale);
+            this.showTicketSubject.next(true);
+            this.notificationService.success(`Venta completada con éxito. Folio: ${savedSale.folio}`);
+            this.clearCart();
+          }),
+          catchError(error => this.inventoryService.releaseReservation(reservationItems).pipe(
+            switchMap(() => throwError(() => error)),
+          )),
+        );
       })
     );
+  }
+
+  private async persistSale(sale: Venta): Promise<Venta> {
+    type Row = Record<string, string>;
+    const [sales, details, payments, clients] = await Promise.all([
+      this.ventasTxt.leer<Row>('ventas.txt'),
+      this.ventasTxt.leer<Row>('ventas_detalle.txt'),
+      this.ventasTxt.leer<Row>('pagos_venta.txt'),
+      this.ventasTxt.leer<Row>('clientes.txt'),
+    ]);
+    const nextId = (rows: Row[], field: string) =>
+      Math.max(0, ...rows.map(row => Number(row[field]) || 0)) + 1;
+    const money = (value: number) => value.toFixed(2);
+    const saleId = nextId(sales, 'id_venta');
+    const year = new Date().getFullYear();
+    const folio = `ZYR-${year}-${String(saleId).padStart(6, '0')}`;
+    const clientId = Number(sale.client.id.replace(/\D/g, '')) || 1;
+    const validClientId = clients.some(client => Number(client['id_cliente']) === clientId) ? clientId : 1;
+    const dateTime = `${sale.date} ${sale.time}:00`;
+    const warehouseId = sale.items[0]?.product.warehouseStocks?.find(stock => stock.stock > 0)?.warehouseId || 1;
+    sales.push({
+      id_venta: String(saleId), folio, id_empresa: '1', id_almacen: String(warehouseId),
+      id_usuario: '1', id_cliente: String(validClientId), id_lista_precio: '1', id_moneda: '1',
+      fecha_venta: dateTime, subtotal: money(sale.subtotal), descuento: money(sale.discount),
+      impuestos: money(sale.tax), total: money(sale.total), estatus: 'Completada',
+      tipo_venta: sale.paymentMethod === 'Crédito' ? 'Credito' : 'Contado', observaciones: sale.observation,
+    });
+    let detailId = nextId(details, 'id_detalle_venta');
+    for (const item of sale.items) {
+      const taxRate = item.product.taxRate || 0;
+      const factor = 1 + taxRate / 100;
+      const grossUnitPrice = item.product.price;
+      const grossTotal = item.subtotal;
+      const net = grossTotal / factor;
+      const tax = grossTotal - net;
+      const netUnitPrice = grossUnitPrice / factor;
+      details.push({
+        id_detalle_venta: String(detailId++), id_venta: String(saleId), id_producto: item.product.id,
+        id_unidad: '1', cantidad: item.quantity.toFixed(4), precio_unitario: money(netUnitPrice),
+        descuento_porcentaje: money(item.discount), tasa_impuesto: money(taxRate),
+        subtotal: money(net), impuesto: money(tax), total: money(grossTotal),
+      });
+    }
+    const paymentIds: Record<PaymentMethod, number> = {
+      Efectivo: 5, Tarjeta: 3, Transferencia: 1, Vales: 2, Crédito: 4,
+    };
+    payments.push({
+      id_pago_venta: String(nextId(payments, 'id_pago_venta')), id_venta: String(saleId),
+      id_metodo_pago: String(paymentIds[sale.paymentMethod]), id_moneda: '1', fecha_pago: dateTime,
+      importe: money(sale.total), referencia: sale.paymentDetails?.authorizationCode
+        || sale.paymentDetails?.transferReference || sale.paymentDetails?.voucherNumber || '',
+      observaciones: sale.paymentMethod,
+    });
+    await this.ventasTxt.reemplazarVarias({ ventas: sales, detallesVenta: details, pagosVenta: payments });
+    return { ...sale, id: `v${saleId}`, folio };
   }
 
   closeTicket(): void {

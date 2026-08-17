@@ -137,6 +137,18 @@ const TABLES = Object.freeze({
     file: 'inventari_db/usuarios.txt',
     columns: null,
   },
+  usuarioRoles: {
+    file: 'inventari_db/usuario_roles.txt',
+    columns: null,
+  },
+  roles: {
+    file: 'inventari_db/roles.txt',
+    columns: null,
+  },
+  rolesPermisos: {
+    file: 'inventari_db/roles_permisos.txt',
+    columns: null,
+  },
   listasPrecios: {
     file: 'inventari_db/listas_precios.txt',
     columns: null,
@@ -147,6 +159,19 @@ const TABLES = Object.freeze({
   imagenesProducto: { file: 'inventari_db/producto_imagenes.txt', columns: null },
   transferencias: { file: 'inventari_db/transferencias.txt', columns: null },
   detallesTransferencia: { file: 'inventari_db/detalle_transferencia.txt', columns: null },
+  clientesVenta: { file: 'ventas_bd/clientes.txt', columns: null },
+  ventas: { file: 'ventas_bd/ventas.txt', columns: null },
+  detallesVenta: { file: 'ventas_bd/ventas_detalle.txt', columns: null },
+  pagosVenta: { file: 'ventas_bd/pagos_venta.txt', columns: null },
+  devolucionesVenta: { file: 'ventas_bd/devoluciones_venta.txt', columns: null },
+  detallesDevolucionVenta: { file: 'ventas_bd/devoluciones_venta_detalle.txt', columns: null },
+  cortesCaja: { file: 'ventas_bd/cortes_caja.txt', columns: null },
+  detallesCorteCaja: { file: 'ventas_bd/cortes_caja_detalle.txt', columns: null },
+  cotizacionesVenta: { file: 'ventas_bd/cotizaciones_venta.txt', columns: null },
+  detallesCotizacionVenta: { file: 'ventas_bd/cotizaciones_venta_detalle.txt', columns: null },
+  impuestos: { file: 'ventas_bd/impuestos.txt', columns: null },
+  productosImpuestos: { file: 'ventas_bd/productos_impuestos.txt', columns: null },
+  monedas: { file: 'ventas_bd/monedas.txt', columns: null },
 });
 
 class RequestError extends Error {
@@ -294,10 +319,45 @@ async function commitTables(tables) {
 }
 
 const INVENTORY_EDITABLE_TABLES = new Set([
-  'productos', 'precios', 'inventario', 'kardex', 'categorias', 'marcas',
+  'productos', 'precios', 'inventario', 'kardex', 'empresas', 'almacenes', 'usuarios', 'usuarioRoles',
+  'roles', 'rolesPermisos', 'categorias', 'marcas',
   'unidades', 'medidas', 'anaqueles', 'componentesKit', 'imagenesProducto',
   'transferencias', 'detallesTransferencia',
 ]);
+
+const SALES_EDITABLE_TABLES = new Set([
+  'clientesVenta', 'ventas', 'detallesVenta', 'pagosVenta',
+  'devolucionesVenta', 'detallesDevolucionVenta', 'cortesCaja',
+  'detallesCorteCaja', 'cotizacionesVenta', 'detallesCotizacionVenta',
+  'impuestos', 'productosImpuestos', 'monedas',
+]);
+
+async function replaceSalesTables(dbRoot, payload) {
+  if (!payload?.tables || typeof payload.tables !== 'object' || Array.isArray(payload.tables)) {
+    throw new RequestError(400, 'tables debe ser un objeto.');
+  }
+  const tables = [];
+  for (const [key, rows] of Object.entries(payload.tables)) {
+    if (!SALES_EDITABLE_TABLES.has(key)) throw new RequestError(404, `Tabla ${key} no permitida.`);
+    if (!Array.isArray(rows)) throw new RequestError(400, `${key} debe ser un arreglo.`);
+    const table = await loadTable(dbRoot, key);
+    table.rows = rows.map((input, index) => {
+      if (!input || typeof input !== 'object' || Array.isArray(input)) {
+        throw new RequestError(400, `Fila invalida en ${key}.`);
+      }
+      const extras = Object.keys(input).filter(column => !table.columns.includes(column));
+      if (extras.length) throw new RequestError(400, `Columnas desconocidas en ${key}: ${extras.join(', ')}.`);
+      return Object.fromEntries(table.columns.map(column => [
+        column,
+        cleanText(input[column], `${column} (fila ${index + 1})`, { max: 2000 }),
+      ]));
+    });
+    tables.push(table);
+  }
+  if (!tables.length) throw new RequestError(400, 'Incluye al menos una tabla.');
+  await commitTables(tables);
+  return { tablas: tables.length };
+}
 
 async function replaceInventoryTable(dbRoot, key, payload) {
   if (!INVENTORY_EDITABLE_TABLES.has(key)) throw new RequestError(404, 'Tabla de Inventario no permitida.');
@@ -1116,6 +1176,10 @@ function router(dbRoot) {
         sendJson(response, 200, { ok: true, almacenamiento: 'txt' });
         return;
       }
+      if (request.method === 'GET' && url.pathname === '/api/ventas-txt/salud') {
+        sendJson(response, 200, { ok: true, almacenamiento: 'txt' });
+        return;
+      }
       if (request.method === 'GET' && url.pathname === '/api/compras-txt/ordenes') {
         sendJson(response, 200, { ok: true, ordenes: await purchaseOrders(dbRoot) });
         return;
@@ -1154,6 +1218,8 @@ function router(dbRoot) {
         result = await serializeWrite(() => replaceInventoryTable(dbRoot, inventoryTableMatch[1], payload));
       } else if (request.method === 'PUT' && url.pathname === '/api/inventario-txt/tablas') {
         result = await serializeWrite(() => replaceInventoryTables(dbRoot, payload));
+      } else if (request.method === 'PUT' && url.pathname === '/api/ventas-txt/tablas') {
+        result = await serializeWrite(() => replaceSalesTables(dbRoot, payload));
       } else if (request.method === 'POST' && url.pathname === '/api/inventario-txt/ajustes') {
         result = await serializeWrite(() => applyInventoryAdjustment(dbRoot, payload));
       } else if (request.method === 'PUT' && url.pathname === '/api/inventario-txt/transferencias') {

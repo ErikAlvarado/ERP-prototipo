@@ -3,3 +3,4 @@ id_recepcion|folio|id_orden_compra|id_almacen|id_responsable|fecha_recepcion|doc
 2|RC-2026-0002|2|2|2|2026-06-22 16:10:00|REM-TC-8845|Primera entrega parcial
 3|RC-2026-0003|2|2|2|2026-06-25 10:35:00|REM-TC-8860|Segunda entrega parcial
 4|REC-OC-2026-0094|8|11|12|2026-08-11 12:00:00|OC-2026-0094|Recepción escaneada de OC-2026-0094
+5|REC-OC-2026-0093|7|11|12|2026-08-17 12:00:00|444|Recepción escaneada de OC-2026-0093

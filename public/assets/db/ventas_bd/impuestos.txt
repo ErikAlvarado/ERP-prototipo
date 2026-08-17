@@ -1,0 +1,4 @@
+id_impuesto|id_empresa|nombre|tipo|tasa|activo
+1|1|IVA 16%|Traslado|16.00|1
+2|1|IVA 0%|Traslado|0.00|1
+3|1|Exento de IVA|Exento|0.00|1

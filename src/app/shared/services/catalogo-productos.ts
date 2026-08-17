@@ -279,7 +279,7 @@ export class CatalogoProductos {
     }));
   }
 
-  guardar(productos: ProductoCatalogo[]): void {
+  guardar(productos: ProductoCatalogo[]): Promise<void> {
     const fecha = this.hoy();
     const tablas = {
       productos: productos.map(producto => ({
@@ -312,6 +312,7 @@ export class CatalogoProductos {
     const guardado = this.persistencia?.reemplazarVarias(tablas);
     if (guardado) void guardado.then(() => this.local.eliminar(this.claveCambios)).catch(() => undefined);
     this.cambiosInternos.next();
+    return guardado || Promise.resolve();
   }
 
   actualizarResumenPrecio(producto: ProductoCatalogo, fecha = this.hoy()): ProductoCatalogo {

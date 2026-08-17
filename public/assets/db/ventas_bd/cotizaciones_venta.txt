@@ -1,0 +1,2 @@
+id_cotizacion_venta|folio|id_empresa|id_almacen|id_usuario|id_cliente|id_lista_precio|id_moneda|fecha_cotizacion|fecha_vencimiento|subtotal|descuento|impuestos|total|estatus|observaciones
+1|COT-V-2026-0001|1|1|1|2|1|1|2026-08-04|2026-08-19|7500.00|0.00|1200.00|8700.00|Aceptada|Cotizacion convertida en venta V-2026-0001

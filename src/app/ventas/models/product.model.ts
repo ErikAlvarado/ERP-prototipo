@@ -14,10 +14,11 @@ export interface Product {
   code: string;
   name: string;
   sku: string;
-  price: number;
+  price: number; // precio publico final, con impuestos incluidos
   unit: string;
   stock: number;
   discount: number; // percentage (e.g. 10 = 10% discount)
+  taxRate?: number; // IVA predeterminado configurado en ventas_bd
   category: string;
   brand?: string;
   model?: string;

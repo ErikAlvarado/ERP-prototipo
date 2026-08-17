@@ -1,4 +1,5 @@
 id_empresa|nombre_empresa|razon_social|rfc|direccion|telefono|email|activo|fecha_creacion|fecha_actualizacion|creado_por_usuario|actualizado_por_usuario
+12|Bodega|BDGA100JUML123|BDGA238934789||||1|2026-08-17|2026-08-17|12|12
 1|SuperMart|SuperMart S.A. de C.V.|SMA123456789|Calle Principal 100|555-1234|contacto@supermart.com|1|2024-01-01|2024-01-01|1|1
 2|SuperMart Norte|SuperMart Norte S.A. de C.V.|SMN240101AA1|Av. Norte 210|555-2001|norte@supermart.com|0|2024-02-01|2024-02-01|1|1
 3|SuperMart Sur|SuperMart Sur S.A. de C.V.|SMS240101BB2|Av. Sur 315|555-2002|sur@supermart.com|0|2024-02-02|2024-02-02|1|1

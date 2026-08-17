@@ -1,0 +1,2 @@
+id_devolucion_venta|folio|id_venta|id_usuario|fecha_devolucion|motivo|estatus|total_devolucion|observaciones
+1|DEV-2026-0001|2|1|2026-08-06 09:20:00|Producto no requerido|Completada|45.00|Devolucion de una pieza

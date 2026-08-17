@@ -3,7 +3,8 @@ import { Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 export type TablaInventarioTxt =
-  | 'productos' | 'precios' | 'inventario' | 'kardex' | 'categorias' | 'marcas'
+  | 'productos' | 'precios' | 'inventario' | 'kardex' | 'empresas' | 'almacenes' | 'usuarios' | 'usuarioRoles'
+  | 'roles' | 'rolesPermisos' | 'categorias' | 'marcas'
   | 'unidades' | 'medidas' | 'anaqueles' | 'componentesKit' | 'imagenesProducto'
   | 'transferencias' | 'detallesTransferencia';
 
