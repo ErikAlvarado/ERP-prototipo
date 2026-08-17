@@ -174,7 +174,7 @@ import { InventoryService, warehouseSummary } from '../../services/inventory.ser
                 <span>\${{ formQuote.subtotal | number:'1.2-2' }}</span>
               </div>
               <div class="totals-row">
-                <span>IVA (16%):</span>
+                <span>IVA incluido:</span>
                 <span>\${{ formQuote.tax | number:'1.2-2' }}</span>
               </div>
               <div class="divider-thin"></div>
@@ -692,19 +692,21 @@ export class CotizacionesComponent implements OnInit {
   recalculateFormTotals(): void {
     let subtotal = 0;
     let totalDiscount = 0;
+    let tax = 0;
+    let total = 0;
     
     this.formQuote.items.forEach(item => {
       const originalSub = item.product.price * item.quantity;
       const discAmt = originalSub * (item.product.discount / 100);
       item.subtotal = originalSub - discAmt;
-      
-      subtotal += originalSub;
-      totalDiscount += discAmt;
+      const factor = 1 + (item.product.taxRate || 0) / 100;
+      const baseOriginal = originalSub / factor;
+      const baseFinal = item.subtotal / factor;
+      subtotal += baseOriginal;
+      totalDiscount += baseOriginal - baseFinal;
+      tax += item.subtotal - baseFinal;
+      total += item.subtotal;
     });
-
-    const netSubtotal = subtotal - totalDiscount;
-    const tax = netSubtotal * 0.16;
-    const total = netSubtotal + tax;
 
     this.formQuote.subtotal = subtotal;
     this.formQuote.discount = totalDiscount;

@@ -2,6 +2,7 @@ import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableDataSource } from '@angular/material/table';
 import { Observable } from 'rxjs';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
@@ -14,7 +15,7 @@ import { AlmacenesDialog } from './dialogs/almacenes-dialog/almacenes-dialog';
 
 @Component({
   selector: 'app-almacenes',
-  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule],
+  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule, MatSnackBarModule],
   templateUrl: './almacenes.html',
   styleUrls: ['../administracion-listas.css'],
 })
@@ -31,7 +32,11 @@ export class Almacenes implements OnInit, AfterViewInit {
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  constructor(private dialog: MatDialog, private datos: AdministracionDatos) {}
+  constructor(
+    private dialog: MatDialog,
+    private datos: AdministracionDatos,
+    private snackBar: MatSnackBar,
+  ) {}
 
   ngOnInit(): void {
     this.dataSource.filterPredicate = (almacen, filtro) => {
@@ -142,7 +147,12 @@ export class Almacenes implements OnInit, AfterViewInit {
   }
 
   private guardar(almacenes: AlmacenAdministracion[]): void {
-    this.datos.guardarAlmacenes(almacenes);
+    void this.datos.guardarAlmacenes(almacenes).then(() => {
+      this.snackBar.open('Almacén guardado correctamente en almacenes.txt.', 'Cerrar', { duration: 3500 });
+    }).catch(error => {
+      const mensaje = error?.error?.error || error?.message || 'No se pudo guardar el almacén.';
+      this.snackBar.open(String(mensaje), 'Cerrar', { duration: 7000 });
+    });
     this.applyFilter();
   }
 

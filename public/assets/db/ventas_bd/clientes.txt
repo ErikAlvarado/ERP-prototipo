@@ -1,0 +1,4 @@
+id_cliente|id_empresa|nombre_cliente|rfc|correo|telefono|direccion|activo|fecha_registro
+1|1|Publico General|||||1|2026-08-01
+2|1|Comercializadora del Centro|CCE260801AB1|compras@comercializadoracentro.mx|5551002001|Av. Central 125, Ciudad de Mexico|1|2026-08-01
+3|1|Maria Hernandez||maria.hernandez@example.com|5551002002|Calle Reforma 80, Ciudad de Mexico|1|2026-08-02

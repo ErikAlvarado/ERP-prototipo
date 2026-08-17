@@ -227,7 +227,7 @@ import { TicketComponent } from '../../components/ticket/ticket.component';
                 <span>-\${{ selectedDetailSale.discount | number:'1.2-2' }}</span>
               </div>
               <div class="tot-row">
-                <span>IVA (16%):</span>
+                <span>IVA incluido:</span>
                 <span>\${{ selectedDetailSale.tax | number:'1.2-2' }}</span>
               </div>
               <div class="divider-thin"></div>

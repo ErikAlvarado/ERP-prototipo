@@ -98,3 +98,6 @@ id_movimiento|id_producto|id_almacen|id_tipo_movimiento|existencia|cantidad|cost
 97|74|1|1|100.00|100.00|3.00|Inventario inicial desde alta de proveedor|ALTA-COM-74|2026-08-08|1
 98|74|2|1|50.00|50.00|3.00|Inventario inicial desde alta de proveedor|ALTA-COM-74|2026-08-08|1
 99|63|11|5|20.00|20.00|0.00|Entrada por recepción de compra|REC-OC-2026-0094|2026-08-11|12
+100|74|1|2|99.00|-1.00|3.00|Salida por venta|ZYR-2026-000004|2026-08-11|1
+101|74|1|2|93.00|-6.00|3.00|Salida por venta|ZYR-2026-000005|2026-08-11|1
+102|63|11|5|40.00|20.00|0.00|Entrada por recepción de compra|REC-OC-2026-0093|2026-08-17|12

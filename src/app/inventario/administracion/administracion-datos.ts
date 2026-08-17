@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { forkJoin, map, Observable, ReplaySubject, shareReplay, switchMap, tap } from 'rxjs';
 import { DatosDb } from '../../shared/services/datos-db';
 import { PersistenciaLocal } from '../../shared/services/persistencia-local';
+import { PersistenciaInventarioTxt } from '../../shared/services/persistencia-inventario-txt';
 
 export interface EmpresaAdministracion {
   id: string;
@@ -53,6 +54,7 @@ export interface UsuarioAdministracion {
   fechaNacimiento: string;
   email: string;
   telefono: string;
+  passwordHash: string;
   estado: boolean;
   ultimoAcceso: string;
   intentosFallidos: number;
@@ -111,7 +113,7 @@ interface CambiosLocales<T> { modificados: Record<string, Partial<T>>; eliminado
 interface EmpresaDb { id_empresa: string; nombre_empresa: string; razon_social: string; rfc: string; direccion: string; telefono: string; email: string; activo: string; fecha_creacion: string; fecha_actualizacion: string; creado_por_usuario: string; actualizado_por_usuario: string; }
 interface AlmacenDb { id_almacen: string; id_empresa: string; nombre_almacen: string; direccion: string; es_principal: string; activo: string; fecha_creacion: string; fecha_actualizacion: string; creado_por_usuario: string; actualizado_por_usuario: string; }
 interface RolDb { id_rol: string; id_empresa: string; nombre: string; descripcion: string; activo: string; fecha_creacion: string; fecha_actualizacion: string; creado_por_usuario: string; actualizado_por_usuario: string; }
-interface UsuarioDb { id_usuario: string; id_empresa: string; nombres: string; apellido_paterno: string; apellido_materno: string; fecha_nacimiento: string; email: string; telefono: string; activo: string; ultimo_acceso: string; intentos_fallidos: string; fecha_bloqueo: string; id_almacen_defecto: string; fecha_creacion: string; fecha_actualizacion: string; creado_por_usuario: string; actualizado_por_usuario: string; }
+interface UsuarioDb { id_usuario: string; id_empresa: string; nombres: string; apellido_paterno: string; apellido_materno: string; fecha_nacimiento: string; email: string; telefono: string; password_hash: string; activo: string; ultimo_acceso: string; intentos_fallidos: string; fecha_bloqueo: string; id_almacen_defecto: string; fecha_creacion: string; fecha_actualizacion: string; creado_por_usuario: string; actualizado_por_usuario: string; }
 interface UsuarioRolDb { id_usuario_rol: string; id_usuario: string; id_rol: string; fecha_asignacion: string; fecha_fin: string; activo: string; asignado_por_usuario: string; }
 interface RolPermisoDb { id_rol: string; id_permiso: string; }
 interface PermisoDb { id_permiso: string; nombre: string; modulo: string; descripcion: string; accion: string; }
@@ -132,7 +134,11 @@ export class AdministracionDatos {
 
   private readonly carga$: Observable<EstadoAdministracion>;
 
-  constructor(private db: DatosDb, private persistencia: PersistenciaLocal) {
+  constructor(
+    private db: DatosDb,
+    private persistencia: PersistenciaLocal,
+    private persistenciaTxt: PersistenciaInventarioTxt,
+  ) {
     this.carga$ = forkJoin({
       empresas: this.db.leer<EmpresaDb>('empresas.txt'),
       almacenes: this.db.leer<AlmacenDb>('almacenes.txt'),
@@ -170,8 +176,8 @@ export class AdministracionDatos {
     return this.carga$.pipe(switchMap(() => this.cambios$));
   }
 
-  guardarEmpresas(empresas: EmpresaAdministracion[]): void {
-    if (!this.estado || !this.base) return;
+  guardarEmpresas(empresas: EmpresaAdministracion[]): Promise<void> {
+    if (!this.estado || !this.base) return Promise.resolve();
     const empresasSeguras = this.prepararCambios(this.estado.empresas, empresas);
     const activas = new Set(empresasSeguras.filter(empresa => empresa.estado).map(empresa => empresa.id));
     const almacenes = this.normalizarPrincipales(this.estado.almacenes.map(almacen =>
@@ -185,10 +191,24 @@ export class AdministracionDatos {
     this.persistir(this.claves.almacenes, almacenes, this.base.almacenes);
     this.persistir(this.claves.roles, roles, this.base.roles);
     this.persistir(this.claves.usuarios, usuarios, this.base.usuarios);
+    return this.persistenciaTxt.reemplazar('empresas', empresasSeguras.map(empresa => ({
+      id_empresa: empresa.id,
+      nombre_empresa: empresa.nombre,
+      razon_social: empresa.razonSocial,
+      rfc: empresa.rfc,
+      direccion: empresa.direccion,
+      telefono: empresa.telefono,
+      email: empresa.email,
+      activo: empresa.estado ? '1' : '0',
+      fecha_creacion: empresa.fechaCreacion,
+      fecha_actualizacion: empresa.fechaActualizacion,
+      creado_por_usuario: empresa.creadoPorUsuarioId,
+      actualizado_por_usuario: empresa.actualizadoPorUsuarioId,
+    })));
   }
 
-  guardarAlmacenes(almacenes: AlmacenAdministracion[]): void {
-    if (!this.estado || !this.base) return;
+  guardarAlmacenes(almacenes: AlmacenAdministracion[]): Promise<void> {
+    if (!this.estado || !this.base) return Promise.resolve();
     const empresas = new Set(this.estado.empresas.map(empresa => empresa.id));
     const validos = almacenes.filter(almacen => empresas.has(almacen.empresaId));
     const preparados = this.normalizarPrincipales(this.prepararCambios(this.estado.almacenes, validos));
@@ -198,10 +218,44 @@ export class AdministracionDatos {
     this.actualizar(this.normalizarRelaciones({ ...this.estado, almacenes: preparados, usuarios }));
     this.persistir(this.claves.almacenes, preparados, this.base.almacenes);
     this.persistir(this.claves.usuarios, usuarios, this.base.usuarios);
+    return this.persistenciaTxt.reemplazarVarias({
+      almacenes: preparados.map(almacen => ({
+        id_almacen: almacen.id,
+        id_empresa: almacen.empresaId,
+        nombre_almacen: almacen.nombre,
+        direccion: almacen.direccion,
+        es_principal: almacen.principal ? '1' : '0',
+        activo: almacen.estado ? '1' : '0',
+        fecha_creacion: almacen.fechaCreacion,
+        fecha_actualizacion: almacen.fechaActualizacion,
+        creado_por_usuario: almacen.creadoPorUsuarioId,
+        actualizado_por_usuario: almacen.actualizadoPorUsuarioId,
+      })),
+      usuarios: usuarios.map(usuario => ({
+        id_usuario: usuario.id,
+        id_empresa: usuario.empresaId,
+        nombres: usuario.nombres,
+        apellido_paterno: usuario.apellidoPaterno,
+        apellido_materno: usuario.apellidoMaterno,
+        fecha_nacimiento: usuario.fechaNacimiento,
+        email: usuario.email,
+        telefono: usuario.telefono,
+        password_hash: usuario.passwordHash,
+        activo: usuario.estado ? '1' : '0',
+        ultimo_acceso: usuario.ultimoAcceso,
+        intentos_fallidos: usuario.intentosFallidos,
+        fecha_bloqueo: usuario.fechaBloqueo,
+        id_almacen_defecto: usuario.almacenId,
+        fecha_creacion: usuario.fechaCreacion,
+        fecha_actualizacion: usuario.fechaActualizacion,
+        creado_por_usuario: usuario.creadoPorUsuarioId,
+        actualizado_por_usuario: usuario.actualizadoPorUsuarioId,
+      })),
+    });
   }
 
-  guardarRoles(roles: RolAdministracion[]): void {
-    if (!this.estado || !this.base) return;
+  guardarRoles(roles: RolAdministracion[]): Promise<void> {
+    if (!this.estado || !this.base) return Promise.resolve();
     const empresas = new Set(this.estado.empresas.map(empresa => empresa.id));
     const validos = roles.filter(rol => empresas.has(rol.empresaId)).map(rol => ({
       ...rol,
@@ -212,10 +266,27 @@ export class AdministracionDatos {
     this.actualizar(estadoActualizado);
     this.persistir(this.claves.roles, preparados, this.base.roles);
     this.persistencia.guardar(this.claves.usuarioRoles, estadoActualizado.usuarioRoles);
+    return this.persistenciaTxt.reemplazarVarias({
+      roles: preparados.map(rol => ({
+        id_rol: rol.id,
+        id_empresa: rol.empresaId,
+        nombre: rol.nombre,
+        descripcion: rol.descripcion,
+        activo: rol.estado ? '1' : '0',
+        fecha_creacion: rol.fechaCreacion,
+        fecha_actualizacion: rol.fechaActualizacion,
+        creado_por_usuario: rol.creadoPorUsuarioId,
+        actualizado_por_usuario: rol.actualizadoPorUsuarioId,
+      })),
+      rolesPermisos: estadoActualizado.rolesPermisos.map(relacion => ({
+        id_rol: relacion.rolId,
+        id_permiso: relacion.permisoId,
+      })),
+    });
   }
 
-  guardarUsuarios(usuarios: UsuarioAdministracion[]): void {
-    if (!this.estado || !this.base) return;
+  guardarUsuarios(usuarios: UsuarioAdministracion[]): Promise<void> {
+    if (!this.estado || !this.base) return Promise.resolve();
     const empresas = new Set(this.estado.empresas.map(empresa => empresa.id));
     const validos = usuarios.filter(usuario => empresas.has(usuario.empresaId)).map(usuario => ({
       ...usuario,
@@ -229,6 +300,37 @@ export class AdministracionDatos {
     this.actualizar(estadoActualizado);
     this.persistir(this.claves.usuarios, preparados, this.base.usuarios);
     this.persistencia.guardar(this.claves.usuarioRoles, estadoActualizado.usuarioRoles);
+    return this.persistenciaTxt.reemplazarVarias({
+      usuarios: preparados.map(usuario => ({
+        id_usuario: usuario.id,
+        id_empresa: usuario.empresaId,
+        nombres: usuario.nombres,
+        apellido_paterno: usuario.apellidoPaterno,
+        apellido_materno: usuario.apellidoMaterno,
+        fecha_nacimiento: usuario.fechaNacimiento,
+        email: usuario.email,
+        telefono: usuario.telefono,
+        password_hash: usuario.passwordHash,
+        activo: usuario.estado ? '1' : '0',
+        ultimo_acceso: usuario.ultimoAcceso,
+        intentos_fallidos: usuario.intentosFallidos,
+        fecha_bloqueo: usuario.fechaBloqueo,
+        id_almacen_defecto: usuario.almacenId,
+        fecha_creacion: usuario.fechaCreacion,
+        fecha_actualizacion: usuario.fechaActualizacion,
+        creado_por_usuario: usuario.creadoPorUsuarioId,
+        actualizado_por_usuario: usuario.actualizadoPorUsuarioId,
+      })),
+      usuarioRoles: estadoActualizado.usuarioRoles.map(relacion => ({
+        id_usuario_rol: relacion.id,
+        id_usuario: relacion.usuarioId,
+        id_rol: relacion.rolId,
+        fecha_asignacion: relacion.fechaAsignacion,
+        fecha_fin: relacion.fechaFin,
+        activo: relacion.estado ? '1' : '0',
+        asignado_por_usuario: relacion.asignadoPorUsuarioId,
+      })),
+    });
   }
 
   private actualizar(estado: EstadoAdministracion): void {
@@ -263,6 +365,7 @@ export class AdministracionDatos {
         id: usuario.id_usuario, empresaId: usuario.id_empresa, nombres: usuario.nombres,
         apellidoPaterno: usuario.apellido_paterno, apellidoMaterno: usuario.apellido_materno,
         fechaNacimiento: usuario.fecha_nacimiento, email: usuario.email, telefono: usuario.telefono,
+        passwordHash: usuario.password_hash,
         estado: usuario.activo === '1', ultimoAcceso: usuario.ultimo_acceso,
         intentosFallidos: Number(usuario.intentos_fallidos) || 0, fechaBloqueo: usuario.fecha_bloqueo,
         almacenId: usuario.id_almacen_defecto,
@@ -358,7 +461,7 @@ export class AdministracionDatos {
 
   private normalizarPrincipales(almacenes: AlmacenAdministracion[]): AlmacenAdministracion[] {
     const principales = new Set<string>();
-    return almacenes.map(almacen => {
+    const normalizados = almacenes.map(almacen => {
       if (!almacen.estado && almacen.principal) {
         return {
           ...almacen,
@@ -375,6 +478,21 @@ export class AdministracionDatos {
       return {
         ...almacen,
         principal: false,
+        fechaActualizacion: this.fechaActual(),
+        actualizadoPorUsuarioId: this.usuarioActualId() || almacen.actualizadoPorUsuarioId,
+      };
+    });
+    const empresasConPrincipal = new Set(
+      normalizados
+        .filter(almacen => almacen.estado && almacen.principal)
+        .map(almacen => almacen.empresaId),
+    );
+    return normalizados.map(almacen => {
+      if (!almacen.estado || empresasConPrincipal.has(almacen.empresaId)) return almacen;
+      empresasConPrincipal.add(almacen.empresaId);
+      return {
+        ...almacen,
+        principal: true,
         fechaActualizacion: this.fechaActual(),
         actualizadoPorUsuarioId: this.usuarioActualId() || almacen.actualizadoPorUsuarioId,
       };

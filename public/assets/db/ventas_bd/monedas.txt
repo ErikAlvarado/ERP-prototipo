@@ -1,0 +1,3 @@
+id_moneda|codigo|nombre|simbolo|decimales|activo
+1|MXN|Peso mexicano|$|2|1
+2|USD|Dolar estadounidense|US$|2|1

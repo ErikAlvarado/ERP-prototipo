@@ -6,3 +6,4 @@ id_detalle_recepcion|id_recepcion|id_detalle_orden|cantidad_recibida|cantidad_re
 5|3|3|2|0|
 6|3|4|3|0|
 7|4|10|20.00|0.00|
+8|5|9|20.00|0.00|

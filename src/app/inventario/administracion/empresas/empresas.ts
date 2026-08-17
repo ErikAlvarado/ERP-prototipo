@@ -3,6 +3,7 @@ import { AsyncPipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
 import { SHARED_IMPORTS } from '../../../shared/imports/shared-imports';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
@@ -15,7 +16,7 @@ import { EmpresasDialog } from './dialogs/empresas-dialog/empresas-dialog';
 
 @Component({
   selector: 'app-empresas',
-  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule],
+  imports: [...SHARED_IMPORTS, AsyncPipe, MatPaginatorModule, MatSnackBarModule],
   templateUrl: './empresas.html',
   styleUrls: ['../administracion-listas.css'],
 })
@@ -31,7 +32,11 @@ export class Empresas implements OnInit, AfterViewInit {
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  constructor(private dialog: MatDialog, private datos: AdministracionDatos) {}
+  constructor(
+    private dialog: MatDialog,
+    private datos: AdministracionDatos,
+    private snackBar: MatSnackBar,
+  ) {}
 
   ngOnInit(): void {
     this.dataSource.filterPredicate = (empresa, filtro) => {
@@ -124,7 +129,12 @@ export class Empresas implements OnInit, AfterViewInit {
   }
 
   private guardar(empresas: EmpresaAdministracion[]): void {
-    this.datos.guardarEmpresas(empresas);
+    void this.datos.guardarEmpresas(empresas).then(() => {
+      this.snackBar.open('Empresa guardada correctamente en empresas.txt.', 'Cerrar', { duration: 3500 });
+    }).catch(error => {
+      const mensaje = error?.error?.error || error?.message || 'No se pudo guardar la empresa.';
+      this.snackBar.open(String(mensaje), 'Cerrar', { duration: 7000 });
+    });
     this.applyFilter();
   }
 }

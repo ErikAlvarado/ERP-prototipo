@@ -32,7 +32,12 @@ describe('InventoryService para Ventas', () => {
       cargar: () => of([createCatalogProduct()]),
       guardar,
     };
-    const service = new InventoryService(catalog as never);
+    const ventasTxt = {
+      leer: (file: string) => Promise.resolve(file === 'impuestos.txt'
+        ? [{ id_impuesto: '1', tasa: '16.00' }]
+        : [{ id_producto: '10', id_impuesto: '1', es_predeterminado: '1', fecha_fin: '' }]),
+    };
+    const service = new InventoryService(catalog as never, ventasTxt as never);
 
     const reserved = await firstValueFrom(service.reserveProducts([
       { sku: 'SKU-REAL-10', quantity: 6 },

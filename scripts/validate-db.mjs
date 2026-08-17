@@ -166,7 +166,7 @@ const foreignKeys = [
   ['usuario_roles.txt', 'id_rol', 'roles.txt', 'id_rol'],
   ['usuario_roles.txt', 'asignado_por_usuario', 'usuarios.txt', 'id_usuario'],
   ['usuarios.txt', 'id_empresa', 'empresas.txt', 'id_empresa'],
-  ['usuarios.txt', 'id_almacen_defecto', 'almacenes.txt', 'id_almacen'],
+  ['usuarios.txt', 'id_almacen_defecto', 'almacenes.txt', 'id_almacen', true],
   ['usuarios.txt', 'creado_por_usuario', 'usuarios.txt', 'id_usuario'],
   ['usuarios.txt', 'actualizado_por_usuario', 'usuarios.txt', 'id_usuario'],
 ];
@@ -405,6 +405,7 @@ for (const category of readTable('categorias.txt').rows) {
 }
 
 for (const user of readTable('usuarios.txt').rows) {
+  if (!user.id_almacen_defecto) continue;
   assert(
     warehouseById.get(user.id_almacen_defecto)?.id_empresa === user.id_empresa,
     `User ${user.id_usuario}: default warehouse belongs to another company.`,

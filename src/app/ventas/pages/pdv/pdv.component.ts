@@ -393,7 +393,7 @@ import { warehouseSummary } from '../../services/inventory.service';
               <span>-\${{ totals.discount | number:'1.2-2' }}</span>
             </div>
             <div class="total-item">
-              <span>IVA (16%):</span>
+              <span>IVA incluido:</span>
               <span>\${{ totals.tax | number:'1.2-2' }}</span>
             </div>
             <div class="divider-thin"></div>
@@ -497,11 +497,19 @@ import { warehouseSummary } from '../../services/inventory.service';
     </div>
   `,
   styles: [`
+    :host {
+      display: block;
+      width: 100%;
+      min-width: 0;
+    }
+
     .pdv-layout {
       display: grid;
       grid-template-columns: 2.2fr 1fr;
       gap: 24px;
       height: calc(100vh - var(--navbar-height) - 48px);
+      width: 100%;
+      min-width: 0;
     }
 
     .pdv-main {
@@ -509,6 +517,8 @@ import { warehouseSummary } from '../../services/inventory.service';
       flex-direction: column;
       gap: 20px;
       overflow-y: auto;
+      min-width: 0;
+      min-height: 0;
     }
 
     /* Station Header */
@@ -744,6 +754,252 @@ import { warehouseSummary } from '../../services/inventory.service';
       flex-direction: column;
       gap: 20px;
       overflow-y: auto;
+      min-width: 0;
+    }
+
+    .table-scroll-wrapper {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      overscroll-behavior-inline: contain;
+    }
+
+    .cart-section {
+      display: flex;
+      flex: 1 1 auto;
+      min-height: 0;
+      flex-direction: column;
+    }
+
+    .cart-section .table-scroll-wrapper {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    .pdv-table {
+      min-width: 920px;
+    }
+
+    /* El desplazamiento permanece disponible, pero su barra no es visible. */
+    .pdv-main,
+    .pdv-sidebar,
+    .table-scroll-wrapper,
+    .client-dropdown-overlay {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .pdv-main::-webkit-scrollbar,
+    .pdv-sidebar::-webkit-scrollbar,
+    .table-scroll-wrapper::-webkit-scrollbar,
+    .client-dropdown-overlay::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    /* Vista de caja: todos los controles esenciales caben en un viewport de escritorio. */
+    @media (min-width: 1181px) {
+      .pdv-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(330px, 370px);
+        gap: 12px;
+      }
+
+      .pdv-main,
+      .pdv-sidebar {
+        gap: 10px;
+      }
+
+      .station-header {
+        padding: 7px 12px !important;
+        gap: 7px;
+      }
+
+      .station-meta {
+        gap: 6px;
+      }
+
+      .station-badge {
+        padding: 3px 7px;
+        font-size: 0.7rem;
+      }
+
+      .mode-btn {
+        padding: 5px 9px;
+        font-size: 0.72rem;
+      }
+
+      .station-status {
+        font-size: 0.72rem;
+      }
+
+      .search-section,
+      .cart-section {
+        padding: 10px 12px !important;
+      }
+
+      .cart-header-row {
+        margin-bottom: 7px;
+      }
+
+      .cart-header-title h3 {
+        font-size: 0.92rem;
+      }
+
+      .cart-header-actions {
+        gap: 5px;
+      }
+
+      .cart-header-actions .btn-premium {
+        min-height: 32px;
+        padding: 5px 8px;
+        font-size: 0.75rem;
+      }
+
+      .pdv-table {
+        min-width: 760px;
+      }
+
+      .pdv-table th,
+      .pdv-table td {
+        height: auto;
+        padding: 7px 8px !important;
+        font-size: 0.75rem;
+      }
+
+      .prod-stock {
+        max-width: 300px;
+        font-size: 0.62rem;
+      }
+
+      .quantity-picker button,
+      .quantity-picker input {
+        height: 28px;
+      }
+
+      .quantity-picker button {
+        width: 28px;
+      }
+
+      .quantity-picker input {
+        width: 38px;
+      }
+
+      .sidebar-section {
+        gap: 7px;
+        padding: 9px 11px !important;
+      }
+
+      .sidebar-section h3,
+      .section-title-row h3 {
+        font-size: 0.82rem;
+      }
+
+      .client-search-input {
+        height: 34px;
+        font-size: 0.76rem;
+      }
+
+      .client-details-card {
+        gap: 3px;
+        padding: 7px 9px;
+        font-size: 0.7rem;
+      }
+
+      .payment-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 4px;
+      }
+
+      .payment-btn {
+        gap: 3px;
+        min-width: 0;
+        padding: 6px 2px;
+      }
+
+      .payment-btn i {
+        font-size: 0.9rem;
+      }
+
+      .payment-btn span {
+        max-width: 100%;
+        overflow: hidden;
+        font-size: 0.63rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .dynamic-payment-form {
+        margin-top: 3px;
+        padding: 7px 9px;
+      }
+
+      .payment-form-group {
+        gap: 5px;
+      }
+
+      .payment-form-group label,
+      .warning-text {
+        font-size: 0.68rem;
+      }
+
+      .form-control,
+      .money-input {
+        min-height: 32px;
+      }
+
+      .input-money-wrap .money-input {
+        height: 34px;
+        font-size: 0.9rem;
+      }
+
+      .change-display {
+        padding: 6px 9px;
+      }
+
+      .summary-totals .totals-list {
+        gap: 4px;
+      }
+
+      .summary-totals .total-item {
+        font-size: 0.76rem;
+      }
+
+      .summary-totals .grand-total {
+        font-size: 0.96rem;
+      }
+
+      .checkout-btn {
+        flex: 0 0 42px;
+        height: 42px;
+        font-size: 0.85rem;
+      }
+    }
+
+    @media (min-width: 1181px) and (max-height: 760px) {
+      .pdv-layout {
+        gap: 8px;
+      }
+
+      .pdv-main,
+      .pdv-sidebar {
+        gap: 6px;
+      }
+
+      .station-header {
+        padding-block: 5px !important;
+      }
+
+      .search-section,
+      .cart-section,
+      .sidebar-section {
+        padding-block: 7px !important;
+      }
+
+      .empty-cart-state {
+        height: 150px;
+      }
     }
 
     .sidebar-section {
@@ -1102,6 +1358,117 @@ import { warehouseSummary } from '../../services/inventory.service';
       font-size: 0.85rem;
 
       &:last-child { border-bottom: none; }
+    }
+
+    @media (max-width: 1180px) {
+      .pdv-layout {
+        grid-template-columns: minmax(0, 1fr);
+        height: auto;
+      }
+
+      .pdv-main,
+      .pdv-sidebar {
+        overflow: visible;
+      }
+
+      .pdv-sidebar {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+      }
+
+      .pdv-sidebar > .summary-totals,
+      .pdv-sidebar > .checkout-btn,
+      .pdv-sidebar > .quote-info-card {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .pdv-layout,
+      .pdv-main,
+      .pdv-sidebar {
+        gap: 14px;
+      }
+
+      .pdv-sidebar {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .station-header,
+      .cart-header-row {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .station-meta {
+        flex-wrap: wrap;
+      }
+
+      .op-mode-toggle,
+      .mode-btn {
+        flex: 1;
+        justify-content: center;
+      }
+
+      .cart-header-title {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .cart-header-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+      }
+
+      .cart-header-actions .btn-premium {
+        justify-content: center;
+        min-width: 0;
+      }
+
+      .sidebar-section {
+        padding: 14px !important;
+      }
+
+      .payment-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .form-row-2col {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .checkout-btn {
+        position: sticky;
+        bottom: 10px;
+        z-index: 20;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      }
+
+      .empty-cart-state {
+        height: 190px;
+        padding: 0 18px;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .station-badge {
+        flex: 1 1 100%;
+      }
+
+      .cart-header-actions {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .payment-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .section-title-row {
+        align-items: flex-start;
+        gap: 8px;
+      }
     }
   `]
 })

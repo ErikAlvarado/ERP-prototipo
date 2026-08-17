@@ -9,7 +9,7 @@ import { jsPDF } from 'jspdf';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="modal-backdrop" (click)="close()">
+    <div class="modal-backdrop">
       <div class="ticket-modal-card" (click)="$event.stopPropagation()">
         <!-- Modal Header -->
         <div class="ticket-header">
@@ -106,7 +106,7 @@ import { jsPDF } from 'jspdf';
                 <span>-\${{ sale.discount | number:'1.2-2' }}</span>
               </div>
               <div class="total-row">
-                <span>IVA (16%):</span>
+                <span>IVA incluido:</span>
                 <span>\${{ sale.tax | number:'1.2-2' }}</span>
               </div>
               <div class="divider-thin"></div>
@@ -706,7 +706,7 @@ export function buildTicketPdfLines(sale: Venta): TicketPdfLine[] {
   if (sale.discount > 0) {
     add('DESCUENTO APLICADO: ', `-${money(sale.discount)}`, { align: 'right' });
   }
-  add('IVA (16%): ', money(sale.tax), { align: 'right' });
+  add('IVA INCLUIDO: ', money(sale.tax), { align: 'right' });
   add('TOTAL: ', `${money(sale.total)} MXN`, {
     align: 'right',
     bold: true,

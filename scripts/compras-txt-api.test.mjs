@@ -113,6 +113,71 @@ test('persiste proveedor, estado y relaciones en los TXT', async t => {
   await validateComprasTxt({ dbRoot: root, requireCoverage: false });
 });
 
+test('persiste tablas de Ventas en ventas_bd de forma atomica', async t => {
+  const { directory, root } = await fixture();
+  const server = createComprasTxtServer({ dbRoot: root });
+  const endpoint = (await listen(server)).replace('/api/compras-txt', '/api/ventas-txt');
+  t.after(async () => {
+    await new Promise(resolvePromise => server.close(resolvePromise));
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  const sales = await table(root, 'ventas_bd/ventas.txt');
+  const details = await table(root, 'ventas_bd/ventas_detalle.txt');
+  const payments = await table(root, 'ventas_bd/pagos_venta.txt');
+  const saleId = nextId(sales, 'id_venta');
+  sales.push({
+    ...sales[0], id_venta: String(saleId), folio: `TEST-${saleId}`,
+  });
+  details.push({
+    ...details[0], id_detalle_venta: String(nextId(details, 'id_detalle_venta')),
+    id_venta: String(saleId),
+  });
+  payments.push({
+    ...payments[0], id_pago_venta: String(nextId(payments, 'id_pago_venta')),
+    id_venta: String(saleId),
+  });
+
+  await request(`${endpoint}/tablas`, 'PUT', {
+    tables: { ventas: sales, detallesVenta: details, pagosVenta: payments },
+  });
+  assert.equal((await table(root, 'ventas_bd/ventas.txt')).at(-1).folio, `TEST-${saleId}`);
+  assert.equal((await table(root, 'ventas_bd/ventas_detalle.txt')).at(-1).id_venta, String(saleId));
+  assert.equal((await table(root, 'ventas_bd/pagos_venta.txt')).at(-1).id_venta, String(saleId));
+});
+
+test('persiste almacenes en inventari_db mediante la API de Inventario', async t => {
+  const { directory, root } = await fixture();
+  const server = createComprasTxtServer({ dbRoot: root });
+  const endpoint = (await listen(server)).replace('/api/compras-txt', '/api/inventario-txt');
+  t.after(async () => {
+    await new Promise(resolvePromise => server.close(resolvePromise));
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  const warehouses = await table(root, 'inventari_db/almacenes.txt');
+  const users = await table(root, 'inventari_db/usuarios.txt');
+  const warehouseId = nextId(warehouses, 'id_almacen');
+  warehouses.push({
+    ...warehouses[0],
+    id_almacen: String(warehouseId),
+    nombre_almacen: 'Almacén persistente',
+    direccion: 'Calle TXT 123',
+    es_principal: '0',
+    fecha_creacion: '2026-08-17',
+    fecha_actualizacion: '2026-08-17',
+  });
+  users[0] = { ...users[0], id_almacen_defecto: '' };
+
+  await request(`${endpoint}/tablas`, 'PUT', { tables: { almacenes: warehouses, usuarios: users } });
+
+  const savedWarehouse = (await table(root, 'inventari_db/almacenes.txt'))
+    .find(row => Number(row.id_almacen) === warehouseId);
+  assert.equal(savedWarehouse?.nombre_almacen, 'Almacén persistente');
+  assert.equal(savedWarehouse?.direccion, 'Calle TXT 123');
+  assert.equal((await table(root, 'inventari_db/usuarios.txt'))[0].id_almacen_defecto, '');
+});
+
 test('alta completa escribe producto, precio, inventario, Kardex y proveedor', async t => {
   const { directory, root } = await fixture();
   const server = createComprasTxtServer({ dbRoot: root });

@@ -10,5 +10,11 @@
     "secure": false,
     "changeOrigin": false,
     "logLevel": "warn"
+  },
+  "/api/ventas-txt": {
+    "target": "http://127.0.0.1:4311",
+    "secure": false,
+    "changeOrigin": false,
+    "logLevel": "warn"
   }
 }
