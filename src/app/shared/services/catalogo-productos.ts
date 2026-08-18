@@ -1,8 +1,9 @@
 import { Injectable, Optional } from '@angular/core';
-import { forkJoin, map, Observable, Subject } from 'rxjs';
+import { firstValueFrom, forkJoin, map, Observable, Subject } from 'rxjs';
 import { PersistenciaInventarioTxt } from './persistencia-inventario-txt';
 import { PersistenciaLocal } from './persistencia-local';
 import { DatosDb } from './datos-db';
+import { GuardarProductoApi, ProductosApi } from './productos-api';
 
 export interface OpcionProducto {
   id: number;
@@ -200,6 +201,7 @@ export class CatalogoProductos {
     private db: DatosDb,
     private local: PersistenciaLocal,
     @Optional() private persistencia?: PersistenciaInventarioTxt,
+    private productosApi?: ProductosApi,
   ) {}
 
   cargar(): Observable<ProductoCatalogo[]> {
@@ -309,10 +311,45 @@ export class CatalogoProductos {
         url_imagen: url, es_principal: indice === 0 ? '1' : '0', orden: indice + 1,
       }))),
     };
-    const guardado = this.persistencia?.reemplazarVarias(tablas);
+    const guardarProductosApi = this.sincronizarProductosApi(productos);
+    const { productos: _productosTxt, ...tablasRelacionadas } = tablas;
+    const guardadoTxt = this.persistencia?.reemplazarVarias(tablasRelacionadas);
+    const guardado = Promise.all([guardarProductosApi, guardadoTxt || Promise.resolve()]).then(() => undefined);
     if (guardado) void guardado.then(() => this.local.eliminar(this.claveCambios)).catch(() => undefined);
     this.cambiosInternos.next();
     return guardado || Promise.resolve();
+  }
+
+  private async sincronizarProductosApi(productos: ProductoCatalogo[]): Promise<void> {
+    if (!this.productosApi) return;
+    const actuales = new Map(productos.map(producto => [producto.id, producto]));
+    const operaciones: Promise<unknown>[] = [];
+    for (const producto of productos) {
+      const origen = this.origenPorId.get(producto.id);
+      const body = this.aProductoApi(producto);
+      if (!origen) operaciones.push(firstValueFrom(this.productosApi.crear(body)));
+      else if (JSON.stringify(this.aProductoApi(origen)) !== JSON.stringify(body)) {
+        operaciones.push(firstValueFrom(this.productosApi.actualizar(producto.id, body)));
+      }
+    }
+    for (const id of this.origenPorId.keys()) {
+      if (!actuales.has(id)) operaciones.push(firstValueFrom(this.productosApi.desactivar(id)));
+    }
+    await Promise.all(operaciones);
+    this.origenPorId = new Map(productos.map(producto => [producto.id, { ...producto }]));
+  }
+
+  private aProductoApi(producto: ProductoCatalogo): GuardarProductoApi {
+    return {
+      companyId: producto.idEmpresa, sku: producto.sku, barcode: producto.codigo || null,
+      name: producto.producto, type: producto.tipo, description: producto.descripcion || null,
+      brandId: producto.idMarca || null, categoryId: producto.idCategoria || null,
+      unitId: producto.idUnidad, status: producto.estatus,
+      defaultLocation: producto.ubicacionDefault === '—' ? null : producto.ubicacionDefault,
+      pointOfSale: producto.pos, onlineCatalog: producto.linea,
+      requiresPrescription: producto.requiereReceta, trackInventory: producto.usarExistencias,
+      satCode: producto.claveSat === '—' ? null : producto.claveSat,
+    };
   }
 
   actualizarResumenPrecio(producto: ProductoCatalogo, fecha = this.hoy()): ProductoCatalogo {
@@ -336,7 +373,7 @@ export class CatalogoProductos {
 
   private cargarArchivos(): Observable<DatosRelacionados> {
     return forkJoin({
-      productos: this.leer<ProductoDb>('productos.txt', true),
+      productos: this.productosDesdeApi(),
       empresas: this.leer<EmpresaDb>('empresas.txt'),
       categorias: this.leer<CategoriaDb>('categorias.txt'),
       unidades: this.leer<UnidadDb>('unidades.txt'),
@@ -349,6 +386,21 @@ export class CatalogoProductos {
       imagenes: this.leer<ImagenDb>('producto_imagenes.txt'),
       kardex: this.leer<MovimientoDb>('kardex_inventario.txt'),
     });
+  }
+
+  private productosDesdeApi(): Observable<ProductoDb[]> {
+    if (!this.productosApi) return this.leer<ProductoDb>('productos.txt', true);
+    return this.productosApi.listarTodos().pipe(map(page => page.items.map(producto => ({
+      id_producto: String(producto.id), id_empresa: String(producto.companyId), sku: producto.sku,
+      codigo_barras: producto.barcode || '', nombre_producto: producto.name, tipo: producto.type,
+      descripcion: producto.description || '', id_marca: producto.brandId == null ? '' : String(producto.brandId),
+      id_categoria: producto.categoryId == null ? '' : String(producto.categoryId), id_unidad: String(producto.unitId),
+      estatus: producto.status, ubicacion_default: producto.defaultLocation || '',
+      en_punto_venta: producto.pointOfSale ? '1' : '0', en_catalogo_linea: producto.onlineCatalog ? '1' : '0',
+      requiere_receta: producto.requiresPrescription ? '1' : '0', usar_existencias: producto.trackInventory ? '1' : '0',
+      clave_sat: producto.satCode || '', fecha_creacion: producto.createdAt,
+      fecha_actualizacion: producto.updatedAt || '',
+    }))));
   }
 
   private registrarOrigen(productosOrigen: ProductoCatalogo[]): ProductoCatalogo[] {

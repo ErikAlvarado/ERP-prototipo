@@ -7,6 +7,11 @@ export const administracionRoutes: Routes = [
             import('./almacenes/almacenes').then(c => c.Almacenes)
     },
     {
+        path: 'cajas',
+        loadComponent: () =>
+            import('./cajas/cajas').then(c => c.Cajas)
+    },
+    {
         path: 'usuarios',
         loadComponent: () =>
             import('./usuarios/usuarios').then(c => c.Usuarios)

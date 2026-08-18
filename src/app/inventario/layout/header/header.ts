@@ -58,6 +58,7 @@ export class Header {
 
     // Administración
     '/almacenes': 'Administración / Almacenes',
+    '/cajas': 'Administración / Cajas',
     '/usuarios': 'Administración / Usuarios',
     '/roles': 'Administración / Roles',
     '/empresas': 'Administración / Empresas',

@@ -1,0 +1,49 @@
+<div class="content-header">
+  <div>
+    <h1>Lista de Cajas</h1>
+  </div>
+  <button mat-raised-button color="primary" [disabled]="guardando" (click)="abrirDialogo()"><mat-icon>add</mat-icon>Agregar caja</button>
+</div>
+
+<div class="content-search">
+  <div class="custom-search"><mat-icon>search</mat-icon><input matInput [(ngModel)]="currentSearch" (input)="applyFilter()" placeholder="Buscar por código, empresa o almacén"></div>
+  <div class="custom-filters">
+    <button mat-stroked-button class="filter-btn" (click)="abrirFiltros()">
+      <mat-icon>tune</mat-icon>Filtros@if (filtrosActivos) { <span class="filter-count">{{ filtrosActivos }}</span> }
+    </button>
+    <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="sortMenu">
+      <mat-icon>sort</mat-icon>{{ currentSort }}
+    </button>
+    <mat-menu #sortMenu="matMenu">
+      <button mat-menu-item (click)="setSort('Más antiguos')">Más antiguos</button>
+      <button mat-menu-item (click)="setSort('Más recientes')">Más recientes</button>
+      <button mat-menu-item (click)="setSort('Código A - Z')">Código A - Z</button>
+      <button mat-menu-item (click)="setSort('Código Z - A')">Código Z - A</button>
+    </mat-menu>
+  </div>
+</div>
+
+<div class="desktop-view table-responsive">
+  <table mat-table [dataSource]="dataSource">
+    <ng-container matColumnDef="codigo"><th mat-header-cell *matHeaderCellDef>Código</th><td mat-cell *matCellDef="let e"><strong>{{ e.codigo }}</strong></td></ng-container>
+    <ng-container matColumnDef="empresa"><th mat-header-cell *matHeaderCellDef>Empresa</th><td mat-cell *matCellDef="let e">{{ nombreEmpresa(e.empresaId) }}</td></ng-container>
+    <ng-container matColumnDef="almacen"><th mat-header-cell *matHeaderCellDef>Almacén</th><td mat-cell *matCellDef="let e">{{ nombreAlmacen(e.almacenId) }}</td></ng-container>
+    <ng-container matColumnDef="estado"><th mat-header-cell *matHeaderCellDef>Estado</th><td mat-cell *matCellDef="let e"><app-status [active]="e.activa"></app-status></td></ng-container>
+    <ng-container matColumnDef="acciones"><th mat-header-cell *matHeaderCellDef>Acciones</th><td mat-cell *matCellDef="let e" class="actions-cell"><button mat-icon-button color="primary" matTooltip="Editar" [disabled]="guardando" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" matTooltip="Desactivar" [disabled]="!e.activa || guardando" (click)="desactivar(e)"><mat-icon>block</mat-icon></button></td></ng-container>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    <tr class="mat-row empty-row" *matNoDataRow><td class="mat-cell" [attr.colspan]="displayedColumns.length">No hay cajas que coincidan con la búsqueda.</td></tr>
+  </table>
+</div>
+
+<div class="cards-container">
+  @for (e of obs | async; track e.id) {
+    <article class="entity-card">
+      <div class="card-header"><div><h3>{{ e.codigo }}</h3><span class="card-subtitle">ID {{ e.id }}</span></div><app-status [active]="e.activa"></app-status></div>
+      <div class="card-body"><span><strong>Empresa:</strong> {{ nombreEmpresa(e.empresaId) }}</span><span><strong>Almacén:</strong> {{ nombreAlmacen(e.almacenId) }}</span><span><strong>Actualizada:</strong> {{ e.fechaActualizacion }}</span></div>
+      <div class="card-actions"><button mat-icon-button color="primary" aria-label="Editar caja" [disabled]="guardando" (click)="editar(e)"><mat-icon>edit</mat-icon></button><button mat-icon-button color="warn" aria-label="Desactivar caja" [disabled]="!e.activa || guardando" (click)="desactivar(e)"><mat-icon>block</mat-icon></button></div>
+    </article>
+  } @empty { <div class="entity-card">No hay cajas que coincidan con la búsqueda.</div> }
+</div>
+
+<div class="paginator-container"><mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 50]" showFirstLastButtons></mat-paginator></div>

@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "node scripts/serve-erp.mjs",
     "start:angular": "ng serve",
+    "start:productos-api": "dotnet run --project ../Backend/MS.csproj --launch-profile MS",
     "data:serve": "node scripts/compras-txt-api.mjs",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",

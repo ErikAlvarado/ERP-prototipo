@@ -1,3 +1,3 @@
 id_detalle_corte|id_corte|id_metodo_pago|monto_esperado|monto_real|diferencia
 1|1|5|281.40|281.40|0.00
-2|1|3|8700.00|8700.00|0.00
+2|1|7|8700.00|8700.00|0.00

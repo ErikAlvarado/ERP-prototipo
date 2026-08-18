@@ -59,4 +59,15 @@ export interface Venta {
   cashier: string;
   numProducts: number;
   observation: string;
+  receipt?: {
+    companyName: string;
+    companyRfc: string;
+    companyPhone: string;
+    warehouseName: string;
+    warehouseAddress: string;
+    cashRegister: string;
+    shift: string;
+    employeeId: string;
+    cashierName: string;
+  };
 }

@@ -1,0 +1,10 @@
+<h2 mat-dialog-title>{{ data.mode === 'add' ? 'Agregar caja' : 'Actualizar caja' }}</h2>
+<mat-dialog-content>
+  <div class="formulario">
+    <mat-form-field appearance="outline"><mat-label>Empresa</mat-label><mat-select [(ngModel)]="caja.empresaId" (selectionChange)="cambiarEmpresa()" required [disabled]="data.mode === 'edit'">@for (empresa of data.empresas; track empresa.id) { <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option> }</mat-select></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Almacén</mat-label><mat-select [(ngModel)]="caja.almacenId" required>@for (almacen of almacenesEmpresa; track almacen.id) { <mat-option [value]="almacen.id">{{ almacen.nombre }}</mat-option> }</mat-select>@if (!almacenesEmpresa.length) { <mat-hint>La empresa no tiene almacenes activos</mat-hint> }</mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Código</mat-label><input matInput [(ngModel)]="caja.codigo" required maxlength="30" placeholder="CAJA-01">@if (codigoDuplicado) { <mat-error>Ya existe una caja con este código en la empresa</mat-error> }</mat-form-field>
+    <mat-checkbox class="full-width" [(ngModel)]="caja.activa">Caja activa</mat-checkbox>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end"><button mat-raised-button mat-dialog-close>Cancelar</button><button mat-raised-button color="primary" [disabled]="!puedeGuardar" (click)="guardar()">{{ data.mode === 'add' ? 'Guardar' : 'Actualizar' }}</button></mat-dialog-actions>

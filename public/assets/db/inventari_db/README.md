@@ -30,3 +30,17 @@ claves y relaciones.
 El contrato propuesto para un backend real está en
 `docs/anaqueles-api.openapi.yaml` y el modelo PostgreSQL de referencia en
 `docs/anaqueles-postgresql.sql`.
+
+## PostgreSQL
+
+`inventari_db_postgresql.sql` crea las 23 tablas con la convención solicitada:
+tablas `"inv-nombre"` y columnas `"ZYRO_nombre_#2045_NN"`. Incluye claves
+primarias, relaciones y restricciones derivadas de los TXT actuales.
+
+```powershell
+createdb zyro
+psql -d zyro -f inventari_db_postgresql.sql
+```
+
+Puede regenerarse después de modificar los encabezados TXT mediante
+`node scripts/generate-inv-postgresql.mjs` desde la raíz del proyecto.

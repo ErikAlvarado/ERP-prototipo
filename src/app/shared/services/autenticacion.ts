@@ -178,7 +178,7 @@ export class Autenticacion {
     if (this.esAdministrador()) return true;
     if (url.startsWith('/compras')) return this.puedeVerCompras();
     if (url.startsWith('/ventas')) return this.puedeVerVentas();
-    if (['/usuarios', '/roles', '/empresas', '/almacenes'].some(ruta => url.startsWith(ruta))) {
+    if (['/usuarios', '/roles', '/empresas', '/almacenes', '/cajas'].some(ruta => url.startsWith(ruta))) {
       return false;
     }
     if (!this.puedeVerInventario()) return false;
