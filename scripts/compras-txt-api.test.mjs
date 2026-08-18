@@ -125,6 +125,7 @@ test('persiste tablas de Ventas en ventas_bd de forma atomica', async t => {
   const sales = await table(root, 'ventas_bd/ventas.txt');
   const details = await table(root, 'ventas_bd/ventas_detalle.txt');
   const payments = await table(root, 'ventas_bd/pagos_venta.txt');
+  const registers = await table(root, 'ventas_bd/cajas.txt');
   const saleId = nextId(sales, 'id_venta');
   sales.push({
     ...sales[0], id_venta: String(saleId), folio: `TEST-${saleId}`,
@@ -137,10 +138,15 @@ test('persiste tablas de Ventas en ventas_bd de forma atomica', async t => {
     ...payments[0], id_pago_venta: String(nextId(payments, 'id_pago_venta')),
     id_venta: String(saleId),
   });
+  const registerId = nextId(registers, 'id_caja');
+  registers.push({
+    ...registers[0], id_caja: String(registerId), codigo: 'CAJA-TEST', nombre: 'Caja de prueba',
+  });
 
   await request(`${endpoint}/tablas`, 'PUT', {
-    tables: { ventas: sales, detallesVenta: details, pagosVenta: payments },
+    tables: { cajas: registers, ventas: sales, detallesVenta: details, pagosVenta: payments },
   });
+  assert.equal((await table(root, 'ventas_bd/cajas.txt')).at(-1).codigo, 'CAJA-TEST');
   assert.equal((await table(root, 'ventas_bd/ventas.txt')).at(-1).folio, `TEST-${saleId}`);
   assert.equal((await table(root, 'ventas_bd/ventas_detalle.txt')).at(-1).id_venta, String(saleId));
   assert.equal((await table(root, 'ventas_bd/pagos_venta.txt')).at(-1).id_venta, String(saleId));

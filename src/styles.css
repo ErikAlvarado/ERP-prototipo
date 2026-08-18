@@ -123,3 +123,15 @@ body {
 .mat-icon {
   font-family: 'Material Symbols Outlined' !important;
 }
+/* El dialogo de terminal ya incluye su propio icono de pago. */
+.payment-dialog-panel [mat-dialog-title]::after {
+  display: none !important;
+  content: none !important;
+}
+
+.payment-dialog-panel .dialog-heading [mat-dialog-title] {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}

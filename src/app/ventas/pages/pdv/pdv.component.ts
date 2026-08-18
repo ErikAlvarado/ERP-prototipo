@@ -1,8 +1,9 @@
-import { Component, OnInit, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, ElementRef, HostListener, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDialog } from '@angular/material/dialog';
 import { VentaService } from '../../services/venta.service';
 import { ClienteService } from '../../services/cliente.service';
 import { CotizacionService } from '../../services/cotizacion.service';
@@ -16,6 +17,7 @@ import { SearchbarComponent } from '../../components/searchbar/searchbar.compone
 import { TicketComponent } from '../../components/ticket/ticket.component';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { warehouseSummary } from '../../services/inventory.service';
+import { PaymentDialogComponent } from '../../components/payment-dialog/payment-dialog.component';
 
 @Component({
   selector: 'app-pdv',
@@ -29,7 +31,7 @@ import { warehouseSummary } from '../../services/inventory.service';
         <div class="station-header card-premium">
           <div class="station-meta">
             <span class="station-badge"><i class="fa-solid fa-desktop"></i> CAJA 01</span>
-            <span class="station-badge"><i class="fa-solid fa-business-time"></i> TURNO MATUTINO</span>
+            <span class="station-badge"><i class="fa-solid fa-business-time"></i> TURNO {{ currentShiftName | uppercase }}</span>
             <span class="station-badge"><i class="fa-solid fa-user"></i> CAJERO: {{ activeUser.name }}</span>
           </div>
 
@@ -256,8 +258,13 @@ import { warehouseSummary } from '../../services/inventory.service';
                   />
                 </div>
               </div>
-              
-              <div class="change-display" [class.has-enough]="calculatedChange >= 0" [class.not-enough]="cashReceived !== null && calculatedChange < 0">
+              <div class="cash-shortcuts" aria-label="Cantidades rápidas de efectivo">
+                <button type="button" *ngFor="let amount of cashQuickAmounts" (click)="setCashReceived(amount)">
+                  \${{ amount | number:'1.0-0' }}
+                </button>
+            </div>
+
+            <div class="change-display" [class.has-enough]="calculatedChange >= 0" [class.not-enough]="cashReceived !== null && calculatedChange < 0">
                 <span class="change-label">Cambio Calculado:</span>
                 <span class="change-val font-bold">
                   \${{ (calculatedChange >= 0 ? calculatedChange : 0) | number:'1.2-2' }}
@@ -268,104 +275,6 @@ import { warehouseSummary } from '../../services/inventory.service';
               </p>
             </div>
 
-            <!-- 2. Tarjeta (Card) -->
-            <div *ngIf="selectedPayment === 'Tarjeta'" class="payment-form-group">
-              <div class="form-row-2col">
-                <div class="form-subcol">
-                  <label>Titular de la Tarjeta:</label>
-                  <input matInput type="text" class="form-control" [(ngModel)]="cardHolderName" placeholder="Nombre como en la tarjeta" />
-                </div>
-                <div class="form-subcol">
-                  <label>Últimos 4 Dígitos:</label>
-                  <input matInput type="text" class="form-control" [(ngModel)]="cardLast4" maxlength="4" placeholder="1234" />
-                </div>
-              </div>
-              <div class="form-row-2col">
-                <div class="form-subcol">
-                  <label>Banco Emisor:</label>
-                  <mat-select class="form-control" [(ngModel)]="cardBank">
-                    <mat-option value="BBVA">BBVA</mat-option>
-                    <mat-option value="Santander">Santander</mat-option>
-                    <mat-option value="Banamex">Citibanamex</mat-option>
-                    <mat-option value="Banorte">Banorte</mat-option>
-                    <mat-option value="HSBC">HSBC</mat-option>
-                    <mat-option value="Otro">Otro Banco</mat-option>
-                  </mat-select>
-                </div>
-                <div class="form-subcol">
-                  <label>Tipo de Tarjeta:</label>
-                  <mat-select class="form-control" [(ngModel)]="cardType">
-                    <mat-option value="Débito">Débito</mat-option>
-                    <mat-option value="Crédito">Crédito</mat-option>
-                  </mat-select>
-                </div>
-              </div>
-              <div class="form-row">
-                <label>Número de Autorización (Simulado):</label>
-                <input matInput type="text" class="form-control font-mono" [(ngModel)]="authorizationCode" placeholder="Ej. AUTH-882710" />
-              </div>
-            </div>
-
-            <!-- 3. Transferencia (Transfer) -->
-            <div *ngIf="selectedPayment === 'Transferencia'" class="payment-form-group">
-              <div class="form-row-2col">
-                <div class="form-subcol">
-                  <label>Banco Emisor:</label>
-                  <mat-select class="form-control" [(ngModel)]="transferBank">
-                    <mat-option value="BBVA">BBVA</mat-option>
-                    <mat-option value="Santander">Santander</mat-option>
-                    <mat-option value="Banamex">Citibanamex</mat-option>
-                    <mat-option value="Banorte">Banorte</mat-option>
-                    <mat-option value="SPEI / OTRO">SPEI / Otro</mat-option>
-                  </mat-select>
-                </div>
-                <div class="form-subcol">
-                  <label>Referencia:</label>
-                  <input matInput type="text" class="form-control" [(ngModel)]="transferReference" placeholder="Ej. REF-99201" />
-                </div>
-              </div>
-              <div class="form-row">
-                <label>Folio de Transferencia (Clave RASTREO SPEI):</label>
-                <input matInput type="text" class="form-control font-mono" [(ngModel)]="transferFolio" placeholder="Ej. 2026072440014782" />
-              </div>
-            </div>
-
-            <!-- 4. Vales (Vouchers) -->
-            <div *ngIf="selectedPayment === 'Vales'" class="payment-form-group">
-              <div class="form-row-2col">
-                <div class="form-subcol">
-                  <label>Empresa Emisora:</label>
-                  <mat-select class="form-control" [(ngModel)]="voucherCompany">
-                    <mat-option value="Edenred">Edenred</mat-option>
-                    <mat-option value="Sodexo">Sodexo</mat-option>
-                    <mat-option value="Up Sí Vale">Up Sí Vale</mat-option>
-                    <mat-option value="Toka">Toka</mat-option>
-                    <mat-option value="Otra">Otra Empresa</mat-option>
-                  </mat-select>
-                </div>
-                <div class="form-subcol">
-                  <label>Número de Vale / Folio:</label>
-                  <input matInput type="text" class="form-control" [(ngModel)]="voucherNumber" placeholder="Ej. V-772810" />
-                </div>
-              </div>
-            </div>
-
-            <!-- 5. Crédito (Credit) -->
-            <div *ngIf="selectedPayment === 'Crédito'" class="payment-form-group">
-              <div class="form-row">
-                <label>Días de Crédito Autorizados:</label>
-                <mat-select class="form-control" [(ngModel)]="creditDays">
-                  <mat-option [value]="15">15 Días</mat-option>
-                  <mat-option [value]="30">30 Días</mat-option>
-                  <mat-option [value]="60">60 Días</mat-option>
-                  <mat-option [value]="90">90 Días</mat-option>
-                </mat-select>
-              </div>
-              <div class="form-row">
-                <label>Observaciones de Crédito:</label>
-                <input matInput type="text" class="form-control" [(ngModel)]="creditNotes" placeholder="Ej. Autorizado por Gerencia" />
-              </div>
-            </div>
           </div>
         </div>
 
@@ -426,7 +335,7 @@ import { warehouseSummary } from '../../services/inventory.service';
 
       <!-- Sale / Quote Ticket Modal -->
       <app-ticket 
-        *ngIf="showTicket$ | async" 
+        *ngIf="showTicket() && ticketSaleData"
         [sale]="ticketSaleData" 
         (closeTicket)="closeTicket()"
       ></app-ticket>
@@ -1238,6 +1147,28 @@ import { warehouseSummary } from '../../services/inventory.service';
       }
     }
 
+    .cash-shortcuts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+
+      button {
+        min-height: 34px;
+        border: 1px solid var(--border-color);
+        border-radius: 7px;
+        color: var(--primary-color);
+        background: var(--panel-bg);
+        font: inherit;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: border-color .15s ease, background-color .15s ease, transform .15s ease;
+
+        &:hover { border-color: var(--primary-color); background: var(--info-light); }
+        &:active { transform: scale(.97); }
+      }
+    }
+
     .change-display {
       display: flex;
       justify-content: space-between;
@@ -1473,6 +1404,7 @@ import { warehouseSummary } from '../../services/inventory.service';
   `]
 })
 export class PdvComponent implements OnInit {
+  private readonly pendingTicketStorageKey = 'ventas.pendingTicket';
   currentUser$!: Observable<any>;
   
   cartItems: any[] = [];
@@ -1480,6 +1412,7 @@ export class PdvComponent implements OnInit {
   selectedClient!: Client;
   selectedPayment: PaymentMethod = 'Efectivo';
   operationType: 'Venta' | 'Cotización' = 'Venta';
+  currentShiftName = 'Cargando';
   isProcessing = false;
 
   // Searchable Client Dropdown State
@@ -1489,18 +1422,8 @@ export class PdvComponent implements OnInit {
 
   // Dynamic Payment Method State
   cashReceived: number | null = null;
-  cardHolderName = '';
-  cardLast4 = '';
-  cardBank = 'BBVA';
-  cardType: 'Débito' | 'Crédito' = 'Débito';
-  authorizationCode = '';
-  transferBank = 'BBVA';
-  transferReference = '';
-  transferFolio = '';
-  voucherCompany = 'Edenred';
-  voucherNumber = '';
-  creditDays = 30;
-  creditNotes = '';
+  readonly cashQuickAmounts = [20, 50, 100, 200, 500, 1000];
+  configuredPaymentDetails: PaymentDetails = {};
 
   // Modals state
   showAddClientModal = false;
@@ -1519,12 +1442,11 @@ export class PdvComponent implements OnInit {
     { id: 'Efectivo' as PaymentMethod, label: 'Efectivo', icon: 'fa-solid fa-money-bill-wave' },
     { id: 'Tarjeta' as PaymentMethod, label: 'Tarjeta', icon: 'fa-solid fa-credit-card' },
     { id: 'Transferencia' as PaymentMethod, label: 'Transferencia', icon: 'fa-solid fa-building-columns' },
-    { id: 'Vales' as PaymentMethod, label: 'Vales', icon: 'fa-solid fa-ticket' },
-    { id: 'Crédito' as PaymentMethod, label: 'Crédito', icon: 'fa-solid fa-calendar-plus' }
+    { id: 'Vales' as PaymentMethod, label: 'Vales', icon: 'fa-solid fa-ticket' }
   ];
 
   completedSale$!: Observable<any>;
-  showTicket$!: Observable<boolean>;
+  readonly showTicket = signal(false);
   ticketSaleData!: Venta;
 
   constructor(
@@ -1534,12 +1456,15 @@ export class PdvComponent implements OnInit {
     private authService: AuthService,
     private notificationService: NotificationService,
     private descuentoService: DescuentoService,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    private dialog: MatDialog,
   ) {}
 
   ngOnInit(): void {
     this.currentUser$ = this.authService.currentUser$;
     this.discountRules = this.descuentoService.DISCOUNT_RULES;
+    void this.cargarMetodosPago();
+    void this.cargarTurnoActual();
     
     this.ventaService.cartItems$.subscribe(items => {
       this.cartItems = items;
@@ -1560,8 +1485,34 @@ export class PdvComponent implements OnInit {
       }
     });
 
-    this.showTicket$ = this.ventaService.showTicket$;
     this.completedSale$ = this.ventaService.lastCompletedSale$;
+    this.completedSale$.subscribe((sale: Venta | null) => {
+      if (!sale) return;
+      this.openTicket(sale);
+    });
+
+    this.restorePendingTicket();
+  }
+
+  private openTicket(sale: Venta): void {
+    this.ticketSaleData = sale;
+    this.showTicket.set(true);
+    try {
+      sessionStorage.setItem(this.pendingTicketStorageKey, JSON.stringify(sale));
+    } catch {
+      // El ticket sigue visible aunque el navegador no permita sessionStorage.
+    }
+  }
+
+  private restorePendingTicket(): void {
+    try {
+      const savedTicket = sessionStorage.getItem(this.pendingTicketStorageKey);
+      if (!savedTicket) return;
+      this.ticketSaleData = JSON.parse(savedTicket) as Venta;
+      this.showTicket.set(true);
+    } catch {
+      sessionStorage.removeItem(this.pendingTicketStorageKey);
+    }
   }
 
   @HostListener('document:click', ['$event'])
@@ -1579,6 +1530,10 @@ export class PdvComponent implements OnInit {
   get calculatedChange(): number {
     if (this.cashReceived === null || this.cashReceived === undefined) return 0;
     return this.cashReceived - this.totals.total;
+  }
+
+  setCashReceived(amount: number): void {
+    this.cashReceived = amount;
   }
 
   setOperationType(type: 'Venta' | 'Cotización'): void {
@@ -1649,13 +1604,23 @@ export class PdvComponent implements OnInit {
   }
 
   onPaymentChange(method: PaymentMethod): void {
-    this.selectedPayment = method;
-    this.ventaService.setSelectedPayment(method);
-    
-    // Generate sample authorization code for card payment
-    if (method === 'Tarjeta' && !this.authorizationCode) {
-      this.authorizationCode = 'AUTH-' + Math.floor(100000 + Math.random() * 900000);
+    if (method === 'Efectivo') {
+      this.selectedPayment = method;
+      this.configuredPaymentDetails = {};
+      this.ventaService.setSelectedPayment(method);
+      return;
     }
+    if (method === 'Crédito') return;
+    this.dialog.open(PaymentDialogComponent, {
+      width: '650px', maxWidth: '96vw', panelClass: ['custom-dialog', 'payment-dialog-panel'],
+      disableClose: true,
+      data: { method, details: this.selectedPayment === method ? this.configuredPaymentDetails : undefined },
+    }).afterClosed().subscribe((details?: PaymentDetails) => {
+      if (!details) return;
+      this.configuredPaymentDetails = details;
+      this.selectedPayment = method;
+      this.ventaService.setSelectedPayment(method);
+    });
   }
 
   // Submission handling (Venta vs Cotización)
@@ -1681,29 +1646,16 @@ export class PdvComponent implements OnInit {
       }
     }
 
-    const paymentDetails: PaymentDetails = {
-      cashReceived: this.selectedPayment === 'Efectivo' ? (this.cashReceived || 0) : undefined,
-      changeGiven: this.selectedPayment === 'Efectivo' ? Math.max(0, this.calculatedChange) : undefined,
-      cardHolderName: this.selectedPayment === 'Tarjeta' ? (this.cardHolderName || 'Cliente de Mostrador') : undefined,
-      cardLast4: this.selectedPayment === 'Tarjeta' ? (this.cardLast4 || '4321') : undefined,
-      cardBank: this.selectedPayment === 'Tarjeta' ? this.cardBank : undefined,
-      cardType: this.selectedPayment === 'Tarjeta' ? this.cardType : undefined,
-      authorizationCode: this.selectedPayment === 'Tarjeta' ? this.authorizationCode : undefined,
-      transferBank: this.selectedPayment === 'Transferencia' ? this.transferBank : undefined,
-      transferReference: this.selectedPayment === 'Transferencia' ? (this.transferReference || 'REF-88910') : undefined,
-      transferFolio: this.selectedPayment === 'Transferencia' ? (this.transferFolio || 'SPEI-' + Math.floor(100000 + Math.random() * 900000)) : undefined,
-      voucherCompany: this.selectedPayment === 'Vales' ? this.voucherCompany : undefined,
-      voucherNumber: this.selectedPayment === 'Vales' ? (this.voucherNumber || 'VALE-' + Math.floor(10000 + Math.random() * 90000)) : undefined,
-      creditDays: this.selectedPayment === 'Crédito' ? this.creditDays : undefined,
-      creditNotes: this.selectedPayment === 'Crédito' ? this.creditNotes : undefined
-    };
+    const paymentDetails: PaymentDetails = this.selectedPayment === 'Efectivo'
+      ? { cashReceived: this.cashReceived || 0, changeGiven: Math.max(0, this.calculatedChange) }
+      : { ...this.configuredPaymentDetails };
 
     this.isProcessing = true;
     setTimeout(() => {
       this.ventaService.checkout(cashierName, '', paymentDetails).subscribe({
         next: (sale) => {
           this.isProcessing = false;
-          this.ticketSaleData = sale;
+          this.openTicket(sale);
           this.resetPaymentForm();
         },
         error: (err) => {
@@ -1759,7 +1711,7 @@ export class PdvComponent implements OnInit {
 
         this.ventaService.clearCart();
         this.notificationService.success(`Cotización ${createdQuote.folio} registrada en el historial.`);
-        (this.ventaService as any).showTicketSubject.next(true);
+        this.showTicket.set(true);
       },
       error: () => {
         this.isProcessing = false;
@@ -1770,16 +1722,38 @@ export class PdvComponent implements OnInit {
 
   private resetPaymentForm(): void {
     this.cashReceived = null;
-    this.cardHolderName = '';
-    this.cardLast4 = '';
-    this.authorizationCode = '';
-    this.transferReference = '';
-    this.transferFolio = '';
-    this.voucherNumber = '';
-    this.creditNotes = '';
+    this.configuredPaymentDetails = {};
+  }
+
+  private async cargarMetodosPago(): Promise<void> {
+    try {
+      const available = await this.ventaService.getAvailablePaymentMethods();
+      const icons: Record<PaymentMethod, string> = {
+        Efectivo: 'fa-solid fa-money-bill-wave', Tarjeta: 'fa-solid fa-credit-card',
+        Transferencia: 'fa-solid fa-building-columns', Vales: 'fa-solid fa-ticket',
+        Crédito: 'fa-solid fa-calendar-plus',
+      };
+      this.paymentMethods = available.map(method => ({ id: method, label: method, icon: icons[method] }));
+      if (!available.includes(this.selectedPayment) && available.length) {
+        this.selectedPayment = available[0];
+        this.ventaService.setSelectedPayment(this.selectedPayment);
+      }
+    } catch {
+      this.notificationService.warning('No fue posible actualizar el catálogo de métodos de pago.');
+    }
+  }
+
+  private async cargarTurnoActual(): Promise<void> {
+    try {
+      this.currentShiftName = await this.ventaService.getCurrentShiftName();
+    } catch {
+      this.currentShiftName = 'Sin turno';
+    }
   }
 
   closeTicket(): void {
+    this.showTicket.set(false);
+    sessionStorage.removeItem(this.pendingTicketStorageKey);
     this.ventaService.closeTicket();
   }
 

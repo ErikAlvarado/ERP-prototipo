@@ -3,11 +3,11 @@ import { Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 export type TablaVentasTxt =
-  | 'clientesVenta' | 'ventas' | 'detallesVenta' | 'pagosVenta'
+  | 'cajas' | 'clientesVenta' | 'ventas' | 'detallesVenta' | 'pagosVenta'
   | 'devolucionesVenta' | 'detallesDevolucionVenta'
   | 'cortesCaja' | 'detallesCorteCaja'
   | 'cotizacionesVenta' | 'detallesCotizacionVenta'
-  | 'impuestos' | 'productosImpuestos' | 'monedas';
+  | 'impuestos' | 'productosImpuestos' | 'monedas' | 'metodosPagoVenta' | 'turnosVenta';
 
 @Injectable({ providedIn: 'root' })
 export class PersistenciaVentasTxt {
@@ -22,6 +22,19 @@ export class PersistenciaVentasTxt {
   async leer<T extends Record<string, string>>(archivo: string): Promise<T[]> {
     const texto = await firstValueFrom(this.http.get(
       `${this.rutaDatos}/${encodeURIComponent(archivo)}?v=${Date.now()}`,
+      { responseType: 'text' },
+    ));
+    const lineas = texto.replace(/^\uFEFF/, '').trim().split(/\r?\n/);
+    const columnas = (lineas.shift() || '').split('|');
+    return lineas.filter(Boolean).map(linea => {
+      const valores = linea.split('|');
+      return Object.fromEntries(columnas.map((columna, i) => [columna, valores[i] ?? ''])) as T;
+    });
+  }
+
+  async leerInventario<T extends Record<string, string>>(archivo: string): Promise<T[]> {
+    const texto = await firstValueFrom(this.http.get(
+      `/assets/db/inventari_db/${encodeURIComponent(archivo)}?v=${Date.now()}`,
       { responseType: 'text' },
     ));
     const lineas = texto.replace(/^\uFEFF/, '').trim().split(/\r?\n/);

@@ -1,8 +1,9 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Venta } from '../../models/venta.model';
 import { NotificationService } from '../../services/notification.service';
 import { jsPDF } from 'jspdf';
+import { PersistenciaVentasTxt } from '../../../shared/services/persistencia-ventas-txt';
 
 @Component({
   selector: 'app-ticket',
@@ -25,16 +26,16 @@ import { jsPDF } from 'jspdf';
           <div class="thermal-ticket">
             <!-- Brand & Company Info -->
             <div class="brand-section">
-              <h2 class="font-bold">ZYRO POS</h2>
-              <p class="company-sub">SISTEMA POS PROFESIONAL</p>
-              <p class="company-address">Av. Insurgentes Sur 1420, Col. Juárez, CDMX</p>
-              <p class="company-rfc">RFC: ZYR260101XYZ | Tel: (55) 5555-9900</p>
+              <h2 class="font-bold">{{ sale.receipt?.companyName || 'Empresa' }}</h2>
+              <p class="company-address">ALMACÉN: {{ sale.receipt?.warehouseName || 'Sin especificar' }}</p>
+              <p class="company-address" *ngIf="sale.receipt?.warehouseAddress">{{ sale.receipt?.warehouseAddress }}</p>
+              <p class="company-rfc">RFC: {{ sale.receipt?.companyRfc || '—' }} | Tel: {{ sale.receipt?.companyPhone || '—' }}</p>
             </div>
 
             <!-- Operation Type Banner -->
             <div class="divider-dashed"></div>
             <div class="op-type-banner text-center font-bold" [class.is-quote]="sale.operationType === 'Cotización'">
-              *** {{ sale.operationType === 'Cotización' ? 'COTIZACIÓN (NO FISCAL)' : 'TICKET DE VENTA' }} ***
+              *** {{ sale.operationType === 'Cotización' ? 'COTIZACIÓN (NO FISCAL)' : 'TICKET' }} ***
             </div>
 
             <!-- Metadata Section -->
@@ -42,7 +43,7 @@ import { jsPDF } from 'jspdf';
             <div class="meta-section">
               <div class="meta-row">
                 <span>FOLIO:</span>
-                <span class="font-bold">{{ sale.folio }}</span>
+                <span class="font-bold">{{ displayFolio }}</span>
               </div>
               <div class="meta-row">
                 <span>FECHA:</span>
@@ -50,19 +51,15 @@ import { jsPDF } from 'jspdf';
               </div>
               <div class="meta-row">
                 <span>CAJA / TURNO:</span>
-                <span>CAJA-01 (MATUTINO)</span>
+                <span>{{ sale.receipt?.cashRegister || 'CAJA-01' }} ({{ sale.receipt?.shift || 'MATUTINO' }})</span>
               </div>
               <div class="meta-row">
-                <span>EMPLEADO / CAJERO:</span>
-                <span>EMP-001 - {{ sale.cashier }}</span>
+                <span>EMPLEADO:</span>
+                <span>{{ sale.receipt?.employeeId || '—' }}</span>
               </div>
               <div class="meta-row">
-                <span>CLIENTE:</span>
-                <span class="font-semibold">{{ sale.client.name }}</span>
-              </div>
-              <div class="meta-row" *ngIf="sale.client.rfc && sale.client.rfc !== 'XAXX010101000'">
-                <span>RFC CLIENTE:</span>
-                <span>{{ sale.client.rfc }}</span>
+                <span>CAJERO:</span>
+                <span>{{ sale.receipt?.cashierName || sale.cashier }}</span>
               </div>
             </div>
 
@@ -201,14 +198,14 @@ import { jsPDF } from 'jspdf';
             <!-- Footer & Barcode/QR Visual Elements -->
             <div class="divider-dashed"></div>
             <div class="payment-footer">
-              <p class="thanks-msg">¡GRACIAS POR SU COMPRA EN ZYRO POS!</p>
+              <p class="thanks-msg">¡GRACIAS POR SU COMPRA EN {{ (sale.receipt?.companyName || 'LA EMPRESA') | uppercase }}!</p>
               
               <!-- Visual Barcode Simulation -->
               <div class="barcode-wrapper">
                 <div class="barcode-lines">
                   <span *ngFor="let width of barcodePattern" [style.width.px]="width" class="bar"></span>
                 </div>
-                <span class="barcode-text">{{ sale.folio }}</span>
+                <span class="barcode-text">{{ displayFolio }}</span>
               </div>
 
               <!-- Visual QR Code Simulation -->
@@ -247,6 +244,13 @@ import { jsPDF } from 'jspdf';
     </div>
   `,
   styles: [`
+    :host {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: block;
+    }
+
     .modal-backdrop {
       position: fixed;
       top: 0;
@@ -255,7 +259,7 @@ import { jsPDF } from 'jspdf';
       height: 100vh;
       background-color: rgba(15, 23, 42, 0.7);
       backdrop-filter: blur(4px);
-      z-index: 1000;
+      z-index: 1;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -559,9 +563,13 @@ import { jsPDF } from 'jspdf';
     }
   `]
 })
-export class TicketComponent {
+export class TicketComponent implements OnInit {
   @Input() sale!: Venta;
   @Output() closeTicket = new EventEmitter<void>();
+
+  get displayFolio(): string {
+    return (this.sale?.folio || '').replace(/-/g, '');
+  }
 
   // Visual barcode pattern simulation
   barcodePattern: number[] = [2, 1, 3, 1, 2, 4, 1, 2, 3, 1, 2, 1, 4, 2, 1, 3, 2, 1, 3, 1, 2, 4, 1, 2];
@@ -586,7 +594,61 @@ export class TicketComponent {
     [true, true, true, true, false, false, true, false, true, true, false, false, true, true, true, true]
   ];
 
-  constructor(private notificationService: NotificationService) {}
+  constructor(
+    private notificationService: NotificationService,
+    private ventasTxt: PersistenciaVentasTxt,
+  ) {}
+
+  ngOnInit(): void {
+    if (!this.sale.receipt) void this.loadReceiptData();
+  }
+
+  private async loadReceiptData(): Promise<void> {
+    type Row = Record<string, string>;
+    const folioParts = (this.sale.folio || '').split('-');
+    if (folioParts.length < 3) return;
+    const [cashRegisterId, warehouseId, userId] = folioParts;
+    try {
+      const [cashRegisters, shifts, companies, warehouses, users] = await Promise.all([
+        this.ventasTxt.leer<Row>('cajas.txt'),
+        this.ventasTxt.leer<Row>('turnos.txt'),
+        this.ventasTxt.leerInventario<Row>('empresas.txt'),
+        this.ventasTxt.leerInventario<Row>('almacenes.txt'),
+        this.ventasTxt.leerInventario<Row>('usuarios.txt'),
+      ]);
+      const cashRegister = cashRegisters.find(row => row['id_caja'] === cashRegisterId);
+      const warehouse = warehouses.find(row => row['id_almacen'] === warehouseId);
+      const companyId = cashRegister?.['id_empresa'] || warehouse?.['id_empresa'];
+      const company = companies.find(row => row['id_empresa'] === companyId);
+      const user = users.find(row => row['id_usuario'] === userId);
+      const cashierName = user
+        ? [user['nombres'], user['apellido_paterno'], user['apellido_materno']].filter(Boolean).join(' ')
+        : this.sale.cashier;
+      const [hours, minutes] = this.sale.time.split(':').map(Number);
+      const saleMinutes = (hours || 0) * 60 + (minutes || 0);
+      const shift = shifts.find(row => {
+        if (row['id_empresa'] !== companyId || row['activo'] !== '1') return false;
+        const toMinutes = (value: string) => {
+          const [hour, minute] = value.split(':').map(Number);
+          return (hour || 0) * 60 + (minute || 0);
+        };
+        const start = toMinutes(row['hora_inicio']);
+        const end = toMinutes(row['hora_fin']);
+        return start < end ? saleMinutes >= start && saleMinutes < end : saleMinutes >= start || saleMinutes < end;
+      });
+      this.sale.receipt = {
+        companyName: company?.['nombre_empresa'] || 'Empresa',
+        companyRfc: company?.['rfc'] || '', companyPhone: company?.['telefono'] || '',
+        warehouseName: warehouse?.['nombre_almacen'] || `Almacén ${warehouseId}`,
+        warehouseAddress: warehouse?.['direccion'] || '',
+        cashRegister: cashRegister?.['codigo'] || `CAJA-${cashRegisterId}`,
+        shift: shift?.['nombre'] || 'Sin turno', employeeId: userId, cashierName,
+      };
+      sessionStorage.setItem('ventas.pendingTicket', JSON.stringify(this.sale));
+    } catch {
+      this.notificationService.warning('No fue posible cargar los datos de empresa del ticket.');
+    }
+  }
 
   printTicket(): void {
     this.notificationService.info(`Preparando comprobante ${this.sale.folio} para impresión`);
@@ -649,29 +711,27 @@ export function buildTicketPdfLines(sale: Venta): TicketPdfLine[] {
   };
   const separator = () => lines.push({ text: '------------------------------------------' });
 
-  lines.push({ text: 'ZYRO POS', bold: true, align: 'center', size: 15 });
-  lines.push({ text: 'SISTEMA POS PROFESIONAL', bold: true, align: 'center' });
-  lines.push({ text: 'Av. Insurgentes Sur 1420, Col. Juárez, CDMX', align: 'center' });
-  lines.push({ text: 'RFC: ZYR260101XYZ | Tel: (55) 5555-9900', align: 'center' });
+  const receipt = sale.receipt;
+  const displayedFolio = sale.folio.replace(/-/g, '');
+  lines.push({ text: receipt?.companyName || 'Empresa', bold: true, align: 'center', size: 15 });
+  lines.push({ text: `ALMACÉN: ${receipt?.warehouseName || 'Sin especificar'}`, align: 'center' });
+  if (receipt?.warehouseAddress) lines.push({ text: receipt.warehouseAddress, align: 'center' });
+  lines.push({ text: `RFC: ${receipt?.companyRfc || '—'} | Tel: ${receipt?.companyPhone || '—'}`, align: 'center' });
   separator();
   lines.push({
     text: sale.operationType === 'Cotización'
       ? '*** COTIZACIÓN (NO FISCAL) ***'
-      : '*** TICKET DE VENTA ***',
+      : '*** TICKET ***',
     bold: true,
     align: 'center',
     gapBefore: 1,
   });
   separator();
-  add('FOLIO: ', sale.folio, { bold: true });
+  add('FOLIO: ', displayedFolio, { bold: true });
   add('FECHA: ', `${sale.date} ${sale.time}`);
-  add('CAJA / TURNO: ', 'CAJA-01 (MATUTINO)');
-  add('EMPLEADO / CAJERO: ', `EMP-001 - ${sale.cashier}`);
-  add('CLIENTE: ', sale.client.name, { bold: true });
-  add('RFC CLIENTE: ', sale.client.rfc);
-  add('EMAIL CLIENTE: ', sale.client.email);
-  add('TELÉFONO CLIENTE: ', sale.client.phone);
-  add('DOMICILIO CLIENTE: ', sale.client.address);
+  add('CAJA / TURNO: ', `${receipt?.cashRegister || 'CAJA-01'} (${receipt?.shift || 'MATUTINO'})`);
+  add('EMPLEADO: ', receipt?.employeeId || '—');
+  add('CAJERO: ', receipt?.cashierName || sale.cashier);
   add('ESTADO: ', sale.status);
   add('ARTÍCULOS: ', sale.numProducts);
 
@@ -741,8 +801,8 @@ export function buildTicketPdfLines(sale: Venta): TicketPdfLine[] {
 
   add('OBSERVACIÓN: ', sale.observation, { gapBefore: 2 });
   separator();
-  lines.push({ text: '¡GRACIAS POR SU COMPRA EN ZYRO POS!', bold: true, align: 'center' });
-  lines.push({ text: `CÓDIGO DE COMPROBANTE: ${sale.folio}`, align: 'center' });
+  lines.push({ text: `¡GRACIAS POR SU COMPRA EN ${(receipt?.companyName || 'LA EMPRESA').toUpperCase()}!`, bold: true, align: 'center' });
+  lines.push({ text: `CÓDIGO DE COMPROBANTE: ${displayedFolio}`, align: 'center' });
   lines.push({
     text: 'Comprobante emitido por ZYRO POS. Para facturación electrónica visite facturas.zyropos.com.mx dentro del mes en curso.',
     align: 'center',

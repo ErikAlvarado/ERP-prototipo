@@ -10,6 +10,7 @@ import { MOCK_CLIENTS } from './mock-data';
 import { NotificationService } from './notification.service';
 import { DescuentoService } from './descuento.service';
 import { PersistenciaVentasTxt } from '../../shared/services/persistencia-ventas-txt';
+import { Autenticacion } from '../../shared/services/autenticacion';
 
 @Injectable({
   providedIn: 'root'
@@ -36,6 +37,7 @@ export class VentaService {
     private notificationService: NotificationService,
     private descuentoService: DescuentoService,
     private ventasTxt: PersistenciaVentasTxt,
+    private autenticacion: Autenticacion,
   ) {}
 
   getCartItems(): VentaItem[] {
@@ -52,6 +54,25 @@ export class VentaService {
 
   setSelectedPayment(method: PaymentMethod): void {
     this.selectedPaymentSubject.next(method);
+  }
+
+  async getAvailablePaymentMethods(): Promise<PaymentMethod[]> {
+    const rows = await this.ventasTxt.leer<Record<string, string>>('metodos_pago.txt');
+    const types = new Set(rows.filter(row => row['activo'] === '1').map(row => row['tipo']));
+    return [
+      types.has('Efectivo') ? 'Efectivo' : null,
+      types.has('Tarjeta') ? 'Tarjeta' : null,
+      types.has('Transferencia') ? 'Transferencia' : null,
+      types.has('Vale') ? 'Vales' : null,
+    ].filter((method): method is PaymentMethod => method !== null);
+  }
+
+  async getCurrentShiftName(companyId = '1'): Promise<string> {
+    const shifts = await this.ventasTxt.leer<Record<string, string>>('turnos.txt');
+    const now = new Date();
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    return shifts.find(row => row['id_empresa'] === companyId && row['activo'] === '1'
+      && this.timeIsInShift(minutes, row['hora_inicio'], row['hora_fin']))?.['nombre'] || 'Sin turno';
   }
 
   addToCart(product: Product, qty: number = 1): void {
@@ -239,28 +260,54 @@ export class VentaService {
 
   private async persistSale(sale: Venta): Promise<Venta> {
     type Row = Record<string, string>;
-    const [sales, details, payments, clients] = await Promise.all([
+    const warehouseId = sale.items[0]?.product.warehouseStocks?.find(stock => stock.stock > 0)?.warehouseId || 1;
+    const [sales, details, payments, clients, cashRegisters, shifts, companies, warehouses, users] = await Promise.all([
       this.ventasTxt.leer<Row>('ventas.txt'),
       this.ventasTxt.leer<Row>('ventas_detalle.txt'),
       this.ventasTxt.leer<Row>('pagos_venta.txt'),
       this.ventasTxt.leer<Row>('clientes.txt'),
+      this.ventasTxt.leer<Row>('cajas.txt'),
+      this.ventasTxt.leer<Row>('turnos.txt'),
+      this.ventasTxt.leerInventario<Row>('empresas.txt'),
+      this.ventasTxt.leerInventario<Row>('almacenes.txt'),
+      this.ventasTxt.leerInventario<Row>('usuarios.txt'),
     ]);
     const nextId = (rows: Row[], field: string) =>
       Math.max(0, ...rows.map(row => Number(row[field]) || 0)) + 1;
     const money = (value: number) => value.toFixed(2);
     const saleId = nextId(sales, 'id_venta');
-    const year = new Date().getFullYear();
-    const folio = `ZYR-${year}-${String(saleId).padStart(6, '0')}`;
+    const cashRegister = cashRegisters.find(row =>
+      row['id_almacen'] === String(warehouseId) && row['activo'] === '1');
+    if (!cashRegister) {
+      throw new Error(`No hay una caja activa asignada al almacén ${warehouseId}.`);
+    }
+    const sessionUserId = this.autenticacion.sesion()?.id || '1';
+    const userId = /^\d+$/.test(sessionUserId) ? sessionUserId : '1';
+    const companyId = cashRegister['id_empresa'] || '1';
+    const company = companies.find(row => row['id_empresa'] === companyId);
+    const warehouse = warehouses.find(row => row['id_almacen'] === String(warehouseId));
+    const user = users.find(row => row['id_usuario'] === userId);
+    const databaseCashierName = user
+      ? [user['nombres'], user['apellido_paterno'], user['apellido_materno']].filter(Boolean).join(' ')
+      : sale.cashier;
+    const saleMinutes = this.timeToMinutes(sale.time);
+    const activeShift = shifts.find(row => row['id_empresa'] === companyId
+      && row['activo'] === '1'
+      && this.timeIsInShift(saleMinutes, row['hora_inicio'], row['hora_fin']));
+    if (!activeShift) throw new Error(`No hay un turno activo configurado para la hora ${sale.time}.`);
+    const dateSegment = sale.date.replace(/-/g, '');
+    const sequence = String(saleId).padStart(6, '0');
+    const folio = `${cashRegister['id_caja']}-${warehouseId}-${userId}-${dateSegment}-${sequence}`;
     const clientId = Number(sale.client.id.replace(/\D/g, '')) || 1;
     const validClientId = clients.some(client => Number(client['id_cliente']) === clientId) ? clientId : 1;
     const dateTime = `${sale.date} ${sale.time}:00`;
-    const warehouseId = sale.items[0]?.product.warehouseStocks?.find(stock => stock.stock > 0)?.warehouseId || 1;
     sales.push({
       id_venta: String(saleId), folio, id_empresa: '1', id_almacen: String(warehouseId),
-      id_usuario: '1', id_cliente: String(validClientId), id_lista_precio: '1', id_moneda: '1',
+      id_usuario: userId, id_cliente: String(validClientId), id_lista_precio: '1', id_moneda: '1',
       fecha_venta: dateTime, subtotal: money(sale.subtotal), descuento: money(sale.discount),
       impuestos: money(sale.tax), total: money(sale.total), estatus: 'Completada',
       tipo_venta: sale.paymentMethod === 'Crédito' ? 'Credito' : 'Contado', observaciones: sale.observation,
+      id_turno: activeShift['id_turno'],
     });
     let detailId = nextId(details, 'id_detalle_venta');
     for (const item of sale.items) {
@@ -279,17 +326,60 @@ export class VentaService {
       });
     }
     const paymentIds: Record<PaymentMethod, number> = {
-      Efectivo: 5, Tarjeta: 3, Transferencia: 1, Vales: 2, Crédito: 4,
+      Efectivo: 5,
+      Tarjeta: sale.paymentDetails?.cardType === 'Crédito' ? 7 : 6,
+      Transferencia: 1,
+      Vales: 8,
+      Crédito: 9,
     };
     payments.push({
       id_pago_venta: String(nextId(payments, 'id_pago_venta')), id_venta: String(saleId),
       id_metodo_pago: String(paymentIds[sale.paymentMethod]), id_moneda: '1', fecha_pago: dateTime,
       importe: money(sale.total), referencia: sale.paymentDetails?.authorizationCode
         || sale.paymentDetails?.transferReference || sale.paymentDetails?.voucherNumber || '',
+      banco: sale.paymentDetails?.cardBank || sale.paymentDetails?.transferBank || '',
+      tipo_tarjeta: sale.paymentDetails?.cardType || '',
+      ultimos_4: sale.paymentDetails?.cardLast4 || '',
+      clave_rastreo: sale.paymentDetails?.transferFolio || '',
+      emisor_vale: sale.paymentDetails?.voucherCompany || '',
       observaciones: sale.paymentMethod,
     });
-    await this.ventasTxt.reemplazarVarias({ ventas: sales, detallesVenta: details, pagosVenta: payments });
-    return { ...sale, id: `v${saleId}`, folio };
+    const savedSale: Venta = {
+      ...sale, id: `v${saleId}`, folio, cashier: databaseCashierName,
+      receipt: {
+        companyName: company?.['nombre_empresa'] || 'Empresa',
+        companyRfc: company?.['rfc'] || '',
+        companyPhone: company?.['telefono'] || '',
+        warehouseName: warehouse?.['nombre_almacen'] || `Almacén ${warehouseId}`,
+        warehouseAddress: warehouse?.['direccion'] || '',
+        cashRegister: cashRegister['codigo'] || `CAJA-${cashRegister['id_caja']}`,
+        shift: activeShift['nombre'], employeeId: userId, cashierName: databaseCashierName,
+      },
+    };
+    // Los TXT viven bajo public/assets durante el prototipo. El servidor de
+    // desarrollo puede recargar la página al detectar su escritura, así que
+    // dejamos listo el ticket actual antes de persistir para no reabrir uno anterior.
+    try {
+      sessionStorage.setItem('ventas.pendingTicket', JSON.stringify(savedSale));
+      await this.ventasTxt.reemplazarVarias({ ventas: sales, detallesVenta: details, pagosVenta: payments });
+    } catch (error) {
+      sessionStorage.removeItem('ventas.pendingTicket');
+      throw error;
+    }
+    return savedSale;
+  }
+
+  private timeToMinutes(time: string): number {
+    const [hours, minutes] = time.split(':').map(Number);
+    return (hours || 0) * 60 + (minutes || 0);
+  }
+
+  private timeIsInShift(value: number, start: string, end: string): boolean {
+    const startMinutes = this.timeToMinutes(start);
+    const endMinutes = this.timeToMinutes(end);
+    return startMinutes < endMinutes
+      ? value >= startMinutes && value < endMinutes
+      : value >= startMinutes || value < endMinutes;
   }
 
   closeTicket(): void {

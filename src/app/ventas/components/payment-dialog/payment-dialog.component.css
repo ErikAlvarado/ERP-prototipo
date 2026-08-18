@@ -1,0 +1,14 @@
+.dialog-heading { display: flex; align-items: center; gap: 13px; padding: 22px 24px 8px; }
+.dialog-heading [mat-dialog-title] { min-height: 0; margin: 1px 0 0; padding: 0; border: 0; background: transparent; }
+.dialog-heading [mat-dialog-title]::after { display: none; content: none; }
+.dialog-heading span { color: #667085; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+.dialog-icon { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 10px; color: #175cd3; background: #eff8ff; }
+.terminal-prompt { display: flex; align-items: center; gap: 12px; margin: 6px 0 20px; padding: 14px; border: 1px solid #b2ddff; border-radius: 9px; color: #1849a9; background: #eff8ff; }
+.terminal-prompt > mat-icon { flex: 0 0 28px; width: 28px; height: 28px; font-size: 28px; }
+.terminal-prompt div { display: flex; flex-direction: column; gap: 2px; }
+.terminal-prompt span { color: #475467; font-size: 13px; }
+.card-prompt { min-height: 78px; margin-bottom: 4px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 16px; }
+.full-width { grid-column: 1 / -1; }
+mat-dialog-actions { padding: 12px 24px 22px; }
+@media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } .form-grid > * { grid-column: 1; } }

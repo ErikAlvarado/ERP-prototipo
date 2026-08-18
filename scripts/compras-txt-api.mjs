@@ -159,6 +159,8 @@ const TABLES = Object.freeze({
   imagenesProducto: { file: 'inventari_db/producto_imagenes.txt', columns: null },
   transferencias: { file: 'inventari_db/transferencias.txt', columns: null },
   detallesTransferencia: { file: 'inventari_db/detalle_transferencia.txt', columns: null },
+  cajas: { file: 'ventas_bd/cajas.txt', columns: null },
+  turnosVenta: { file: 'ventas_bd/turnos.txt', columns: null },
   clientesVenta: { file: 'ventas_bd/clientes.txt', columns: null },
   ventas: { file: 'ventas_bd/ventas.txt', columns: null },
   detallesVenta: { file: 'ventas_bd/ventas_detalle.txt', columns: null },
@@ -172,6 +174,7 @@ const TABLES = Object.freeze({
   impuestos: { file: 'ventas_bd/impuestos.txt', columns: null },
   productosImpuestos: { file: 'ventas_bd/productos_impuestos.txt', columns: null },
   monedas: { file: 'ventas_bd/monedas.txt', columns: null },
+  metodosPagoVenta: { file: 'ventas_bd/metodos_pago.txt', columns: null },
 });
 
 class RequestError extends Error {
@@ -326,10 +329,10 @@ const INVENTORY_EDITABLE_TABLES = new Set([
 ]);
 
 const SALES_EDITABLE_TABLES = new Set([
-  'clientesVenta', 'ventas', 'detallesVenta', 'pagosVenta',
+  'cajas', 'clientesVenta', 'ventas', 'detallesVenta', 'pagosVenta',
   'devolucionesVenta', 'detallesDevolucionVenta', 'cortesCaja',
   'detallesCorteCaja', 'cotizacionesVenta', 'detallesCotizacionVenta',
-  'impuestos', 'productosImpuestos', 'monedas',
+  'impuestos', 'productosImpuestos', 'monedas', 'metodosPagoVenta', 'turnosVenta',
 ]);
 
 async function replaceSalesTables(dbRoot, payload) {

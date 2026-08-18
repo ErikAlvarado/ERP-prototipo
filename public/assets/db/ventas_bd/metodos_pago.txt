@@ -1,0 +1,7 @@
+id_metodo_pago|nombre|tipo|activo
+1|Transferencia bancaria|Transferencia|1
+5|Efectivo|Efectivo|1
+6|Tarjeta de débito|Tarjeta|1
+7|Tarjeta de crédito|Tarjeta|1
+8|Vales|Vale|1
+9|Crédito a clientes|Crédito|0

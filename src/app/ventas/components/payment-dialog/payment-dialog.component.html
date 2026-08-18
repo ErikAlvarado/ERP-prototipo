@@ -1,0 +1,35 @@
+@if (data.method === 'Tarjeta') {
+  <div class="dialog-heading">
+    <div class="dialog-icon"><mat-icon>credit_card</mat-icon></div>
+    <div><span>Método de pago</span><h2 mat-dialog-title>Pago con tarjeta</h2></div>
+  </div>
+  <mat-dialog-content role="status" aria-live="polite">
+    <div class="terminal-prompt card-prompt"><div><strong>Inserta la tarjeta</strong><span>Inserta, desliza o acerca la tarjeta en la terminal bancaria.</span></div></div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end"><button mat-button mat-dialog-close>Cancelar</button></mat-dialog-actions>
+} @else {
+  <div class="dialog-heading">
+    <div class="dialog-icon"><mat-icon>{{ data.method === 'Transferencia' ? 'account_balance' : 'confirmation_number' }}</mat-icon></div>
+    <div><span>Método de pago</span><h2 mat-dialog-title>{{ titulo }}</h2></div>
+  </div>
+
+  <mat-dialog-content>
+    @if (data.method === 'Transferencia') {
+    <div class="terminal-prompt"><mat-icon>verified</mat-icon><div><strong>Verifica el depósito</strong><span>Confirma el abono en la cuenta antes de entregar la mercancía.</span></div></div>
+    <div class="form-grid">
+      <mat-form-field appearance="outline"><mat-label>Banco emisor</mat-label><mat-select [(ngModel)]="details.transferBank"><mat-option value="BBVA">BBVA</mat-option><mat-option value="Santander">Santander</mat-option><mat-option value="Citibanamex">Citibanamex</mat-option><mat-option value="Banorte">Banorte</mat-option><mat-option value="SPEI / Otro">SPEI / Otro</mat-option></mat-select></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Referencia</mat-label><input matInput maxlength="80" [(ngModel)]="details.transferReference" placeholder="REF-99201"></mat-form-field>
+      <mat-form-field appearance="outline" class="full-width"><mat-label>Clave de rastreo o folio</mat-label><input matInput maxlength="100" [(ngModel)]="details.transferFolio" placeholder="Clave proporcionada por el banco"></mat-form-field>
+      <mat-checkbox class="full-width" [(ngModel)]="transferenciaConfirmada">Confirmé que el importe fue recibido</mat-checkbox>
+    </div>
+    } @else {
+    <div class="terminal-prompt"><mat-icon>confirmation_number</mat-icon><div><strong>Inserta o captura el vale</strong><span>Registra el emisor y el folio que aparece en el comprobante.</span></div></div>
+    <div class="form-grid">
+      <mat-form-field appearance="outline"><mat-label>Empresa emisora</mat-label><mat-select [(ngModel)]="details.voucherCompany"><mat-option value="Edenred">Edenred</mat-option><mat-option value="Pluxee">Pluxee</mat-option><mat-option value="Up Sí Vale">Up Sí Vale</mat-option><mat-option value="Toka">Toka</mat-option><mat-option value="Otra">Otra</mat-option></mat-select></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Folio del vale</mat-label><input matInput maxlength="80" [(ngModel)]="details.voucherNumber" placeholder="V-772810"></mat-form-field>
+    </div>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end"><button mat-button mat-dialog-close>Cancelar</button><button mat-raised-button color="primary" [disabled]="!puedeConfirmar" (click)="confirmar()">Confirmar pago</button></mat-dialog-actions>
+}

@@ -182,6 +182,11 @@ export class Sidebar {
         route: '/almacenes'
       },
       {
+        title: 'Cajas',
+        icon: 'point_of_sale',
+        route: '/cajas'
+      },
+      {
         title: 'Usuarios',
         icon: 'people',
         route: '/usuarios'

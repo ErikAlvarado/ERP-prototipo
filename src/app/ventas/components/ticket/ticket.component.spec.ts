@@ -9,13 +9,14 @@ describe('contenido del PDF de ticket', () => {
       .map(line => line.text)
       .join('\n');
 
-    expect(content).toContain('ZYRO POS');
-    expect(content).toContain('RFC: ZYR260101XYZ');
-    expect(content).toContain('FOLIO: F-TEST-001');
+    expect(content).toContain('SuperMart');
+    expect(content).toContain('ALMACÉN: Almacén Central');
+    expect(content).toContain('RFC: SMA123456789 | Tel: 555-1234');
+    expect(content).toContain('FOLIO: FTEST001');
     expect(content).toContain('FECHA: 2026-08-07 11:30');
-    expect(content).toContain('EMPLEADO / CAJERO: EMP-001 - Ana Cajera');
-    expect(content).toContain('CLIENTE: Cliente Prueba');
-    expect(content).toContain('RFC CLIENTE: CUPR800101AA1');
+    expect(content).toContain('EMPLEADO: 1');
+    expect(content).toContain('CAJERO: Juan Pérez Gómez');
+    expect(content).not.toContain('CLIENTE:');
     expect(content).toContain('1. Producto de prueba');
     expect(content).toContain('CANTIDAD / PRECIO U.: 2 x $100.00');
     expect(content).toContain('DESCUENTO CATÁLOGO (10%): -$20.00');
@@ -73,5 +74,11 @@ function createSale(): Venta {
     cashier: 'Ana Cajera',
     numProducts: 2,
     observation: 'Venta completa de prueba',
+    receipt: {
+      companyName: 'SuperMart', companyRfc: 'SMA123456789', companyPhone: '555-1234',
+      warehouseName: 'Almacén Central', warehouseAddress: 'Bodega 5, Zona Industrial',
+      cashRegister: 'CAJA-01', shift: 'MATUTINO', employeeId: '1',
+      cashierName: 'Juan Pérez Gómez',
+    },
   };
 }
